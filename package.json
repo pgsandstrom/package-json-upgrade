@@ -1,0 +1,74 @@
+{
+  "name": "package-json-upgrade",
+  "displayName": "Package Json Upgrade",
+  "description": "Helps you update your dependencies in your package.json file",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "1.41.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:extension.helloWorld"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.helloWorld",
+        "title": "Hello World"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "format": "prettier --write \"src/**/*.{json,md,ts,tsx,css,scss}\"",
+    "lint": "npm run lint:js && npm run lint:ts",
+    "lint:js": "node ./node_modules/eslint/bin/eslint.js --ext .ts --ext .tsx --fix src",
+    "lint:ts": "tslint --fix src/**/*.ts{,x}",
+    "pre-commit": "lint-staged",
+    "pre-push": "cross-env CI=true npm run test"
+  },
+  "devDependencies": {
+    "@types/glob": "7.1.1",
+    "@types/mocha": "5.2.7",
+    "@types/node": "12.11.7",
+    "@types/vscode": "1.41.0",
+    "@typescript-eslint/eslint-plugin": "2.12.0",
+    "@typescript-eslint/parser": "2.12.0",
+    "cross-env": "6.0.3",
+    "eslint": "6.7.2",
+    "eslint-config-prettier": "6.7.0",
+    "glob": "7.1.5",
+    "husky": "3.1.0",
+    "lint-staged": "9.5.0",
+    "mocha": "6.2.2",
+    "prettier": "1.19.1",
+    "tslint": "5.20.1",
+    "tslint-config-prettier": "1.18.0",
+    "typescript": "3.7.3",
+    "vscode-test": "1.2.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run pre-commit",
+      "pre-push": "npm run pre-push"
+    }
+  },
+  "lint-staged": {
+    "*.{json,md,ts,tsx,css,scss}": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.{ts,tsx}": [
+      "node ./node_modules/eslint/bin/eslint.js --ext .ts --ext .tsx --fix",
+      "tslint --fix",
+      "git add"
+    ]
+  }
+}
