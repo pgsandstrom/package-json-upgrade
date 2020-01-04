@@ -1,8 +1,8 @@
 import { isBefore, subMinutes } from 'date-fns'
 import fetch, { Response } from 'node-fetch'
+import { diff, gt, ReleaseType, valid } from 'semver'
 import * as vscode from 'vscode'
 import { Dict, StrictDict } from './types'
-import { gt, diff, ReleaseType, valid } from 'semver'
 
 interface PackageJson {
   dependencies: StrictDict<string, PackageJsonDependency>
@@ -17,6 +17,11 @@ interface NpmData {
   versions: {
     [key in string]: { name: string; version: string }
   }
+  homepage: string
+}
+
+interface NpmError {
+  error: string
 }
 
 interface CacheItem {
@@ -92,13 +97,18 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
 const fetchNpmData = async (dependencyName: string) => {
   // console.log(`Fetching npm data for ${dependencyName}`)
   const lol: Response = await fetch(`https://registry.npmjs.org/${dependencyName}`)
-  //   const text = await lol.text()
-  //   console.log(`npm data: ${dependencyName}: ${text}`)
-  const json = (await lol.json()) as NpmData
-  // TODO pick out the latest version and save it... or something...
+  const json = (await lol.json()) as NpmData | NpmError
 
-  npmCache[dependencyName] = {
-    date: new Date(),
-    npmData: json,
+  // TODO do something smart if we cant find a dependency. Show error decorator?
+  if (isNpmData(json)) {
+    npmCache[dependencyName] = {
+      date: new Date(),
+      npmData: json,
+    }
   }
+}
+
+const isNpmData = (object: NpmData | NpmError): object is NpmData => {
+  // tslint:disable-next-line: strict-type-predicates
+  return (object as NpmData).versions !== undefined
 }

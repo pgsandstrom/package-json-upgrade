@@ -119,13 +119,6 @@ export class UpdateAction implements vscode.CodeActionProvider {
       )
     }
 
-    // const replaceWithSmileyCatFix = this.createFix(document, range, '😺')
-    // const replaceWithSmileyFix = this.createFix(document, range, '😀')
-    // Marking a single fix as `preferred` means that users can apply it with a
-    // single keyboard shortcut using the `Auto Fix` command.
-    // replaceWithSmileyFix.isPreferred = true
-    // const replaceWithSmileyHankyFix = this.createFix(document, range, '💩')
-
     const commandAction = this.createCommand()
     actions.push(commandAction)
 
