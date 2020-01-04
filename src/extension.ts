@@ -9,16 +9,15 @@ import { replaceLastOccuranceOf } from './util/util'
 const OPEN_URL_COMMAND = 'package-json-upgrade.open-url-command'
 
 export function activate(context: vscode.ExtensionContext) {
-  vscode.window.onDidChangeVisibleTextEditors((e: vscode.TextEditor[]) => {
-    e.filter(texteditor => isPackageJson(texteditor.document)).forEach(texteditor => {
+  vscode.window.onDidChangeActiveTextEditor((texteditor: vscode.TextEditor | undefined) => {
+    if (texteditor !== undefined) {
       handleFile(texteditor.document)
-    })
+    }
   })
 
   vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
-    // TODO timeout?
-    console.log('did change text document')
-    handleFile(e.document, true)
+    // TODO timeout? handleFile only after 500ms without a change or something? Or is it unnecessary?
+    handleFile(e.document)
   })
 
   vscode.window.visibleTextEditors.forEach(textEditor => {
@@ -27,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // vscode.workspace.onDidOpenTextDocument((e: vscode.TextDocument) => {})
   // vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {})
-  // vscode.window.onDidChangeActiveTextEditor((e: vscode.TextEditor | undefined) => {})
+  // vscode.window.onDidChangeVisibleTextEditors((e: vscode.TextEditor[]) => {})
 
   // TODO fix commands
   const disposable = vscode.commands.registerCommand('extension.helloWorld', () => {

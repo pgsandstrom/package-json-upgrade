@@ -1,13 +1,11 @@
-import { isBefore, subMinutes } from 'date-fns'
 import * as vscode from 'vscode'
 import { decorateNotFound, getDecoratorForUpdate } from './decorations'
 import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
 import { parseDependencyLine } from './packageJson'
-import { Dict } from './types'
 
 // const packageJsonLastUpdate: Dict<string, Date> = {}
 
-export const handleFile = (document: vscode.TextDocument, forceRefresh = false) => {
+export const handleFile = (document: vscode.TextDocument) => {
   console.log(`handle file: ${document.fileName}`)
   // const cacheCutoff = subMinutes(new Date(), 15)
 

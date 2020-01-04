@@ -84,6 +84,7 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
   const cacheCutoff = subMinutes(new Date(), 120)
 
   const text = packageJson.getText()
+  // TODO if package.json is not valid json i guess this will crash. Handle that.
   const json = JSON.parse(text) as PackageJson
   const dependencies = {
     ...json.dependencies,
