@@ -30,20 +30,30 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-use-before-define': 'off',
     '@typescript-eslint/camelcase': 'off', // There are a few exceptions, like variables from the backend and stuff
+    '@typescript-eslint/no-inferrable-types': 'off',
 
     // activate awesome rules:
     '@typescript-eslint/no-unnecessary-type-assertion': ['error'],
     '@typescript-eslint/no-extra-non-null-assertion': ['error'],
-    '@typescript-eslint/no-unused-vars': ['error', {
-      'vars': 'all',
-      'args': 'none',
-    }],
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        vars: 'all',
+        args: 'none',
+      },
+    ],
     '@typescript-eslint/require-await': 'off', // currently buggy on 2019-11-20, see https://github.com/typescript-eslint/typescript-eslint/issues/1226
-    '@typescript-eslint/no-unnecessary-condition': ['error', {
-      'ignoreRhs': true,
-    }],
-    '@typescript-eslint/strict-boolean-expressions':['error', {
-      'ignoreRhs': true,
-    }],
+    '@typescript-eslint/no-unnecessary-condition': [
+      'error',
+      {
+        ignoreRhs: true,
+      },
+    ],
+    '@typescript-eslint/strict-boolean-expressions': [
+      'error',
+      {
+        ignoreRhs: true,
+      },
+    ],
   },
-};
+}

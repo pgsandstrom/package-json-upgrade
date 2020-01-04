@@ -1,0 +1,6 @@
+{
+  "//": "this file exists because of https://github.com/typescript-eslint/typescript-eslint/issues/890",
+  "extends": "./tsconfig.json",
+  "exclude": ["**/*.spec.ts", "node_modules"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

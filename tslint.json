@@ -1,15 +1,24 @@
 {
-	"rules": {
-		"no-string-throw": true,
-		"no-unused-expression": true,
-		"no-duplicate-variable": true,
-		"curly": true,
-		"class-name": true,
-		"semicolon": [
-			true,
-			"always"
-		],
-		"triple-equals": true
-	},
-	"defaultSeverity": "warning"
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
+  "linterOptions": {
+    "exclude": ["config/**/*.js", "node_modules/**/*.ts", "coverage/lcov-report/*.js"]
+  },
+  "rules": {
+    "interface-name": [true, "never-prefix"],
+    "max-line-length": [false],
+    "member-access": false,
+    "no-console": [false],
+    "no-implicit-dependencies": false,
+    "no-invalid-this": true,
+    "ordered-imports": true,
+    "object-literal-sort-keys": false,
+    "prefer-conditional-expression": false,
+    "jsx-no-lambda": false,
+    "no-empty-interface": false,
+    "variable-name": [true, "allow-pascal-case", "allow-leading-underscore"],
+    "strict-type-predicates": true,
+    "no-submodule-imports": [true, "date-fns", "@material-ui", "redux-devtools-extension"],
+    "max-classes-per-file": false
+  },
+  "defaultSeverity": "error"
 }

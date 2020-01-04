@@ -4,13 +4,13 @@
   "description": "Helps you update your dependencies in your package.json file",
   "version": "0.0.1",
   "engines": {
-    "vscode": "1.41.0"
+    "vscode": "1.41.1"
   },
   "categories": [
     "Other"
   ],
   "activationEvents": [
-    "onCommand:extension.helloWorld"
+    "onLanguage:json"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -38,6 +38,8 @@
     "@types/glob": "7.1.1",
     "@types/mocha": "5.2.7",
     "@types/node": "12.11.7",
+    "@types/node-fetch": "2.5.4",
+    "@types/semver": "6.2.0",
     "@types/vscode": "1.41.0",
     "@typescript-eslint/eslint-plugin": "2.12.0",
     "@typescript-eslint/parser": "2.12.0",
@@ -70,5 +72,10 @@
       "tslint --fix",
       "git add"
     ]
+  },
+  "dependencies": {
+    "date-fns": "^2.8.1",
+    "node-fetch": "2.6.0",
+    "semver": "^7.1.1"
   }
 }
