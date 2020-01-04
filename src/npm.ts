@@ -2,7 +2,7 @@ import { isBefore, subMinutes } from 'date-fns'
 import fetch, { Response } from 'node-fetch'
 import { diff, gt, ReleaseType, valid } from 'semver'
 import * as vscode from 'vscode'
-import { Dict, StrictDict } from './types'
+import { AsyncState, Dict, Loader, StrictDict } from './types'
 
 interface PackageJson {
   dependencies: StrictDict<string, PackageJsonDependency>
@@ -17,7 +17,7 @@ interface NpmData {
   versions: {
     [key in string]: { name: string; version: string }
   }
-  homepage: string
+  homepage?: string
 }
 
 interface NpmError {
@@ -31,8 +31,15 @@ interface CacheItem {
 
 const npmCache: Dict<string, CacheItem> = {}
 
+// dependencyname pointing to a potential changelog
+const changelogCache: Dict<string, Loader<string>> = {}
+
 export const getCachedNpmData = (dependencyName: string) => {
   return npmCache[dependencyName]
+}
+
+export const getCachedChangelog = (dependencyName: string) => {
+  return changelogCache[dependencyName]
 }
 
 // export type ReleaseType = "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
@@ -73,6 +80,7 @@ export const getPossibleUpgrades = (npmData: NpmData, currentVersion: string) =>
 }
 
 export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
+  // TODO prevent several simulationous fetches of the same package. Perhaps add Loader to npmCache?
   const cacheCutoff = subMinutes(new Date(), 120)
 
   const text = packageJson.getText()
@@ -101,6 +109,9 @@ const fetchNpmData = async (dependencyName: string) => {
 
   // TODO do something smart if we cant find a dependency. Show error decorator?
   if (isNpmData(json)) {
+    if (changelogCache[dependencyName] === undefined) {
+      findChangelog(dependencyName, json)
+    }
     npmCache[dependencyName] = {
       date: new Date(),
       npmData: json,
@@ -111,4 +122,33 @@ const fetchNpmData = async (dependencyName: string) => {
 const isNpmData = (object: NpmData | NpmError): object is NpmData => {
   // tslint:disable-next-line: strict-type-predicates
   return (object as NpmData).versions !== undefined
+}
+
+const findChangelog = async (dependencyName: string, npmData: NpmData) => {
+  if (npmData.homepage === undefined) {
+    return
+  }
+  // TODO support other stuff than github?
+  const regexResult = /(https?:\/\/github\.com\/[a-zA-z0-9_-]*\/[a-zA-z0-9_-]*)(#[a-zA-z0-9_-]*)?/.exec(
+    npmData.homepage,
+  )
+  if (regexResult !== null) {
+    changelogCache[dependencyName] = {
+      asyncstate: AsyncState.InProgress,
+    }
+    const baseGithubUrl = regexResult[1]
+    const changelogUrl = `${baseGithubUrl}/blob/master/CHANGELOG.md`
+    const result = await fetch(changelogUrl)
+    if (result.status >= 200 && result.status < 300) {
+      console.log(`found changelog at ${changelogUrl}`)
+      changelogCache[dependencyName] = {
+        asyncstate: AsyncState.Fulfilled,
+        item: changelogUrl,
+      }
+    } else {
+      changelogCache[dependencyName] = {
+        asyncstate: AsyncState.Rejected,
+      }
+    }
+  }
 }

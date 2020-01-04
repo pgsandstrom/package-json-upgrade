@@ -1,12 +1,12 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
-import { getCachedNpmData, getPossibleUpgrades } from './npm'
+import { getCachedChangelog, getCachedNpmData, getPossibleUpgrades } from './npm'
 import { parseDependencyLine } from './packageJson'
 import { handleFile, isInDependency, isPackageJson } from './texteditor'
 import { replaceLastOccuranceOf } from './util/util'
 
-const COMMAND = 'code-actions-sample.command'
+const OPEN_URL_COMMAND = 'package-json-upgrade.open-url-command'
 
 export function activate(context: vscode.ExtensionContext) {
   vscode.window.onDidChangeVisibleTextEditors((e: vscode.TextEditor[]) => {
@@ -47,11 +47,9 @@ const activateCodeActionStuff = (context: vscode.ExtensionContext) => {
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMAND, () =>
-      vscode.env.openExternal(
-        vscode.Uri.parse('https://unicode.org/emoji/charts-12.0/full-emoji-list.html'),
-      ),
-    ),
+    vscode.commands.registerCommand(OPEN_URL_COMMAND, url => {
+      vscode.env.openExternal(vscode.Uri.parse(url))
+    }),
   )
 }
 
@@ -119,8 +117,16 @@ export class UpdateAction implements vscode.CodeActionProvider {
       )
     }
 
-    const commandAction = this.createCommand()
-    actions.push(commandAction)
+    if (npmCache.npmData.homepage !== undefined) {
+      const commandAction = this.createHomepageCommand(npmCache.npmData.homepage)
+      actions.push(commandAction)
+    }
+
+    const changelog = getCachedChangelog(dep.dependencyName)
+    if (changelog !== undefined && changelog.item !== undefined) {
+      const commandAction = this.createChangelogCommand(changelog.item)
+      actions.push(commandAction)
+    }
 
     return actions
   }
@@ -144,12 +150,24 @@ export class UpdateAction implements vscode.CodeActionProvider {
     return fix
   }
 
-  private createCommand(): vscode.CodeAction {
-    const action = new vscode.CodeAction('Learn more...', vscode.CodeActionKind.Empty)
+  private createHomepageCommand(url: string): vscode.CodeAction {
+    const action = new vscode.CodeAction('Open homepage', vscode.CodeActionKind.Empty)
     action.command = {
-      command: COMMAND,
-      title: 'Learn more about emojis',
-      tooltip: 'This will open the unicode emoji page.',
+      command: OPEN_URL_COMMAND,
+      title: 'Open homepage',
+      tooltip: 'This will open the dependency homepage.',
+      arguments: [url],
+    }
+    return action
+  }
+
+  private createChangelogCommand(url: string): vscode.CodeAction {
+    const action = new vscode.CodeAction('Open changelog', vscode.CodeActionKind.Empty)
+    action.command = {
+      command: OPEN_URL_COMMAND,
+      title: 'Open changelog',
+      tooltip: 'This will open the dependency changelog.',
+      arguments: [url],
     }
     return action
   }
