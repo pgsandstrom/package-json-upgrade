@@ -29,7 +29,7 @@ interface CacheItem {
   npmData: NpmData
 }
 
-const npmCache: Dict<string, CacheItem> = {}
+const npmCache: Dict<string, Loader<CacheItem>> = {}
 
 // dependencyname pointing to a potential changelog
 const changelogCache: Dict<string, Loader<string>> = {}
@@ -80,7 +80,7 @@ export const getPossibleUpgrades = (npmData: NpmData, currentVersion: string) =>
 }
 
 export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
-  // TODO prevent several simulationous fetches of the same package. Perhaps add Loader to npmCache?
+  // TODO prevent several simulationous fetches of the same package. Check asyncstate of npmcache!
   const cacheCutoff = subMinutes(new Date(), 120)
 
   const text = packageJson.getText()
@@ -93,7 +93,7 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
 
   const promises = Object.entries(dependencies).map(([dependencyName, _version]) => {
     const cache = npmCache[dependencyName]
-    if (cache === undefined || isBefore(cache.date, cacheCutoff)) {
+    if (cache === undefined || cache.item === undefined || isBefore(cache.item.date, cacheCutoff)) {
       return fetchNpmData(dependencyName)
     } else {
       return Promise.resolve()
@@ -104,18 +104,27 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
 }
 
 const fetchNpmData = async (dependencyName: string) => {
-  // console.log(`Fetching npm data for ${dependencyName}`)
+  npmCache[dependencyName] = {
+    asyncstate: AsyncState.InProgress,
+  }
   const lol: Response = await fetch(`https://registry.npmjs.org/${dependencyName}`)
   const json = (await lol.json()) as NpmData | NpmError
 
-  // TODO do something smart if we cant find a dependency. Show error decorator?
   if (isNpmData(json)) {
     if (changelogCache[dependencyName] === undefined) {
       findChangelog(dependencyName, json)
     }
     npmCache[dependencyName] = {
-      date: new Date(),
-      npmData: json,
+      asyncstate: AsyncState.Fulfilled,
+      item: {
+        date: new Date(),
+        npmData: json,
+      },
+    }
+  } else {
+    console.log(`failed to load dependency ${dependencyName}`)
+    npmCache[dependencyName] = {
+      asyncstate: AsyncState.Rejected,
     }
   }
 }
@@ -141,7 +150,6 @@ const findChangelog = async (dependencyName: string, npmData: NpmData) => {
     const changelogUrl = `${baseGithubUrl}/blob/master/CHANGELOG.md`
     const result = await fetch(changelogUrl)
     if (result.status >= 200 && result.status < 300) {
-      console.log(`found changelog at ${changelogUrl}`)
       changelogCache[dependencyName] = {
         asyncstate: AsyncState.Fulfilled,
         item: changelogUrl,

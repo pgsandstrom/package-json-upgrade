@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import { decorateNotFound, getDecoratorForUpdate } from './decorations'
 import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
 import { parseDependencyLine } from './packageJson'
+import { AsyncState } from './types'
 
 // const packageJsonLastUpdate: Dict<string, Date> = {}
 
@@ -56,7 +57,10 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 
       const npmCache = getCachedNpmData(dep.dependencyName)
       if (npmCache === undefined) {
-        const notFoundDecoration = decorateNotFound('loading or not found')
+        return
+      }
+      if (npmCache.asyncstate === AsyncState.Rejected) {
+        const notFoundDecoration = decorateNotFound('Dependency not found')
         textEditor.setDecorations(notFoundDecoration, [
           {
             range,
@@ -65,7 +69,11 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
         return
       }
 
-      const possibleUpgrades = getPossibleUpgrades(npmCache.npmData, dep.currentVersion)
+      if (npmCache.item === undefined) {
+        return
+      }
+
+      const possibleUpgrades = getPossibleUpgrades(npmCache.item.npmData, dep.currentVersion)
 
       let decorator
       if (possibleUpgrades.major !== undefined) {
@@ -100,7 +108,6 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
         ])
       }
     })
-  console.log('done setting decorators')
 }
 
 const getTextEditorFromDocument = (document: vscode.TextDocument) => {

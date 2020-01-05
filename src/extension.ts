@@ -73,14 +73,14 @@ export class UpdateAction implements vscode.CodeActionProvider {
       return
     }
     const npmCache = getCachedNpmData(dep.dependencyName)
-    if (npmCache === undefined) {
+    if (npmCache === undefined || npmCache.item === undefined) {
       return
     }
 
     const wholeLineRange = new vscode.Range(range.start.line, 0, range.start.line, lineText.length)
     const actions = []
 
-    const possibleUpgrades = getPossibleUpgrades(npmCache.npmData, dep.currentVersion)
+    const possibleUpgrades = getPossibleUpgrades(npmCache.item.npmData, dep.currentVersion)
 
     if (possibleUpgrades.major !== undefined) {
       actions.push(
@@ -116,8 +116,8 @@ export class UpdateAction implements vscode.CodeActionProvider {
       )
     }
 
-    if (npmCache.npmData.homepage !== undefined) {
-      const commandAction = this.createHomepageCommand(npmCache.npmData.homepage)
+    if (npmCache.item.npmData.homepage !== undefined) {
+      const commandAction = this.createHomepageCommand(npmCache.item.npmData.homepage)
       actions.push(commandAction)
     }
 

@@ -26,6 +26,8 @@ const decorateUpdatedPackage = ({
   })
 }
 
+// TODO check that light theme looks good
+
 const decorateMajorUpdate = (contentText: string) => {
   return decorateUpdatedPackage({
     overviewRulerColor: 'red',
@@ -53,14 +55,14 @@ const decoratePatchUpdate = (contentText: string) => {
   })
 }
 
-const decorateNonUpdate = (contentText: string) => {
-  return decorateUpdatedPackage({
-    overviewRulerColor: 'darkgray',
-    light: { color: 'lightgray', after: { color: 'lightgray' } },
-    dark: { color: 'darkgray', after: { color: 'darkgray' } },
-    contentText,
-  })
-}
+// const decorateNonUpdate = (contentText: string) => {
+//   return decorateUpdatedPackage({
+//     overviewRulerColor: 'darkgray',
+//     light: { color: 'lightgray', after: { color: 'lightgray' } },
+//     dark: { color: 'darkgray', after: { color: 'darkgray' } },
+//     contentText,
+//   })
+// }
 
 // TODO we need to find out when npm doesnt find anything
 export const decorateNotFound = (contentText: string) => {
