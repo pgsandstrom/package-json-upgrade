@@ -1,6 +1,5 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
+import { getConfig, reloadConfig } from './config'
 import { getCachedChangelog, getCachedNpmData, getPossibleUpgrades } from './npm'
 import { parseDependencyLine } from './packageJson'
 import { handleFile, isInDependency, isPackageJson } from './texteditor'
@@ -9,33 +8,69 @@ import { replaceLastOccuranceOf } from './util/util'
 const OPEN_URL_COMMAND = 'package-json-upgrade.open-url-command'
 
 export function activate(context: vscode.ExtensionContext) {
-  vscode.window.onDidChangeActiveTextEditor((texteditor: vscode.TextEditor | undefined) => {
-    if (texteditor !== undefined) {
-      handleFile(texteditor.document)
+  reloadConfig()
+
+  let showDecorations = getConfig().showUpdatesAtStart
+  console.log(showDecorations)
+
+  const onConfigChange = vscode.workspace.onDidChangeConfiguration(e => {
+    if (e.affectsConfiguration('package-json-upgrade')) {
+      reloadConfig()
+      const newShowDecorations = getConfig().showUpdatesAtStart
+      if (showDecorations !== newShowDecorations) {
+        showDecorations = newShowDecorations
+        checkCurrentFiles(showDecorations)
+      }
     }
   })
 
-  vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
-    // TODO timeout? handleFile only after 500ms without a change or something? Or is it unnecessary?
-    handleFile(e.document)
-  })
+  const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor(
+    (texteditor: vscode.TextEditor | undefined) => {
+      if (texteditor !== undefined) {
+        if (showDecorations) {
+          handleFile(texteditor.document, showDecorations)
+        }
+      }
+    },
+  )
 
-  vscode.window.visibleTextEditors.forEach(textEditor => {
-    handleFile(textEditor.document)
-  })
+  const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument(
+    (e: vscode.TextDocumentChangeEvent) => {
+      // TODO timeout? handleFile only after 500ms without a change or something? Or is it unnecessary?
+
+      if (showDecorations) {
+        handleFile(e.document, showDecorations)
+      }
+    },
+  )
+
+  if (showDecorations) {
+    checkCurrentFiles(showDecorations)
+  }
 
   // vscode.workspace.onDidOpenTextDocument((e: vscode.TextDocument) => {})
   // vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {})
   // vscode.window.onDidChangeVisibleTextEditors((e: vscode.TextEditor[]) => {})
 
-  // TODO fix commands
-  const disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
-    vscode.window.showInformationMessage('Hello World!')
+  const disposable = vscode.commands.registerCommand('package-json-upgrade.toggle-show', () => {
+    showDecorations = !showDecorations
+    checkCurrentFiles(showDecorations)
   })
 
-  context.subscriptions.push(disposable)
+  context.subscriptions.push(
+    onConfigChange,
+    onDidChangeActiveTextEditor,
+    onDidChangeTextDocument,
+    disposable,
+  )
 
   activateCodeActionStuff(context)
+}
+
+const checkCurrentFiles = (showDecorations: boolean) => {
+  vscode.window.visibleTextEditors.forEach(textEditor => {
+    handleFile(textEditor.document, showDecorations)
+  })
 }
 
 const activateCodeActionStuff = (context: vscode.ExtensionContext) => {

@@ -6,8 +6,12 @@ import { AsyncState } from './types'
 
 // const packageJsonLastUpdate: Dict<string, Date> = {}
 
-export const handleFile = (document: vscode.TextDocument) => {
-  console.log(`handle file: ${document.fileName}`)
+export const handleFile = (document: vscode.TextDocument, showDecorations: boolean) => {
+  if (showDecorations === false) {
+    clearCurrentDecorations()
+    return
+  }
+
   // const cacheCutoff = subMinutes(new Date(), 15)
 
   // const lastUpdate = packageJsonLastUpdate[document.uri.fsPath]
@@ -23,18 +27,21 @@ export const handleFile = (document: vscode.TextDocument) => {
 // TODO maybe have cooler handling of decorationtypes? Investigate!
 let currentDecorationTypes: vscode.TextEditorDecorationType[] = []
 
+export const clearCurrentDecorations = () => {
+  currentDecorationTypes.forEach(d => d.dispose())
+  currentDecorationTypes = []
+}
+
 const updatePackageJson = async (document: vscode.TextDocument) => {
   // TODO show loading?
   await refreshPackageJsonData(document)
 
   const textEditor = getTextEditorFromDocument(document)
   if (textEditor === undefined) {
-    console.log('texteditor not found')
     return
   }
 
-  currentDecorationTypes.forEach(d => d.dispose())
-  currentDecorationTypes = []
+  clearCurrentDecorations()
 
   Array.from({ length: document.lineCount })
     .map((_, index) => index)
@@ -66,6 +73,7 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
             range,
           },
         ])
+        currentDecorationTypes.push(notFoundDecoration)
         return
       }
 
