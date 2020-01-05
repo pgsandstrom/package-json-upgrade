@@ -55,6 +55,7 @@ const decoratePatchUpdate = (contentText: string) => {
   })
 }
 
+// currently we just show nothing when no update is available
 // const decorateNonUpdate = (contentText: string) => {
 //   return decorateUpdatedPackage({
 //     overviewRulerColor: 'darkgray',
@@ -64,7 +65,6 @@ const decoratePatchUpdate = (contentText: string) => {
 //   })
 // }
 
-// TODO we need to find out when npm doesnt find anything
 export const decorateNotFound = (contentText: string) => {
   return decorateUpdatedPackage({
     overviewRulerColor: 'darkgray',

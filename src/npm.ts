@@ -104,11 +104,17 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
 }
 
 const fetchNpmData = async (dependencyName: string) => {
+  if (
+    npmCache[dependencyName] !== undefined &&
+    npmCache[dependencyName]?.asyncstate === AsyncState.InProgress
+  ) {
+    return
+  }
   npmCache[dependencyName] = {
     asyncstate: AsyncState.InProgress,
   }
-  const lol: Response = await fetch(`https://registry.npmjs.org/${dependencyName}`)
-  const json = (await lol.json()) as NpmData | NpmError
+  const response: Response = await fetch(`https://registry.npmjs.org/${dependencyName}`)
+  const json = (await response.json()) as NpmData | NpmError
 
   if (isNpmData(json)) {
     if (changelogCache[dependencyName] === undefined) {

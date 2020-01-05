@@ -31,6 +31,7 @@ module.exports = {
     '@typescript-eslint/no-use-before-define': 'off',
     '@typescript-eslint/camelcase': 'off', // There are a few exceptions, like variables from the backend and stuff
     '@typescript-eslint/no-inferrable-types': 'off',
+    'require-atomic-updates': 'off', // shitty rule that gives many false positives. See https://github.com/eslint/eslint/issues/11899
 
     // activate awesome rules:
     '@typescript-eslint/no-unnecessary-type-assertion': ['error'],
