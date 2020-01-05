@@ -111,7 +111,6 @@ const fetchNpmData = async (dependencyName: string) => {
   ) {
     return
   }
-  console.log(`gonna fetch dep ${dependencyName}`)
   npmCache[dependencyName] = {
     asyncstate: AsyncState.InProgress,
   }

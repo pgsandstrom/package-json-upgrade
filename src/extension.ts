@@ -11,7 +11,6 @@ export function activate(context: vscode.ExtensionContext) {
   reloadConfig()
 
   let showDecorations = getConfig().showUpdatesAtStart
-  console.log(showDecorations)
 
   const onConfigChange = vscode.workspace.onDidChangeConfiguration(e => {
     if (e.affectsConfiguration('package-json-upgrade')) {

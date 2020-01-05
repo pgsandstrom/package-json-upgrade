@@ -6,6 +6,11 @@ import { AsyncState } from './types'
 
 // const packageJsonLastUpdate: Dict<string, Date> = {}
 
+export interface LineLimit {
+  startLine: number
+  endLine: number
+}
+
 export const handleFile = (document: vscode.TextDocument, showDecorations: boolean) => {
   if (showDecorations === false) {
     clearCurrentDecorations()
@@ -43,10 +48,12 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 
   clearCurrentDecorations()
 
+  const dependencyLineLimits = getDependencyLineLimits(document)
+
   Array.from({ length: document.lineCount })
     .map((_, index) => index)
     .filter(index => {
-      return isInDependency(document, index)
+      return isInDependency(document, index, dependencyLineLimits)
     })
     .forEach(index => {
       const lineText = document.lineAt(index).text
@@ -125,20 +132,68 @@ const getTextEditorFromDocument = (document: vscode.TextDocument) => {
 }
 
 export const isPackageJson = (document: vscode.TextDocument) => {
-  // console.log(document.fileName)
   // TODO match exact filename in a better way
   return document.fileName.endsWith('package.json')
 }
 
-export const isInDependency = (document: vscode.TextDocument, line: number) => {
-  const devDependenciesLine = Array.from({ length: document.lineCount })
-    .map((_, index) => index)
-    .find(i => {
-      const lineText = document.lineAt(i).text
-      return /\s*"devDependencies"\s*/.test(lineText)
-    })
-  // console.log(`devdep line: ${devDependenciesLine}`)
+// lineLimits can be supplied here to save some cpu
+export const isInDependency = (
+  document: vscode.TextDocument,
+  line: number,
+  lineLimits?: LineLimit[],
+) => {
+  if (lineLimits === undefined) {
+    lineLimits = getDependencyLineLimits(document)
+  }
 
-  // TODO complete this
-  return devDependenciesLine !== undefined && devDependenciesLine < line
+  return lineLimits.some(limit => limit.startLine < line && limit.endLine > line)
+}
+
+export const getDependencyLineLimits = (document: vscode.TextDocument) => {
+  const limits = []
+  const devDependencies = getFlatTagStartEnd(document, /\s*"devDependencies"\s*/)
+  if (devDependencies !== undefined) {
+    limits.push(devDependencies)
+  }
+  const peerDepdencies = getFlatTagStartEnd(document, /\s*"peerDependencies"\s*/)
+  if (peerDepdencies !== undefined) {
+    limits.push(peerDepdencies)
+  }
+  const depdencies = getFlatTagStartEnd(document, /\s*"dependencies"\s*/)
+  if (depdencies !== undefined) {
+    limits.push(depdencies)
+  }
+  return limits
+}
+
+const getFlatTagStartEnd = (
+  document: vscode.TextDocument,
+  regexp: RegExp,
+): LineLimit | undefined => {
+  // TODO this whole limit detection is nooby. How to do it smarter? Is there a cool library for parsing json and finding lines in it?
+  const array = Array.from({ length: document.lineCount }).map((_, index) => index)
+
+  const startLine = array.find(i => {
+    const lineText = document.lineAt(i).text
+    return regexp.test(lineText)
+  })
+  if (startLine === undefined) {
+    return undefined
+  }
+
+  // detect if it opens and closes on same line:
+  if (document.lineAt(startLine).text.includes('}')) {
+    return undefined
+  }
+
+  const endLine = array.slice(startLine + 1).find(i => {
+    return document.lineAt(i).text.includes('}')
+  })
+  if (endLine === undefined) {
+    return undefined
+  }
+  return {
+    startLine,
+    endLine,
+  }
 }
