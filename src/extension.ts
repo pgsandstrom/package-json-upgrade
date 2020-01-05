@@ -27,26 +27,22 @@ export function activate(context: vscode.ExtensionContext) {
   const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor(
     (texteditor: vscode.TextEditor | undefined) => {
       if (texteditor !== undefined) {
-        if (showDecorations) {
-          handleFile(texteditor.document, showDecorations)
-        }
+        handleFile(texteditor.document, showDecorations)
       }
     },
   )
 
+  let timeout: NodeJS.Timeout
   const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument(
     (e: vscode.TextDocumentChangeEvent) => {
-      // TODO timeout? handleFile only after 500ms without a change or something? Or is it unnecessary?
-
-      if (showDecorations) {
+      clearTimeout(timeout)
+      timeout = setTimeout(() => {
         handleFile(e.document, showDecorations)
-      }
+      }, 500)
     },
   )
 
-  if (showDecorations) {
-    checkCurrentFiles(showDecorations)
-  }
+  checkCurrentFiles(showDecorations)
 
   // vscode.workspace.onDidOpenTextDocument((e: vscode.TextDocument) => {})
   // vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {})

@@ -106,10 +106,12 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
 const fetchNpmData = async (dependencyName: string) => {
   if (
     npmCache[dependencyName] !== undefined &&
-    npmCache[dependencyName]?.asyncstate === AsyncState.InProgress
+    (npmCache[dependencyName]?.asyncstate === AsyncState.InProgress ||
+      npmCache[dependencyName]?.asyncstate === AsyncState.Rejected)
   ) {
     return
   }
+  console.log(`gonna fetch dep ${dependencyName}`)
   npmCache[dependencyName] = {
     asyncstate: AsyncState.InProgress,
   }
