@@ -48,7 +48,7 @@ const ACCEPTABLE_UPGRADES = ['major', 'minor', 'patch']
 
 export const getPossibleUpgrades = (npmData: NpmData, currentVersion: string) => {
   if (valid(currentVersion) === null) {
-    // TODO currently invalid versions will be shown as latest due to this
+    // Currently invalid versions will be shown the same as latest due to this
     return {}
   }
   const possibleUpgrades = Object.values(npmData.versions)
@@ -80,27 +80,34 @@ export const getPossibleUpgrades = (npmData: NpmData, currentVersion: string) =>
 }
 
 export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
-  // TODO prevent several simulationous fetches of the same package. Check asyncstate of npmcache!
   const cacheCutoff = subMinutes(new Date(), 120)
 
   const text = packageJson.getText()
-  // TODO if package.json is not valid json i guess this will crash. Handle that.
-  const json = JSON.parse(text) as PackageJson
-  const dependencies = {
-    ...json.dependencies,
-    ...json.devDependencies,
-  }
-
-  const promises = Object.entries(dependencies).map(([dependencyName, _version]) => {
-    const cache = npmCache[dependencyName]
-    if (cache === undefined || cache.item === undefined || isBefore(cache.item.date, cacheCutoff)) {
-      return fetchNpmData(dependencyName)
-    } else {
-      return Promise.resolve()
+  try {
+    const json = JSON.parse(text) as PackageJson
+    const dependencies = {
+      ...json.dependencies,
+      ...json.devDependencies,
     }
-  })
 
-  return Promise.all(promises)
+    const promises = Object.entries(dependencies).map(([dependencyName, _version]) => {
+      const cache = npmCache[dependencyName]
+      if (
+        cache === undefined ||
+        cache.item === undefined ||
+        isBefore(cache.item.date, cacheCutoff)
+      ) {
+        return fetchNpmData(dependencyName)
+      } else {
+        return Promise.resolve()
+      }
+    })
+
+    return Promise.all(promises)
+  } catch (e) {
+    console.warn(`Failed to parse package.json: ${packageJson.uri.fsPath}`)
+    return Promise.resolve()
+  }
 }
 
 const fetchNpmData = async (dependencyName: string) => {
