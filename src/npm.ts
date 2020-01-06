@@ -1,4 +1,3 @@
-import { isBefore, subMinutes } from 'date-fns'
 import fetch, { Response } from 'node-fetch'
 import { diff, gt, ReleaseType, valid } from 'semver'
 import * as vscode from 'vscode'
@@ -80,7 +79,7 @@ export const getPossibleUpgrades = (npmData: NpmData, currentVersion: string) =>
 }
 
 export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
-  const cacheCutoff = subMinutes(new Date(), 120)
+  const cacheCutoff = new Date(new Date().getTime() - 1000 * 60 * 120) // 120 minutes
 
   const text = packageJson.getText()
   try {
@@ -95,7 +94,7 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
       if (
         cache === undefined ||
         cache.item === undefined ||
-        isBefore(cache.item.date, cacheCutoff)
+        cache.item.date.getTime() < cacheCutoff.getTime()
       ) {
         return fetchNpmData(dependencyName)
       } else {
