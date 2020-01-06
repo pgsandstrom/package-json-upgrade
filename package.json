@@ -3,12 +3,18 @@
   "displayName": "Package Json Upgrade",
   "description": "Shows available updates in package.json files and offers quick fix command to update them and to show the changelog",
   "version": "1.0.0",
+  "publisher": "codeandstuff",
   "engines": {
     "vscode": "1.41.1"
   },
   "categories": [
+    "Programming Languages",
     "Other"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pgsandstrom/package-json-upgrade.git"
+  },
   "activationEvents": [
     "onLanguage:json"
   ],
