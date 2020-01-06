@@ -83,15 +83,15 @@ export const getDecoratorForUpdate = (
   switch (releaseType) {
     case 'major':
     case 'premajor':
-      return decorateMajorUpdate(`Installed: ${currentVersion}\t\t Latest: ${latestVersion}`)
+      return decorateMajorUpdate(`\t\tUpdate available: ${latestVersion}`)
     case 'minor':
     case 'preminor':
-      return decorateMinorUpdate(`Installed: ${currentVersion}\t\t Latest: ${latestVersion}`)
+      return decorateMinorUpdate(`\t\tUpdate available: ${latestVersion}`)
     case 'patch':
     case 'prepatch':
     case 'prerelease':
       // TODO wtf is these version releasetypes
-      return decoratePatchUpdate(`Installed: ${currentVersion}\t\t Latest: ${latestVersion}`)
+      return decoratePatchUpdate(`\t\tUpdate available: ${latestVersion}`)
     case null:
       return undefined
     // return decorateNonUpdate('Latest version used')

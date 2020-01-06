@@ -118,7 +118,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
         this.createFix(
           document,
           wholeLineRange,
-          'Major',
+          'major',
           dep.currentVersion,
           possibleUpgrades.major.version,
         ),
@@ -129,7 +129,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
         this.createFix(
           document,
           wholeLineRange,
-          'Minor',
+          'minor',
           dep.currentVersion,
           possibleUpgrades.minor.version,
         ),
@@ -140,7 +140,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
         this.createFix(
           document,
           wholeLineRange,
-          'Patch',
+          'patch',
           dep.currentVersion,
           possibleUpgrades.patch.version,
         ),
@@ -172,7 +172,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
     const newLineText = replaceLastOccuranceOf(lineText, currentVersion, newVersion)
 
     const fix = new vscode.CodeAction(
-      `${type} upgrade to ${newVersion}`,
+      `Do ${type} upgrade to ${newVersion}`,
       vscode.CodeActionKind.Empty,
     )
     fix.edit = new vscode.WorkspaceEdit()
