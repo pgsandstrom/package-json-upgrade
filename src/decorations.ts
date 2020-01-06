@@ -26,13 +26,13 @@ const decorateUpdatedPackage = ({
   })
 }
 
-// TODO check that light theme looks good
+// TODO make colors configurable
 
 const decorateMajorUpdate = (contentText: string) => {
   return decorateUpdatedPackage({
     overviewRulerColor: 'red',
-    light: { after: { color: '#E03419' } },
-    dark: { after: { color: '#C74632' } },
+    light: { after: { color: '#C74632' } },
+    dark: { after: { color: '#E03419' } },
     contentText,
   })
 }
@@ -40,7 +40,7 @@ const decorateMajorUpdate = (contentText: string) => {
 const decorateMinorUpdate = (contentText: string) => {
   return decorateUpdatedPackage({
     overviewRulerColor: 'yellow',
-    light: { after: { color: '#EEFF00' } },
+    light: { after: { color: '#abab00' } },
     dark: { after: { color: '#F8FF99' } },
     contentText,
   })
@@ -49,8 +49,8 @@ const decorateMinorUpdate = (contentText: string) => {
 const decoratePatchUpdate = (contentText: string) => {
   return decorateUpdatedPackage({
     overviewRulerColor: 'green',
-    light: { after: { color: '#19e034' } },
-    dark: { after: { color: '#32C746' } },
+    light: { after: { color: '#009113' } },
+    dark: { after: { color: '#19e034' } },
     contentText,
   })
 }
