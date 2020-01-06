@@ -1,65 +1,39 @@
-# package-json-upgrade README
+# package-json-upgrade
 
-This is the README for your extension "package-json-upgrade". After writing up a brief description, we recommend including the following sections.
+Shows available updates in package.json. Offers quick actions to guide you in your updating.
 
-## Features
+## Preview
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+The available updates are shown as a decoration to the right of each line.
 
-For example if there is an image subfolder under your extension project workspace:
+![feature X](images/preview1.png)
 
-\!\[feature X\]\(images/feature-x.png\)
+The extension adds code actions that are available through the quick fix-command. Default keyboard shortcut is "ctrl + ."
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+These quick actions can update the dependency, but also links to the homepage and, if found, the changelog.
 
-## Requirements
+![feature X](images/preview2.png)
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Reason to exist
+
+There exists good alternatives to this extension:
+
+[Version Lens](https://github.com/vscode-contrib/vscode-versionlens)
+
+[Better package json](https://github.com/ldd/better-package-json)
+
+I didnt like that Version Lens interface and missed quick access to the changelog. This extension fits my use case perfectly, and I hope you enjoy it as well!
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+A config is available to control if the updates should always be shown when a package.json is opened, or if they should only be shown after triggering a command called "Toggle showing package.json available updates". This can be useful if you find that this extension is in the way when you are doing other work in your package.json file.
 
-For example:
+## Install
 
-This extension contributes the following settings:
-
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+[How to install vscode extensions](https://code.visualstudio.com/docs/editor/extension-gallery)
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+Initial release.
