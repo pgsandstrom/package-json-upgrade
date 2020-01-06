@@ -4,8 +4,6 @@ import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from '.
 import { parseDependencyLine } from './packageJson'
 import { AsyncState } from './types'
 
-// const packageJsonLastUpdate: Dict<string, Date> = {}
-
 export interface LineLimit {
   startLine: number
   endLine: number
@@ -17,16 +15,9 @@ export const handleFile = (document: vscode.TextDocument, showDecorations: boole
     return
   }
 
-  // const cacheCutoff = subMinutes(new Date(), 15)
-
-  // const lastUpdate = packageJsonLastUpdate[document.uri.fsPath]
-  // if (lastUpdate === undefined || isBefore(lastUpdate, cacheCutoff) || forceRefresh) {
   if (isPackageJson(document)) {
-    // TODO should only set this on success, but also want to prevent several simultanious things
-    // packageJsonLastUpdate[document.uri.fsPath] = new Date()
     updatePackageJson(document)
   }
-  // }
 }
 
 // TODO maybe have cooler handling of decorationtypes? Investigate!
@@ -132,8 +123,8 @@ const getTextEditorFromDocument = (document: vscode.TextDocument) => {
 }
 
 export const isPackageJson = (document: vscode.TextDocument) => {
-  // TODO match exact filename in a better way
-  return document.fileName.endsWith('package.json')
+  // Is checking both slashes necessary? Test on linux and mac.
+  return document.fileName.endsWith('\\package.json') || document.fileName.endsWith('/package.json')
 }
 
 // lineLimits can be supplied here to save some cpu
