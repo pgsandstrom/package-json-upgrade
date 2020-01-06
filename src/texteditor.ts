@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { decorateNotFound, getDecoratorForUpdate } from './decorations'
+import { decorateDiscreet, getDecoratorForUpdate } from './decorations'
 import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
 import { parseDependencyLine } from './packageJson'
 import { AsyncState } from './types'
@@ -29,17 +29,33 @@ export const clearCurrentDecorations = () => {
 }
 
 const updatePackageJson = async (document: vscode.TextDocument) => {
-  // TODO show loading?
-  await refreshPackageJsonData(document)
+  const dependencyLineLimits = getDependencyLineLimits(document)
 
   const textEditor = getTextEditorFromDocument(document)
   if (textEditor === undefined) {
     return
   }
 
-  clearCurrentDecorations()
+  if (currentDecorationTypes.length === 0) {
+    dependencyLineLimits.forEach(lineLimit => {
+      const lineText = document.lineAt(lineLimit.startLine).text
+      const range = new vscode.Range(
+        new vscode.Position(lineLimit.startLine, lineText.length),
+        new vscode.Position(lineLimit.startLine, lineText.length),
+      )
+      const notFoundDecoration = decorateDiscreet('Loading updates...')
+      textEditor.setDecorations(notFoundDecoration, [
+        {
+          range,
+        },
+      ])
+      currentDecorationTypes.push(notFoundDecoration)
+    })
+  }
 
-  const dependencyLineLimits = getDependencyLineLimits(document)
+  await refreshPackageJsonData(document)
+
+  clearCurrentDecorations()
 
   Array.from({ length: document.lineCount })
     .map((_, index) => index)
@@ -65,7 +81,7 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
         return
       }
       if (npmCache.asyncstate === AsyncState.Rejected) {
-        const notFoundDecoration = decorateNotFound('Dependency not found')
+        const notFoundDecoration = decorateDiscreet('Dependency not found')
         textEditor.setDecorations(notFoundDecoration, [
           {
             range,

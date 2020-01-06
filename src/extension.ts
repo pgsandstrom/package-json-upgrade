@@ -31,6 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   )
 
+  // TODO maybe have timeout on fetching dependencies instead? Now it looks weird when we delete rows
   let timeout: NodeJS.Timeout
   const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument(
     (e: vscode.TextDocumentChangeEvent) => {

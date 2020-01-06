@@ -65,7 +65,7 @@ const decoratePatchUpdate = (contentText: string) => {
 //   })
 // }
 
-export const decorateNotFound = (contentText: string) => {
+export const decorateDiscreet = (contentText: string) => {
   return decorateUpdatedPackage({
     overviewRulerColor: 'darkgray',
     light: { color: 'lightgray', after: { color: 'lightgray' } },
