@@ -1,5 +1,5 @@
 import fetch, { Response } from 'node-fetch'
-import { diff, gt, ReleaseType, valid } from 'semver'
+import { coerce, diff, gt, ReleaseType, valid } from 'semver'
 import * as vscode from 'vscode'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
 
@@ -45,8 +45,9 @@ export const getCachedChangelog = (dependencyName: string) => {
 
 const ACCEPTABLE_UPGRADES = ['major', 'minor', 'patch']
 
-export const getPossibleUpgrades = (npmData: NpmData, currentVersion: string) => {
-  if (valid(currentVersion) === null) {
+export const getPossibleUpgrades = (npmData: NpmData, rawCurrentVersion: string) => {
+  const currentVersion = coerce(rawCurrentVersion)
+  if (currentVersion === null) {
     // Currently invalid versions will be shown the same as latest due to this
     return {}
   }
