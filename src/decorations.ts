@@ -77,7 +77,6 @@ export const decorateDiscreet = (contentText: string) => {
 // "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
 export const getDecoratorForUpdate = (
   releaseType: ReleaseType | null,
-  currentVersion?: string,
   latestVersion?: string,
 ): vscode.TextEditorDecorationType | undefined => {
   switch (releaseType) {

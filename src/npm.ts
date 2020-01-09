@@ -14,9 +14,21 @@ interface PackageJsonDependency {
 
 interface NpmData {
   versions: {
-    [key in string]: { name: string; version: string }
+    [key in string]: VersionData
   }
   homepage?: string
+}
+
+interface VersionData {
+  name: string
+  version: string
+}
+
+interface DependencyUpdateInfo {
+  major?: VersionData
+  minor?: VersionData
+  patch?: VersionData
+  validVersion: boolean
 }
 
 interface NpmError {
@@ -45,11 +57,14 @@ export const getCachedChangelog = (dependencyName: string) => {
 
 const ACCEPTABLE_UPGRADES = ['major', 'minor', 'patch']
 
-export const getPossibleUpgrades = (npmData: NpmData, rawCurrentVersion: string) => {
+export const getPossibleUpgrades = (
+  npmData: NpmData,
+  rawCurrentVersion: string,
+): DependencyUpdateInfo => {
   const currentVersion = coerce(rawCurrentVersion)
   if (currentVersion === null) {
     // Currently invalid versions will be shown the same as latest due to this
-    return {}
+    return { validVersion: false }
   }
   const possibleUpgrades = Object.values(npmData.versions)
     .filter(version => valid(version.version))
@@ -76,6 +91,7 @@ export const getPossibleUpgrades = (npmData: NpmData, rawCurrentVersion: string)
     major: majorUpgrade,
     minor: minorUpgrade,
     patch: patchUpgrade,
+    validVersion: true,
   }
 }
 

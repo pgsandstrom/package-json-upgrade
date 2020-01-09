@@ -99,26 +99,16 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 
       let decorator
       if (possibleUpgrades.major !== undefined) {
-        // TODO add info about patch version
-        decorator = getDecoratorForUpdate(
-          'major',
-          dep.currentVersion,
-          possibleUpgrades.major.version,
-        )
+        // TODO add info about patch version?
+        decorator = getDecoratorForUpdate('major', possibleUpgrades.major.version)
       } else if (possibleUpgrades.minor !== undefined) {
-        decorator = getDecoratorForUpdate(
-          'minor',
-          dep.currentVersion,
-          possibleUpgrades.minor.version,
-        )
+        decorator = getDecoratorForUpdate('minor', possibleUpgrades.minor.version)
       } else if (possibleUpgrades.patch !== undefined) {
-        decorator = getDecoratorForUpdate(
-          'patch',
-          dep.currentVersion,
-          possibleUpgrades.patch.version,
-        )
+        decorator = getDecoratorForUpdate('patch', possibleUpgrades.patch.version)
+      } else if (possibleUpgrades.validVersion === false) {
+        decorator = decorateDiscreet('Failed to parse version')
       } else {
-        decorator = getDecoratorForUpdate(null, dep.currentVersion)
+        decorator = undefined
       }
 
       if (decorator !== undefined) {
