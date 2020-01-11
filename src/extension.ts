@@ -165,10 +165,14 @@ export class UpdateAction implements vscode.CodeActionProvider {
     document: vscode.TextDocument,
     range: vscode.Range,
     type: string,
-    currentVersion: string,
+    rawCurrentVersion: string,
     newVersion: string,
   ): vscode.CodeAction {
     const lineText = document.lineAt(range.start.line).text
+    const currentVersion =
+      rawCurrentVersion.startsWith('~') || rawCurrentVersion.startsWith('^')
+        ? rawCurrentVersion.substring(1)
+        : rawCurrentVersion
     const newLineText = replaceLastOccuranceOf(lineText, currentVersion, newVersion)
 
     const fix = new vscode.CodeAction(
