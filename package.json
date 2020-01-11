@@ -52,6 +52,7 @@
     "lint": "npm run lint:js && npm run lint:ts",
     "lint:js": "node ./node_modules/eslint/bin/eslint.js --ext .ts --ext .tsx --fix src",
     "lint:ts": "tslint --fix src/**/*.ts{,x}",
+    "package": "vsce package",
     "pre-commit": "lint-staged",
     "pre-push": "cross-env CI=true npm run test"
   },
