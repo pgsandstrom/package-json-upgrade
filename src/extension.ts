@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import { getConfig, reloadConfig } from './config'
 import { handleFile } from './texteditor'
 import { UpdateAction } from './updateAction'
+import { updateAll } from './updateAll'
 
 export const OPEN_URL_COMMAND = 'package-json-upgrade.open-url-command'
 
@@ -46,16 +47,27 @@ export function activate(context: vscode.ExtensionContext) {
   // vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {})
   // vscode.window.onDidChangeVisibleTextEditors((e: vscode.TextEditor[]) => {})
 
-  const disposable = vscode.commands.registerCommand('package-json-upgrade.toggle-show', () => {
-    showDecorations = !showDecorations
-    checkCurrentFiles(showDecorations)
-  })
+  const toggleShowCommand = vscode.commands.registerCommand(
+    'package-json-upgrade.toggle-show',
+    () => {
+      showDecorations = !showDecorations
+      checkCurrentFiles(showDecorations)
+    },
+  )
+
+  const updateAllCommand = vscode.commands.registerCommand(
+    'package-json-upgrade.update-all',
+    () => {
+      updateAll(vscode.window.activeTextEditor)
+    },
+  )
 
   context.subscriptions.push(
     onConfigChange,
     onDidChangeActiveTextEditor,
     onDidChangeTextDocument,
-    disposable,
+    toggleShowCommand,
+    updateAllCommand,
   )
 
   activateCodeActionStuff(context)

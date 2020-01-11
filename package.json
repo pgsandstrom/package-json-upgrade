@@ -35,6 +35,10 @@
       {
         "command": "package-json-upgrade.toggle-show",
         "title": "Toggle showing package.json available updates"
+      },
+      {
+        "command": "package-json-upgrade.update-all",
+        "title": "Update all dependencies in the current package.json file"
       }
     ]
   },

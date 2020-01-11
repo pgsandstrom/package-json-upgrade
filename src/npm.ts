@@ -1,5 +1,5 @@
 import fetch, { Response } from 'node-fetch'
-import { coerce, diff, gt, ReleaseType, valid } from 'semver'
+import { coerce, diff, gt, prerelease, ReleaseType, valid } from 'semver'
 import * as vscode from 'vscode'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
 
@@ -56,6 +56,17 @@ export const getCachedChangelog = (dependencyName: string) => {
 // export type ReleaseType = "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
 
 const ACCEPTABLE_UPGRADES = ['major', 'minor', 'patch']
+
+export const getLatestVersion = (npmData: NpmData) => {
+  const versions = Object.values<VersionData>(npmData.versions)
+  if (versions.length === 0) {
+    return undefined
+  } else {
+    return versions
+      .filter(item => prerelease(item.version) === null)
+      .reduce((a, b) => (gt(a.version, b.version) ? a : b))
+  }
+}
 
 export const getPossibleUpgrades = (
   npmData: NpmData,
