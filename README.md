@@ -14,6 +14,8 @@ These quick actions can update the dependency, but also links to the homepage an
 
 ![feature X](images/preview2.png)
 
+The extension also adds a command to update all dependencies in the package.json file.
+
 ## Reason to exist
 
 There exists good alternatives to this extension:
