@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { getCachedNpmData, getLatestVersion } from './npm'
 import { parseDependencyLine } from './packageJson'
-import { getDependencyLineLimits, isInDependency, isPackageJson } from './texteditor'
+import { getDependencyLineLimits, getLineLimitForLine, isPackageJson } from './texteditor'
 import { replaceLastOccuranceOf } from './util/util'
 
 export const updateAll = (textEditor?: vscode.TextEditor) => {
@@ -16,7 +16,8 @@ export const updateAll = (textEditor?: vscode.TextEditor) => {
     const edits = Array.from({ length: document.lineCount })
       .map((_, index) => index)
       .filter(index => {
-        return isInDependency(document, index, dependencyLineLimits)
+        const lineLimit = getLineLimitForLine(document, index, dependencyLineLimits)
+        return lineLimit !== undefined && lineLimit.isPeerDependency === false
       })
       .map(index => {
         const lineText = document.lineAt(index).text

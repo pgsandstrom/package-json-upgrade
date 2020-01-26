@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { OPEN_URL_COMMAND } from './extension'
 import { getCachedChangelog, getCachedNpmData, getPossibleUpgrades } from './npm'
 import { parseDependencyLine } from './packageJson'
-import { isInDependency, isPackageJson } from './texteditor'
+import { getLineLimitForLine, isPackageJson } from './texteditor'
 import { replaceLastOccuranceOf } from './util/util'
 
 export class UpdateAction implements vscode.CodeActionProvider {
@@ -12,7 +12,9 @@ export class UpdateAction implements vscode.CodeActionProvider {
     document: vscode.TextDocument,
     range: vscode.Range,
   ): vscode.CodeAction[] | undefined {
-    if (!isPackageJson(document) || !isInDependency(document, range.start.line)) {
+    const lineLimit = getLineLimitForLine(document, range.start.line)
+
+    if (isPackageJson(document) === false || lineLimit === undefined) {
       return
     }
 
@@ -33,40 +35,41 @@ export class UpdateAction implements vscode.CodeActionProvider {
     const wholeLineRange = new vscode.Range(range.start.line, 0, range.start.line, lineText.length)
     const actions = []
 
-    const possibleUpgrades = getPossibleUpgrades(npmCache.item.npmData, dep.currentVersion)
-
-    if (possibleUpgrades.major !== undefined) {
-      actions.push(
-        this.createFix(
-          document,
-          wholeLineRange,
-          'major',
-          dep.currentVersion,
-          possibleUpgrades.major.version,
-        ),
-      )
-    }
-    if (possibleUpgrades.minor !== undefined) {
-      actions.push(
-        this.createFix(
-          document,
-          wholeLineRange,
-          'minor',
-          dep.currentVersion,
-          possibleUpgrades.minor.version,
-        ),
-      )
-    }
-    if (possibleUpgrades.patch !== undefined) {
-      actions.push(
-        this.createFix(
-          document,
-          wholeLineRange,
-          'patch',
-          dep.currentVersion,
-          possibleUpgrades.patch.version,
-        ),
-      )
+    if (lineLimit.isPeerDependency === false) {
+      const possibleUpgrades = getPossibleUpgrades(npmCache.item.npmData, dep.currentVersion)
+      if (possibleUpgrades.major !== undefined) {
+        actions.push(
+          this.createFix(
+            document,
+            wholeLineRange,
+            'major',
+            dep.currentVersion,
+            possibleUpgrades.major.version,
+          ),
+        )
+      }
+      if (possibleUpgrades.minor !== undefined) {
+        actions.push(
+          this.createFix(
+            document,
+            wholeLineRange,
+            'minor',
+            dep.currentVersion,
+            possibleUpgrades.minor.version,
+          ),
+        )
+      }
+      if (possibleUpgrades.patch !== undefined) {
+        actions.push(
+          this.createFix(
+            document,
+            wholeLineRange,
+            'patch',
+            dep.currentVersion,
+            possibleUpgrades.patch.version,
+          ),
+        )
+      }
     }
 
     if (npmCache.item.npmData.homepage !== undefined) {
