@@ -28,6 +28,21 @@
           "type": "boolean",
           "default": true,
           "description": "Available updates will be shown directly when a package.json is opened. Otherwise, this must be toggled with a command."
+        },
+        "package-json-upgrade.majorUpgradeColorOverwrite": {
+          "type": "string",
+          "default": "",
+          "description": "Specify a color (like #FF0000) to override the color of major upgrades. Leave empty for default color."
+        },
+        "package-json-upgrade.minorUpgradeColorOverwrite": {
+          "type": "string",
+          "default": "",
+          "description": "Specify a color (like #FFFF00) to override the color of minor upgrades. Leave empty for default color."
+        },
+        "package-json-upgrade.patchUpgradeColorOverwrite": {
+          "type": "string",
+          "default": "",
+          "description": "Specify a color (like #00FF00) to override the color of patch upgrades Leave empty for default color."
         }
       }
     },

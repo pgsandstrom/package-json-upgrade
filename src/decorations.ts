@@ -1,6 +1,7 @@
 import { ReleaseType } from 'semver'
 import { OverviewRulerLane, ThemableDecorationRenderOptions, window } from 'vscode'
 import * as vscode from 'vscode'
+import { getConfig } from './config'
 
 const decorateUpdatedPackage = ({
   overviewRulerColor,
@@ -29,30 +30,44 @@ const decorateUpdatedPackage = ({
 // TODO make colors configurable
 
 const decorateMajorUpdate = (contentText: string) => {
+  const settingsColor = getConfig().majorUpgradeColorOverwrite
   return decorateUpdatedPackage({
     overviewRulerColor: 'red',
-    light: { after: { color: '#C74632' } },
-    dark: { after: { color: '#E03419' } },
+    light: { after: { color: getCorrectColor(settingsColor, '#C74632') } },
+    dark: { after: { color: getCorrectColor(settingsColor, '#E03419') } },
     contentText,
   })
 }
 
 const decorateMinorUpdate = (contentText: string) => {
+  const settingsColor = getConfig().minorUpgradeColorOverwrite
   return decorateUpdatedPackage({
     overviewRulerColor: 'yellow',
-    light: { after: { color: '#abab00' } },
-    dark: { after: { color: '#F8FF99' } },
+    light: { after: { color: getCorrectColor(settingsColor, '#ABAB00') } },
+    dark: { after: { color: getCorrectColor(settingsColor, '#F8FF99') } },
     contentText,
   })
 }
 
 const decoratePatchUpdate = (contentText: string) => {
+  const settingsColor = getConfig().patchUpgradeColorOverwrite
   return decorateUpdatedPackage({
     overviewRulerColor: 'green',
-    light: { after: { color: '#009113' } },
-    dark: { after: { color: '#19e034' } },
+    light: { after: { color: getCorrectColor(settingsColor, '#009113') } },
+    dark: { after: { color: getCorrectColor(settingsColor, '#19E034') } },
     contentText,
   })
+}
+
+const getCorrectColor = (settingsColor: string, defaultColor: string): string => {
+  if (settingsColor === '') {
+    return defaultColor
+  }
+  if (settingsColor.startsWith('#')) {
+    return settingsColor
+  } else {
+    return `#${settingsColor}`
+  }
 }
 
 // currently we just show nothing when no update is available
