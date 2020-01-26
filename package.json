@@ -2,7 +2,7 @@
   "name": "package-json-upgrade",
   "displayName": "Package Json Upgrade",
   "description": "Shows available updates in package.json files. Offers quick fix command to update them and to show the changelog.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "codeandstuff",
   "engines": {
     "vscode": "1.41.1"
