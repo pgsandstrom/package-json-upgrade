@@ -5,7 +5,7 @@
   "version": "1.0.3",
   "publisher": "codeandstuff",
   "engines": {
-    "vscode": "1.41.1"
+    "vscode": "^1.41.1"
   },
   "categories": [
     "Programming Languages",
