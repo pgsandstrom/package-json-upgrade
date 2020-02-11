@@ -110,7 +110,9 @@
     ]
   },
   "dependencies": {
+    "libnpmconfig": "1.2.1",
     "node-fetch": "2.6.0",
-    "semver": "7.1.2"
+    "npm-registry-fetch": "6.0.2",
+    "semver": "7.1.3"
   }
 }

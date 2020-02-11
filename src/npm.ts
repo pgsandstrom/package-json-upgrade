@@ -1,4 +1,6 @@
-import fetch, { Response } from 'node-fetch'
+import * as config from 'libnpmconfig'
+import fetch from 'node-fetch'
+import * as npmRegistryFetch from 'npm-registry-fetch'
 import { coerce, diff, gt, prerelease, ReleaseType, valid } from 'semver'
 import * as vscode from 'vscode'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
@@ -29,10 +31,6 @@ interface DependencyUpdateInfo {
   minor?: VersionData
   patch?: VersionData
   validVersion: boolean
-}
-
-interface NpmError {
-  error: string
 }
 
 interface CacheItem {
@@ -140,6 +138,11 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
   }
 }
 
+const conf = config.read({
+  // here we can override config
+  // registry: 'https://registry.npmjs.org',
+})
+
 const fetchNpmData = async (dependencyName: string) => {
   if (
     npmCache[dependencyName] !== undefined &&
@@ -151,10 +154,8 @@ const fetchNpmData = async (dependencyName: string) => {
   npmCache[dependencyName] = {
     asyncstate: AsyncState.InProgress,
   }
-  const response: Response = await fetch(`https://registry.npmjs.org/${dependencyName}`)
-  const json = (await response.json()) as NpmData | NpmError
-
-  if (isNpmData(json)) {
+  try {
+    const json = (await npmRegistryFetch.json(dependencyName, conf)) as NpmData
     if (changelogCache[dependencyName] === undefined) {
       findChangelog(dependencyName, json)
     }
@@ -165,17 +166,12 @@ const fetchNpmData = async (dependencyName: string) => {
         npmData: json,
       },
     }
-  } else {
-    console.log(`failed to load dependency ${dependencyName}`)
+  } catch (e) {
+    console.debug(`failed to load dependency ${dependencyName}. Status code: ${e?.statusCode}`)
     npmCache[dependencyName] = {
       asyncstate: AsyncState.Rejected,
     }
   }
-}
-
-const isNpmData = (object: NpmData | NpmError): object is NpmData => {
-  // tslint:disable-next-line: strict-type-predicates
-  return (object as NpmData).versions !== undefined
 }
 
 const findChangelog = async (dependencyName: string, npmData: NpmData) => {
