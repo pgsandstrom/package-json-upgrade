@@ -72,9 +72,12 @@ export const getPossibleUpgrades = (
   npmData: NpmData,
   rawCurrentVersion: string,
 ): DependencyUpdateInfo => {
+  if (rawCurrentVersion === '*' || rawCurrentVersion === 'x') {
+    return { validVersion: true }
+  }
+
   const currentVersion = coerce(rawCurrentVersion)
   if (currentVersion === null) {
-    // Currently invalid versions will be shown the same as latest due to this
     return { validVersion: false }
   }
   const possibleUpgrades = Object.values(npmData.versions)

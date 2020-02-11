@@ -2,7 +2,11 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
-## 1.0.3
+## 1.0.5
+
+- Avoid error message when version is '\*' or 'x'
+
+## 1.0.4
 
 - Fix compatibility issue with v1.42.0 of vscode
 
