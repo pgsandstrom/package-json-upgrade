@@ -140,8 +140,11 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
 
 const conf = config.read({
   // here we can override config
+  // currently disable cache since it seems to be buggy with npm-registry-fetch
+  cache: null,
   // registry: 'https://registry.npmjs.org',
 })
+// console.log(JSON.stringify(conf))
 
 const fetchNpmData = async (dependencyName: string) => {
   if (
@@ -167,7 +170,7 @@ const fetchNpmData = async (dependencyName: string) => {
       },
     }
   } catch (e) {
-    console.debug(`failed to load dependency ${dependencyName}. Status code: ${e?.statusCode}`)
+    console.debug(`failed to load dependency ${dependencyName}. Error: ${JSON.stringify(e)}`)
     npmCache[dependencyName] = {
       asyncstate: AsyncState.Rejected,
     }
