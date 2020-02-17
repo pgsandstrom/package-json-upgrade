@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { getConfig, reloadConfig } from './config'
+import { cleanNpmCache } from './npm'
 import { handleFile } from './texteditor'
 import { UpdateAction } from './updateAction'
 import { updateAll } from './updateAll'
@@ -14,6 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
   const onConfigChange = vscode.workspace.onDidChangeConfiguration(e => {
     if (e.affectsConfiguration('package-json-upgrade')) {
       reloadConfig()
+      cleanNpmCache()
       checkCurrentFiles(showDecorations)
     }
   })

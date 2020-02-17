@@ -1,8 +1,8 @@
-import * as config from 'libnpmconfig'
 import fetch from 'node-fetch'
 import * as npmRegistryFetch from 'npm-registry-fetch'
 import { coerce, diff, gt, prerelease, ReleaseType, valid } from 'semver'
 import * as vscode from 'vscode'
+import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
 
 interface PackageJson {
@@ -38,10 +38,15 @@ interface CacheItem {
   npmData: NpmData
 }
 
-const npmCache: Dict<string, Loader<CacheItem>> = {}
+let npmCache: Dict<string, Loader<CacheItem>> = {}
 
 // dependencyname pointing to a potential changelog
-const changelogCache: Dict<string, Loader<string>> = {}
+let changelogCache: Dict<string, Loader<string>> = {}
+
+export const cleanNpmCache = () => {
+  npmCache = {}
+  changelogCache = {}
+}
 
 export const getCachedNpmData = (dependencyName: string) => {
   return npmCache[dependencyName]
@@ -138,14 +143,6 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
   }
 }
 
-const conf = config.read({
-  // here we can override config
-  // currently disable cache since it seems to be buggy with npm-registry-fetch
-  cache: null,
-  // registry: 'https://registry.npmjs.org',
-})
-// console.log(JSON.stringify(conf))
-
 const fetchNpmData = async (dependencyName: string) => {
   if (
     npmCache[dependencyName] !== undefined &&
@@ -158,6 +155,7 @@ const fetchNpmData = async (dependencyName: string) => {
     asyncstate: AsyncState.InProgress,
   }
   try {
+    const conf = getNpmConfig()
     const json = (await npmRegistryFetch.json(dependencyName, conf)) as NpmData
     if (changelogCache[dependencyName] === undefined) {
       findChangelog(dependencyName, json)
