@@ -5,6 +5,7 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 ## 1.0.5
 
 - Avoid error message when version is '\*' or 'x'
+- Use the local npm configuration for all npm commands
 
 ## 1.0.4
 

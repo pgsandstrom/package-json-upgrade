@@ -16,6 +16,8 @@ These quick actions can update the dependency, but also links to the homepage an
 
 The extension also adds a command to update all dependencies in the package.json file.
 
+The extension will pick up your npm configurations and use them, so it works with proxies and private npm registries.
+
 ## Reason to exist
 
 There exists good alternatives to this extension:
