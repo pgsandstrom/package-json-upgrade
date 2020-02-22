@@ -27,8 +27,6 @@ const decorateUpdatedPackage = ({
   })
 }
 
-// TODO make colors configurable
-
 const decorateMajorUpdate = (contentText: string) => {
   const settingsColor = getConfig().majorUpgradeColorOverwrite
   return decorateUpdatedPackage({
