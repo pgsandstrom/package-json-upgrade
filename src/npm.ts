@@ -155,7 +155,8 @@ const fetchNpmData = async (dependencyName: string) => {
     asyncstate: AsyncState.InProgress,
   }
   try {
-    const conf = getNpmConfig()
+    const conf = { ...getNpmConfig(), spec: dependencyName }
+
     const json = (await npmRegistryFetch.json(dependencyName, conf)) as NpmData
     if (changelogCache[dependencyName] === undefined) {
       findChangelog(dependencyName, json)
