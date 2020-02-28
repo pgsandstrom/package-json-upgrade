@@ -57,6 +57,16 @@ const decoratePatchUpdate = (contentText: string) => {
   })
 }
 
+const decoratePrereleaseUpdate = (contentText: string) => {
+  const settingsColor = getConfig().prereleaseUpgradeColorOverwrite
+  return decorateUpdatedPackage({
+    overviewRulerColor: 'purple',
+    light: { after: { color: getCorrectColor(settingsColor, '#C433FF') } },
+    dark: { after: { color: getCorrectColor(settingsColor, '#EC33FF') } },
+    contentText,
+  })
+}
+
 const getCorrectColor = (settingsColor: string, defaultColor: string): string => {
   if (settingsColor === '') {
     return defaultColor
@@ -67,16 +77,6 @@ const getCorrectColor = (settingsColor: string, defaultColor: string): string =>
     return `#${settingsColor}`
   }
 }
-
-// currently we just show nothing when no update is available
-// const decorateNonUpdate = (contentText: string) => {
-//   return decorateUpdatedPackage({
-//     overviewRulerColor: 'darkgray',
-//     light: { color: 'lightgray', after: { color: 'lightgray' } },
-//     dark: { color: 'darkgray', after: { color: 'darkgray' } },
-//     contentText,
-//   })
-// }
 
 export const decorateDiscreet = (contentText: string) => {
   return decorateUpdatedPackage({
@@ -101,11 +101,11 @@ export const getDecoratorForUpdate = (
       return decorateMinorUpdate(`\t\tUpdate available: ${latestVersion}`)
     case 'patch':
     case 'prepatch':
-    case 'prerelease':
-      // TODO wtf is these version releasetypes
       return decoratePatchUpdate(`\t\tUpdate available: ${latestVersion}`)
+    case 'prerelease':
+      return decoratePrereleaseUpdate(`\t\tUpdate available: ${latestVersion}`)
     case null:
+    default:
       return undefined
-    // return decorateNonUpdate('Latest version used')
   }
 }

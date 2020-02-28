@@ -6,6 +6,7 @@ interface Config {
   majorUpgradeColorOverwrite: string
   minorUpgradeColorOverwrite: string
   patchUpgradeColorOverwrite: string
+  prereleaseUpgradeColorOverwrite: string
 }
 
 let currentConfig: Config | undefined
@@ -25,6 +26,7 @@ export const reloadConfig = () => {
     majorUpgradeColorOverwrite: config.get<string>('majorUpgradeColorOverwrite') ?? '',
     minorUpgradeColorOverwrite: config.get<string>('minorUpgradeColorOverwrite') ?? '',
     patchUpgradeColorOverwrite: config.get<string>('patchUpgradeColorOverwrite') ?? '',
+    prereleaseUpgradeColorOverwrite: config.get<string>('prereleaseUpgradeColorOverwrite') ?? '',
   }
 
   currentConfig = newConfig

@@ -70,6 +70,17 @@ export class UpdateAction implements vscode.CodeActionProvider {
           ),
         )
       }
+      if (possibleUpgrades.prerelease !== undefined) {
+        actions.push(
+          this.createFix(
+            document,
+            wholeLineRange,
+            'prerelease',
+            dep.currentVersion,
+            possibleUpgrades.prerelease.version,
+          ),
+        )
+      }
     }
 
     if (npmCache.item.npmData.homepage !== undefined) {

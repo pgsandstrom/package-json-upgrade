@@ -47,7 +47,12 @@
         "package-json-upgrade.patchUpgradeColorOverwrite": {
           "type": "string",
           "default": "",
-          "description": "Specify a color (like #00FF00) to override the color of patch upgrades Leave empty for default color."
+          "description": "Specify a color (like #00FF00) to override the color of patch upgrades. Leave empty for default color."
+        },
+        "package-json-upgrade.prereleaseUpgradeColorOverwrite": {
+          "type": "string",
+          "default": "",
+          "description": "Specify a color (like #00FF00) to override the color of prerelease upgrades. Leave empty for default color."
         }
       }
     },

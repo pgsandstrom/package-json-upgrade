@@ -107,6 +107,8 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
         decorator = getDecoratorForUpdate('minor', possibleUpgrades.minor.version)
       } else if (possibleUpgrades.patch !== undefined) {
         decorator = getDecoratorForUpdate('patch', possibleUpgrades.patch.version)
+      } else if (possibleUpgrades.prerelease !== undefined) {
+        decorator = getDecoratorForUpdate('prerelease', possibleUpgrades.prerelease.version)
       } else if (possibleUpgrades.validVersion === false) {
         decorator = decorateDiscreet('Failed to parse version')
       } else {

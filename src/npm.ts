@@ -30,6 +30,7 @@ interface DependencyUpdateInfo {
   major?: VersionData
   minor?: VersionData
   patch?: VersionData
+  prerelease?: VersionData
   validVersion: boolean
 }
 
@@ -58,6 +59,7 @@ export const getCachedChangelog = (dependencyName: string) => {
 
 // export type ReleaseType = "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
 
+// By not including 'premajor', 'preminor', 'prepatch' we make sure prereleases are only offered prerelease-upgrades
 const ACCEPTABLE_UPGRADES = ['major', 'minor', 'patch']
 
 export const getLatestVersion = (npmData: NpmData) => {
@@ -71,6 +73,19 @@ export const getLatestVersion = (npmData: NpmData) => {
   }
 }
 
+export const isVersionPrerelease = (version: string) => {
+  // regex gotten from https://github.com/semver/semver/blob/master/semver.md
+  const result: RegExpExecArray | null = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/.exec(
+    version,
+  )
+  if (result === null) {
+    return false
+  }
+  // tslint:disable-next-line: strict-type-predicates
+  return result[4] != null
+}
+
+// TODO this could use some tests
 export const getPossibleUpgrades = (
   npmData: NpmData,
   rawCurrentVersion: string,
@@ -79,16 +94,25 @@ export const getPossibleUpgrades = (
     return { validVersion: true }
   }
 
-  const currentVersion = coerce(rawCurrentVersion)
+  const currentVersionIsPrerelease = isVersionPrerelease(rawCurrentVersion)
+
+  const currentVersion = currentVersionIsPrerelease ? rawCurrentVersion : coerce(rawCurrentVersion)
   if (currentVersion === null) {
     return { validVersion: false }
   }
+
   const possibleUpgrades = Object.values(npmData.versions)
     .filter(version => valid(version.version))
     .filter(version => gt(version.version, currentVersion))
     .filter(version => {
       const upgrade = diff(version.version, currentVersion)
-      return upgrade !== null && ACCEPTABLE_UPGRADES.includes(upgrade)
+      if (upgrade !== null && currentVersionIsPrerelease && upgrade === 'prerelease') {
+        return true
+      }
+      if (upgrade !== null && ACCEPTABLE_UPGRADES.includes(upgrade)) {
+        return true
+      }
+      return false
     })
 
   const helper = (releaseType: ReleaseType) => {
@@ -103,11 +127,12 @@ export const getPossibleUpgrades = (
   const majorUpgrade = helper('major')
   const minorUpgrade = helper('minor')
   const patchUpgrade = helper('patch')
-
+  const prereleaseUpgrade = currentVersionIsPrerelease ? helper('prerelease') : undefined
   return {
     major: majorUpgrade,
     minor: minorUpgrade,
     patch: patchUpgrade,
+    prerelease: prereleaseUpgrade,
     validVersion: true,
   }
 }
