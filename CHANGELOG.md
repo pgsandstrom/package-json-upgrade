@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 1.1.0
+
+- Add support for prereleases
+
 ## 1.0.5
 
 - Avoid error message when version is '\*' or 'x'

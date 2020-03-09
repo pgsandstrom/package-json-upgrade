@@ -14,9 +14,9 @@ These quick actions can update the dependency, but also links to the homepage an
 
 ![feature X](images/preview2.png)
 
-The extension also adds a command to update all dependencies in the package.json file.
+The extension will pick up your npm configurations and use them, so it works with proxies, private npm registries and scopes.
 
-The extension will pick up your npm configurations and use them, so it works with proxies and private npm registries.
+The extension also adds a command to update all dependencies in the package.json file.
 
 ## Reason to exist
 
@@ -26,7 +26,7 @@ There exists good alternatives to this extension:
 
 [Better package json](https://github.com/ldd/better-package-json)
 
-I didnt like that Version Lens interface and missed quick access to the changelog. But Version Lens was the only extension that made it simple to update specific dependencies. This extension aims to solve these issues.
+I didnt like that Version Lens interface and missed quick access to the changelog. But Version Lens was the only extension that made it simple to update specific dependencies. This extension aims to solve these issues, and at the same time offering perfect npm integration and version parsing.
 
 ## Extension Settings
 
