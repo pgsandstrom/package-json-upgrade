@@ -1,6 +1,10 @@
 import { ReleaseType } from 'semver'
-import { OverviewRulerLane, ThemableDecorationRenderOptions, window } from 'vscode'
-import * as vscode from 'vscode'
+import {
+  OverviewRulerLane,
+  TextEditorDecorationType,
+  ThemableDecorationRenderOptions,
+  window,
+} from 'vscode'
 import { getConfig } from './config'
 
 const decorateUpdatedPackage = ({
@@ -91,7 +95,7 @@ export const decorateDiscreet = (contentText: string) => {
 export const getDecoratorForUpdate = (
   releaseType: ReleaseType | null,
   latestVersion?: string,
-): vscode.TextEditorDecorationType | undefined => {
+): TextEditorDecorationType | undefined => {
   switch (releaseType) {
     case 'major':
     case 'premajor':
