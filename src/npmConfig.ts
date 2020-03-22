@@ -9,7 +9,7 @@ export const getNpmConfig = (): object => {
   if (skippedNpmConfig === undefined || skipNpmConfig !== skippedNpmConfig) {
     if (getConfig().skipNpmConfig) {
       conf = {}
-      console.log('Defaulting to empty config')
+      console.debug('Defaulting to empty config')
     } else {
       conf = config
         .read({
@@ -19,7 +19,7 @@ export const getNpmConfig = (): object => {
           // registry: 'https://registry.npmjs.org',
         })
         .toJSON()
-      console.log(`read config from npm: ${JSON.stringify(conf)}`)
+      // console.debug(`read config from npm: ${JSON.stringify(conf)}`)
     }
     skippedNpmConfig = getConfig().skipNpmConfig
   }

@@ -179,9 +179,9 @@ const fetchNpmData = async (dependencyName: string) => {
   npmCache[dependencyName] = {
     asyncstate: AsyncState.InProgress,
   }
-  try {
-    const conf = { ...getNpmConfig(), spec: dependencyName }
 
+  const conf = { ...getNpmConfig(), spec: dependencyName }
+  try {
     const json = (await npmRegistryFetch.json(dependencyName, conf)) as NpmData
     if (changelogCache[dependencyName] === undefined) {
       findChangelog(dependencyName, json)
@@ -194,7 +194,12 @@ const fetchNpmData = async (dependencyName: string) => {
       },
     }
   } catch (e) {
-    console.debug(`failed to load dependency ${dependencyName}. Error: ${JSON.stringify(e)}`)
+    console.error(`failed to load dependency ${dependencyName}`)
+    console.error(`status code: ${e?.statusCode}`)
+    console.error(`uri: ${e?.uri}`)
+    console.error(`message: ${e?.message}`)
+    console.error(`config used: ${JSON.stringify(conf, null, 2)}`)
+    console.error(`Entire error: ${JSON.stringify(e, null, 2)}`)
     npmCache[dependencyName] = {
       asyncstate: AsyncState.Rejected,
     }
