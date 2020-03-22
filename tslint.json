@@ -1,6 +1,5 @@
 {
   "extends": ["tslint:latest"],
-  "rulesDirectory": ["./src/styles/tslint/"],
   "rules": {
     "array-type": false,
     "no-console": false,
@@ -11,7 +10,6 @@
     "no-empty": false,
     "no-empty-interface": false,
     "no-implicit-dependencies": false,
-    "no-implicit-enum-values": true,
     "no-invalid-this": true,
     "no-unused-variable": false,
     "no-object-literal-type-assertion": false,
