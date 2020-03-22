@@ -68,7 +68,7 @@ export const getLatestVersion = (npmData: NpmData) => {
     return undefined
   } else {
     return versions
-      .filter(item => prerelease(item.version) === null)
+      .filter((item) => prerelease(item.version) === null)
       .reduce((a, b) => (gt(a.version, b.version) ? a : b))
   }
 }
@@ -102,9 +102,9 @@ export const getPossibleUpgrades = (
   }
 
   const possibleUpgrades = Object.values(npmData.versions)
-    .filter(version => valid(version.version))
-    .filter(version => gt(version.version, currentVersion))
-    .filter(version => {
+    .filter((version) => valid(version.version))
+    .filter((version) => gt(version.version, currentVersion))
+    .filter((version) => {
       const upgrade = diff(version.version, currentVersion)
       if (upgrade !== null && currentVersionIsPrerelease && upgrade === 'prerelease') {
         return true
@@ -117,7 +117,7 @@ export const getPossibleUpgrades = (
 
   const helper = (releaseType: ReleaseType) => {
     const matchingUpgradeTypes = possibleUpgrades.filter(
-      version => diff(version.version, currentVersion) === releaseType,
+      (version) => diff(version.version, currentVersion) === releaseType,
     )
     return matchingUpgradeTypes.length === 0
       ? undefined

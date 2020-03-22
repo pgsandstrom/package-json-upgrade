@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   let showDecorations = getConfig().showUpdatesAtStart
 
-  const onConfigChange = vscode.workspace.onDidChangeConfiguration(e => {
+  const onConfigChange = vscode.workspace.onDidChangeConfiguration((e) => {
     if (e.affectsConfiguration('package-json-upgrade')) {
       reloadConfig()
       cleanNpmCache()
@@ -72,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 const checkCurrentFiles = (showDecorations: boolean) => {
-  vscode.window.visibleTextEditors.forEach(textEditor => {
+  vscode.window.visibleTextEditors.forEach((textEditor) => {
     handleFile(textEditor.document, showDecorations)
   })
 }
@@ -85,7 +85,7 @@ const activateCodeActionStuff = (context: vscode.ExtensionContext) => {
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(OPEN_URL_COMMAND, url => {
+    vscode.commands.registerCommand(OPEN_URL_COMMAND, (url) => {
       vscode.env.openExternal(vscode.Uri.parse(url))
     }),
   )

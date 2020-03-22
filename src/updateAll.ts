@@ -15,11 +15,11 @@ export const updateAll = (textEditor?: vscode.TextEditor) => {
     const dependencyLineLimits = getDependencyLineLimits(document)
     const edits = Array.from({ length: document.lineCount })
       .map((_, index) => index)
-      .filter(index => {
+      .filter((index) => {
         const lineLimit = getLineLimitForLine(document, index, dependencyLineLimits)
         return lineLimit !== undefined && lineLimit.isPeerDependency === false
       })
-      .map(index => {
+      .map((index) => {
         const lineText = document.lineAt(index).text
         const wholeLineRange = new vscode.Range(index, 0, index, lineText.length)
         const dep = parseDependencyLine(lineText)
@@ -46,7 +46,7 @@ export const updateAll = (textEditor?: vscode.TextEditor) => {
       })
 
     textEditor.edit((editBuilder: vscode.TextEditorEdit) => {
-      edits.forEach(edit => {
+      edits.forEach((edit) => {
         if (edit !== undefined) {
           editBuilder.replace(edit.range, edit.text)
         }

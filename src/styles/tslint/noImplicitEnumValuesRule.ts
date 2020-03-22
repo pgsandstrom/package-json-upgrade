@@ -96,7 +96,7 @@ function walk(ctx: Lint.WalkContext<void>) {
     }
   }
   for (const track of enums) {
-    if (Array.from(track.members.values()).every(value => value.stringValued === true)) {
+    if (Array.from(track.members.values()).every((value) => value.stringValued === true)) {
       continue
     }
     for (const declaration of track.declarations) {

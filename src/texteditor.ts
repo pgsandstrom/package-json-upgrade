@@ -25,7 +25,7 @@ export const handleFile = (document: vscode.TextDocument, showDecorations: boole
 let currentDecorationTypes: vscode.TextEditorDecorationType[] = []
 
 export const clearCurrentDecorations = () => {
-  currentDecorationTypes.forEach(d => d.dispose())
+  currentDecorationTypes.forEach((d) => d.dispose())
   currentDecorationTypes = []
 }
 
@@ -38,7 +38,7 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
   }
 
   if (currentDecorationTypes.length === 0) {
-    dependencyLineLimits.forEach(lineLimit => {
+    dependencyLineLimits.forEach((lineLimit) => {
       const lineText = document.lineAt(lineLimit.startLine).text
       const range = new vscode.Range(
         new vscode.Position(lineLimit.startLine, lineText.length),
@@ -60,11 +60,11 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 
   Array.from({ length: document.lineCount })
     .map((_, index) => index)
-    .filter(index => {
+    .filter((index) => {
       const lineLimit = getLineLimitForLine(document, index, dependencyLineLimits)
       return lineLimit !== undefined && lineLimit.isPeerDependency === false
     })
-    .forEach(index => {
+    .forEach((index) => {
       const lineText = document.lineAt(index).text
 
       const dep = parseDependencyLine(lineText)
@@ -127,7 +127,7 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 }
 
 const getTextEditorFromDocument = (document: vscode.TextDocument) => {
-  return vscode.window.visibleTextEditors.find(textEditor => {
+  return vscode.window.visibleTextEditors.find((textEditor) => {
     return textEditor.document === document
   })
 }
@@ -147,7 +147,7 @@ export const getLineLimitForLine = (
     lineLimits = getDependencyLineLimits(document)
   }
 
-  return lineLimits.find(limit => limit.startLine < line && limit.endLine > line)
+  return lineLimits.find((limit) => limit.startLine < line && limit.endLine > line)
 }
 
 export const getDependencyLineLimits = (document: vscode.TextDocument) => {
@@ -175,7 +175,7 @@ const getFlatTagStartEnd = (
   // TODO this whole limit detection is nooby. How to do it smarter? Is there a cool library for parsing json and finding lines in it?
   const array = Array.from({ length: document.lineCount }).map((_, index) => index)
 
-  const startLine = array.find(i => {
+  const startLine = array.find((i) => {
     const lineText = document.lineAt(i).text
     return regexp.test(lineText)
   })
@@ -188,7 +188,7 @@ const getFlatTagStartEnd = (
     return undefined
   }
 
-  const endLine = array.slice(startLine + 1).find(i => {
+  const endLine = array.slice(startLine + 1).find((i) => {
     return document.lineAt(i).text.includes('}')
   })
   if (endLine === undefined) {
