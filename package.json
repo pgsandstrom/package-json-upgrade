@@ -116,12 +116,13 @@
     }
   },
   "lint-staged": {
-    "*.{json,md,ts,tsx,css,scss}": [
+    "*.{json,md,css,scss}": [
       "prettier --write"
     ],
     "*.{ts,tsx}": [
-      "node ./node_modules/eslint/bin/eslint.js --ext .ts --ext .tsx --fix",
-      "tslint --fix"
+      "node ./node_modules/eslint/bin/eslint.js --fix",
+      "tslint --fix",
+      "prettier --write"
     ]
   },
   "dependencies": {
