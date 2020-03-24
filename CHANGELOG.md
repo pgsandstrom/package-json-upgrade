@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 1.1.1
+
+- Respect the per-project config file (/path/to/my/project/.npmrc)
+
 ## 1.1.0
 
 - Add support for prereleases
