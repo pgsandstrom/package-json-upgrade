@@ -82,7 +82,8 @@
     "lint:ts": "tslint --fix src/**/*.ts{,x}",
     "package": "vsce package",
     "pre-commit": "lint-staged",
-    "pre-push": "cross-env CI=true npm run test"
+    "pre-push": "tsc --noEmit",
+    "// TODO": "Fix a cool way to run the tests on pre-push"
   },
   "devDependencies": {
     "@types/glob": "7.1.1",
