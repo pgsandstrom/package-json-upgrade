@@ -155,7 +155,7 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
         cache.item === undefined ||
         cache.item.date.getTime() < cacheCutoff.getTime()
       ) {
-        return fetchNpmData(dependencyName)
+        return fetchNpmData(dependencyName, packageJson.uri.fsPath)
       } else {
         return Promise.resolve()
       }
@@ -168,7 +168,7 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
   }
 }
 
-const fetchNpmData = async (dependencyName: string) => {
+const fetchNpmData = async (dependencyName: string, path: string) => {
   if (
     npmCache[dependencyName] !== undefined &&
     (npmCache[dependencyName]?.asyncstate === AsyncState.InProgress ||
@@ -180,7 +180,7 @@ const fetchNpmData = async (dependencyName: string) => {
     asyncstate: AsyncState.InProgress,
   }
 
-  const conf = { ...getNpmConfig(), spec: dependencyName }
+  const conf = { ...getNpmConfig(path), spec: dependencyName }
   try {
     const json = (await npmRegistryFetch.json(dependencyName, conf)) as NpmData
     if (changelogCache[dependencyName] === undefined) {
