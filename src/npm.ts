@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import * as npmRegistryFetch from 'npm-registry-fetch'
-import { coerce, diff, gt, prerelease, ReleaseType, valid } from 'semver'
+import { coerce, diff, gt, lte, prerelease, ReleaseType, valid } from 'semver'
 import * as vscode from 'vscode'
 import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
@@ -15,6 +15,9 @@ interface PackageJsonDependency {
 }
 
 export interface NpmData {
+  'dist-tags': {
+    latest: string
+  }
   versions: {
     [key in string]: VersionData
   }
@@ -105,9 +108,12 @@ export const getPossibleUpgrades = (
     return { validVersion: false }
   }
 
+  const latest = npmData['dist-tags'].latest
+
   const possibleUpgrades = Object.values(npmData.versions)
     .filter((version) => valid(version.version))
     .filter((version) => gt(version.version, currentVersion))
+    .filter((version) => currentVersionIsPrerelease === true || lte(version.version, latest))
     .filter((version) => {
       const upgrade = diff(version.version, currentVersion)
       if (upgrade !== null && currentVersionIsPrerelease && upgrade === 'prerelease') {
