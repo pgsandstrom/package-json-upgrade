@@ -14,7 +14,7 @@ interface PackageJsonDependency {
   versions: StrictDict<string, NpmData>
 }
 
-interface NpmData {
+export interface NpmData {
   versions: {
     [key in string]: VersionData
   }
@@ -30,7 +30,7 @@ interface VersionData {
   version: string
 }
 
-interface DependencyUpdateInfo {
+export interface DependencyUpdateInfo {
   major?: VersionData
   minor?: VersionData
   patch?: VersionData
