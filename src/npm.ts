@@ -112,7 +112,15 @@ export const getPossibleUpgrades = (
   const possibleUpgrades = Object.values(npmData.versions)
     .filter((version) => valid(version.version))
     .filter((version) => gt(version.version, currentVersion))
-    .filter((version) => currentVersionIsPrerelease === true || lte(version.version, latest))
+    .filter((version) => {
+      // If the current version is a pre-release or already higher than latest, then we ignore the latest tag.
+      // Otherwise, remove all versions higher than the latest tag
+      return (
+        currentVersionIsPrerelease === true ||
+        gt(currentVersion, latest) ||
+        lte(version.version, latest)
+      )
+    })
     .filter((version) => {
       const upgrade = diff(version.version, currentVersion)
       if (upgrade !== null && currentVersionIsPrerelease && upgrade === 'prerelease') {

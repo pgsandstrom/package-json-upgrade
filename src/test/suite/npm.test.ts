@@ -139,31 +139,48 @@ suite('Npm Test Suite', () => {
     assert.deepStrictEqual(result, expected)
   })
 
-  test('Latest blocks major upgrade', () => {
-    const testDataWithLatest: NpmData = {
-      'dist-tags': {
-        latest: '1.0.0',
+  const testDataWithLatest: NpmData = {
+    'dist-tags': {
+      latest: '1.0.0',
+    },
+    versions: {
+      '1.0.0': {
+        name: 'test1',
+        version: '1.0.0',
       },
-      versions: {
-        '1.0.0': {
-          name: 'test1',
-          version: '1.0.0',
-        },
-        '2.0.0': {
-          name: 'test1',
-          version: '2.0.0',
-        },
+      '2.0.0': {
+        name: 'test1',
+        version: '2.0.0',
       },
-      repository: {
-        type: 'git',
-        url: 'git://asdf.com/asdf.git',
+      '2.0.1': {
+        name: 'test1',
+        version: '2.0.1',
       },
-    }
+    },
+    repository: {
+      type: 'git',
+      url: 'git://asdf.com/asdf.git',
+    },
+  }
+
+  test('Latest dist-tag blocks major upgrade', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(testDataWithLatest, '1.0.0')
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
       patch: undefined,
+      prerelease: undefined,
+      validVersion: true,
+    }
+    assert.deepStrictEqual(result, expected)
+  })
+
+  test('Latest dist-tag ignored if current version is already higher than latest dist-tag', () => {
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testDataWithLatest, '2.0.0')
+    const expected: DependencyUpdateInfo = {
+      major: undefined,
+      minor: undefined,
+      patch: { name: 'test1', version: '2.0.1' },
       prerelease: undefined,
       validVersion: true,
     }
