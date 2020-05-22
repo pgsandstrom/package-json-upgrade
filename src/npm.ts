@@ -92,7 +92,6 @@ export const isVersionPrerelease = (version: string) => {
   return result[4] != null
 }
 
-// TODO this could use some tests
 export const getPossibleUpgrades = (
   npmData: NpmData,
   rawCurrentVersion: string,

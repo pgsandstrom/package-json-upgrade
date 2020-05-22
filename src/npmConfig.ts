@@ -19,6 +19,9 @@ export const getNpmConfig = (path: string): object => {
           {
             // here we can override config
             // currently disable cache since it seems to be buggy with npm-registry-fetch
+            // the bug was supposedly fixed here: https://github.com/npm/npm-registry-fetch/issues/23
+            // but I still have issues, and not enough time to investigate
+            // TODO: Investigate why the cache causes issues
             cache: null,
             // registry: 'https://registry.npmjs.org',
           },

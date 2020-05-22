@@ -82,8 +82,7 @@
     "lint:ts": "tslint --fix src/**/*.ts{,x}",
     "package": "vsce package",
     "pre-commit": "lint-staged",
-    "pre-push": "tsc --noEmit",
-    "// TODO": "Fix a cool way to run the tests on pre-push"
+    "pre-push": "tsc --noEmit && npm run test"
   },
   "husky": {
     "hooks": {
@@ -104,32 +103,32 @@
   "dependencies": {
     "libnpmconfig": "1.2.1",
     "node-fetch": "2.6.0",
-    "npm-registry-fetch": "7.0.0",
-    "semver": "7.1.3"
+    "npm-registry-fetch": "8.1.0",
+    "semver": "7.3.2"
   },
   "devDependencies": {
     "@types/glob": "7.1.1",
-    "@types/mocha": "5.2.7",
+    "@types/mocha": "7.0.2",
     "@types/node": "13.9.2",
-    "@types/node-fetch": "2.5.5",
-    "@types/semver": "7.1.0",
+    "@types/node-fetch": "2.5.7",
+    "@types/semver": "7.2.0",
     "@types/vscode": "1.41.0",
-    "@typescript-eslint/eslint-plugin": "2.19.0",
-    "@typescript-eslint/parser": "2.19.0",
+    "@typescript-eslint/eslint-plugin": "2.34.0",
+    "@typescript-eslint/parser": "2.34.0",
     "cross-env": "7.0.2",
     "eslint": "6.8.0",
-    "eslint-config-prettier": "6.10.1",
+    "eslint-config-prettier": "6.11.0",
     "glob": "7.1.6",
-    "husky": "4.2.3",
-    "lint-staged": "10.0.8",
-    "mocha": "6.2.2",
-    "prettier": "2.0.1",
-    "ts-loader": "6.2.1",
-    "tslint": "6.1.0",
-    "typescript": "3.8.3",
-    "vsce": "1.74.0",
+    "husky": "4.2.5",
+    "lint-staged": "10.2.6",
+    "mocha": "7.1.2",
+    "prettier": "2.0.5",
+    "ts-loader": "7.0.4",
+    "tslint": "6.1.2",
+    "typescript": "3.9.3",
+    "vsce": "1.75.0",
     "vscode-test": "1.3.0",
-    "webpack": "4.42.0",
+    "webpack": "4.43.0",
     "webpack-cli": "3.3.11"
   }
 }
