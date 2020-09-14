@@ -77,14 +77,21 @@ export const getCachedChangelog = (dependencyName: string) => {
 // By not including 'premajor', 'preminor', 'prepatch' we make sure prereleases are only offered prerelease-upgrades
 const ACCEPTABLE_UPGRADES = ['major', 'minor', 'patch']
 
-export const getLatestVersion = (npmData: NpmData) => {
+export const getLatestVersion = (
+  npmData: NpmData,
+  includePrerelease: boolean,
+): VersionData | undefined => {
   const versions = Object.values<VersionData>(npmData.versions)
   if (versions.length === 0) {
     return undefined
   } else {
-    return versions
-      .filter((item) => prerelease(item.version) === null)
-      .reduce((a, b) => (gt(a.version, b.version) ? a : b))
+    const filteredVersions = includePrerelease
+      ? versions
+      : versions.filter((item) => prerelease(item.version) === null)
+    if (filteredVersions.length === 0) {
+      return undefined
+    }
+    return filteredVersions.reduce((a, b) => (gt(a.version, b.version) ? a : b))
   }
 }
 

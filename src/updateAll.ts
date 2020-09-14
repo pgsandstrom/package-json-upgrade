@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { getCachedNpmData, getLatestVersion } from './npm'
+import { getCachedNpmData, getLatestVersion, isVersionPrerelease } from './npm'
 import { parseDependencyLine } from './packageJson'
 import { getDependencyLineLimits, getLineLimitForLine, isPackageJson } from './texteditor'
 import { replaceLastOccuranceOf } from './util/util'
@@ -39,7 +39,8 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
           dep.currentVersion.startsWith('~') || dep.currentVersion.startsWith('^')
             ? dep.currentVersion.substring(1)
             : dep.currentVersion
-        const latestVersion = getLatestVersion(npmCache.item.npmData)
+        const includePrerelease = isVersionPrerelease(currentVersion)
+        const latestVersion = getLatestVersion(npmCache.item.npmData, includePrerelease)
         if (latestVersion === undefined) {
           return
         }
