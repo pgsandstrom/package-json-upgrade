@@ -2,6 +2,11 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 1.2.1
+
+- Fix crash when all releases for a dependency was prereleases
+- Fix issue with not detecting updates on prereleases using tilde or caret ranges
+
 ## 1.2.0
 
 - Do not suggest updates further than the "latest" dist-tag
