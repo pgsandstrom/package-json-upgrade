@@ -28,7 +28,7 @@ export interface NpmData {
   // }
 }
 
-interface VersionData {
+export interface VersionData {
   name: string
   version: string
 }
@@ -41,7 +41,7 @@ export interface DependencyUpdateInfo {
   validVersion: boolean
 }
 
-interface CacheItem {
+export interface CacheItem {
   date: Date
   npmData: NpmData
 }
@@ -56,8 +56,16 @@ export const cleanNpmCache = () => {
   changelogCache = {}
 }
 
+export const getAllCachedNpmData = () => {
+  return npmCache
+}
+
 export const getCachedNpmData = (dependencyName: string) => {
   return npmCache[dependencyName]
+}
+
+export const setCachedNpmData = (newNpmCache: Dict<string, Loader<CacheItem>>) => {
+  npmCache = newNpmCache
 }
 
 export const getCachedChangelog = (dependencyName: string) => {
