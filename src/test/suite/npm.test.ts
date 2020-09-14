@@ -123,6 +123,18 @@ suite('Npm Test Suite', () => {
     assert.deepStrictEqual(result, expected)
   })
 
+  test('Prerelease upgrade with inexact version', () => {
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '^3.0.0-alpha.1')
+    const expected: DependencyUpdateInfo = {
+      major: undefined,
+      minor: undefined,
+      patch: undefined,
+      prerelease: { name: 'test1', version: '3.0.0-alpha.2' },
+      validVersion: true,
+    }
+    assert.deepStrictEqual(result, expected)
+  })
+
   test('Prerelease upgrade to final', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0-alpha.1')
     const expected: DependencyUpdateInfo = {
