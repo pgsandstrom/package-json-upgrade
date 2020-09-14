@@ -52,10 +52,6 @@ const testData: NpmData = {
       version: '3.0.0-alpha.2',
     },
   },
-  repository: {
-    type: 'git',
-    url: 'git://asdf.com/asdf.git',
-  },
 }
 
 suite('Npm Test Suite', () => {
@@ -156,10 +152,6 @@ suite('Npm Test Suite', () => {
         name: 'test1',
         version: '2.0.1',
       },
-    },
-    repository: {
-      type: 'git',
-      url: 'git://asdf.com/asdf.git',
     },
   }
 

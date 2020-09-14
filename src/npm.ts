@@ -22,10 +22,10 @@ export interface NpmData {
     [key in string]: VersionData
   }
   homepage?: string
-  repository: {
-    type: string
-    url: string
-  }
+  // repository: {
+  //   type: string
+  //   url: string
+  // }
 }
 
 interface VersionData {
