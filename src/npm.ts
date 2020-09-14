@@ -95,7 +95,14 @@ export const getLatestVersion = (
   }
 }
 
-export const isVersionPrerelease = (version: string) => {
+export const getExactVersion = (rawVersion: string) => {
+  return rawVersion.startsWith('~') || rawVersion.startsWith('^')
+    ? rawVersion.substring(1)
+    : rawVersion
+}
+
+export const isVersionPrerelease = (rawVersion: string) => {
+  const version = getExactVersion(rawVersion)
   // regex gotten from https://github.com/semver/semver/blob/master/semver.md
   const result: RegExpExecArray | null = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/.exec(
     version,
@@ -115,10 +122,12 @@ export const getPossibleUpgrades = (
     return { validVersion: true }
   }
 
-  const currentVersionIsPrerelease = isVersionPrerelease(rawCurrentVersion)
+  const exactVersion = getExactVersion(rawCurrentVersion)
 
-  const currentVersion = currentVersionIsPrerelease ? rawCurrentVersion : coerce(rawCurrentVersion)
-  if (currentVersion === null) {
+  const currentVersionIsPrerelease = isVersionPrerelease(exactVersion)
+
+  const coercedVersion = currentVersionIsPrerelease ? exactVersion : coerce(exactVersion)
+  if (coercedVersion === null) {
     return { validVersion: false }
   }
 
@@ -126,18 +135,18 @@ export const getPossibleUpgrades = (
 
   const possibleUpgrades = Object.values(npmData.versions)
     .filter((version) => valid(version.version))
-    .filter((version) => gt(version.version, currentVersion))
+    .filter((version) => gt(version.version, coercedVersion))
     .filter((version) => {
       // If the current version is a pre-release or already higher than latest, then we ignore the latest tag.
       // Otherwise, remove all versions higher than the latest tag
       return (
         currentVersionIsPrerelease === true ||
-        gt(currentVersion, latest) ||
+        gt(coercedVersion, latest) ||
         lte(version.version, latest)
       )
     })
     .filter((version) => {
-      const upgrade = diff(version.version, currentVersion)
+      const upgrade = diff(version.version, coercedVersion)
       if (upgrade !== null && currentVersionIsPrerelease && upgrade === 'prerelease') {
         return true
       }
@@ -149,7 +158,7 @@ export const getPossibleUpgrades = (
 
   const helper = (releaseType: ReleaseType) => {
     const matchingUpgradeTypes = possibleUpgrades.filter(
-      (version) => diff(version.version, currentVersion) === releaseType,
+      (version) => diff(version.version, coercedVersion) === releaseType,
     )
     return matchingUpgradeTypes.length === 0
       ? undefined

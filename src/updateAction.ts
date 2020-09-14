@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { OPEN_URL_COMMAND } from './extension'
-import { getCachedChangelog, getCachedNpmData, getPossibleUpgrades } from './npm'
+import { getCachedChangelog, getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
 import { parseDependencyLine } from './packageJson'
 import { getLineLimitForLine, isPackageJson } from './texteditor'
 import { replaceLastOccuranceOf } from './util/util'
@@ -105,10 +105,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
     newVersion: string,
   ): vscode.CodeAction {
     const lineText = document.lineAt(range.start.line).text
-    const currentVersion =
-      rawCurrentVersion.startsWith('~') || rawCurrentVersion.startsWith('^')
-        ? rawCurrentVersion.substring(1)
-        : rawCurrentVersion
+    const currentVersion = getExactVersion(rawCurrentVersion)
     const newLineText = replaceLastOccuranceOf(lineText, currentVersion, newVersion)
 
     const fix = new vscode.CodeAction(
