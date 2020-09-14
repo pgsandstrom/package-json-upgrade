@@ -4,16 +4,21 @@ import { parseDependencyLine } from './packageJson'
 import { getDependencyLineLimits, getLineLimitForLine, isPackageJson } from './texteditor'
 import { replaceLastOccuranceOf } from './util/util'
 
-export const updateAll = (textEditor?: vscode.TextEditor) => {
+export interface UpdateEdit {
+  range: vscode.Range
+  text: string
+}
+
+export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
   if (textEditor === undefined) {
-    return
+    return []
   }
 
   const document = textEditor.document
 
   if (isPackageJson(document)) {
     const dependencyLineLimits = getDependencyLineLimits(document)
-    const edits = Array.from({ length: document.lineCount })
+    const edits: UpdateEdit[] = Array.from({ length: document.lineCount })
       .map((_, index) => index)
       .filter((index) => {
         const lineLimit = getLineLimitForLine(document, index, dependencyLineLimits)
@@ -44,15 +49,16 @@ export const updateAll = (textEditor?: vscode.TextEditor) => {
           text: newLineText,
         }
       })
+      .filter((edit): edit is UpdateEdit => edit !== undefined)
 
     textEditor.edit((editBuilder: vscode.TextEditorEdit) => {
       edits.forEach((edit) => {
-        if (edit !== undefined) {
-          editBuilder.replace(edit.range, edit.text)
-        }
+        editBuilder.replace(edit.range, edit.text)
       })
     })
+    return edits
   } else {
     vscode.window.showWarningMessage('Update failed: File not recognized as valid package.json')
+    return []
   }
 }
