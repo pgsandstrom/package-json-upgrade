@@ -252,25 +252,27 @@ const findChangelog = async (dependencyName: string, npmData: NpmData) => {
     return
   }
   // TODO support other stuff than github?
-  const regexResult = /(https?:\/\/github\.com\/[a-zA-z0-9_-]*\/[a-zA-z0-9_-]*)(#[a-zA-z0-9_-]*)?/.exec(
+  const regexResult = /(https?:\/\/github\.com\/[-\w/.]*\/[-\w/.]*)(#[-\w/.]*)?/.exec(
     npmData.homepage,
   )
-  if (regexResult !== null) {
+  if (regexResult === null) {
+    return
+  }
+
+  changelogCache[dependencyName] = {
+    asyncstate: AsyncState.InProgress,
+  }
+  const baseGithubUrl = regexResult[1]
+  const changelogUrl = `${baseGithubUrl}/blob/master/CHANGELOG.md`
+  const result = await fetch(changelogUrl)
+  if (result.status >= 200 && result.status < 300) {
     changelogCache[dependencyName] = {
-      asyncstate: AsyncState.InProgress,
+      asyncstate: AsyncState.Fulfilled,
+      item: changelogUrl,
     }
-    const baseGithubUrl = regexResult[1]
-    const changelogUrl = `${baseGithubUrl}/blob/master/CHANGELOG.md`
-    const result = await fetch(changelogUrl)
-    if (result.status >= 200 && result.status < 300) {
-      changelogCache[dependencyName] = {
-        asyncstate: AsyncState.Fulfilled,
-        item: changelogUrl,
-      }
-    } else {
-      changelogCache[dependencyName] = {
-        asyncstate: AsyncState.Rejected,
-      }
+  } else {
+    changelogCache[dependencyName] = {
+      asyncstate: AsyncState.Rejected,
     }
   }
 }
