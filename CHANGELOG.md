@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 1.2.2
+
+- Fix bug in finding changelog
+
 ## 1.2.1
 
 - Fix crash when all releases for a dependency was prereleases
