@@ -110,7 +110,7 @@ export const isVersionPrerelease = (rawVersion: string) => {
   if (result === null) {
     return false
   }
-  // tslint:disable-next-line: strict-type-predicates
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return result[4] != null
 }
 
@@ -223,7 +223,7 @@ const fetchNpmData = async (dependencyName: string, path: string) => {
 
   const conf = { ...getNpmConfig(path), spec: dependencyName }
   try {
-    const json = (await npmRegistryFetch.json(dependencyName, conf)) as NpmData
+    const json = ((await npmRegistryFetch.json(dependencyName, conf)) as unknown) as NpmData
     if (changelogCache[dependencyName] === undefined) {
       findChangelog(dependencyName, json)
     }
@@ -235,12 +235,14 @@ const fetchNpmData = async (dependencyName: string, path: string) => {
       },
     }
   } catch (e) {
+    /* eslint-disable */
     console.error(`failed to load dependency ${dependencyName}`)
     console.error(`status code: ${e?.statusCode}`)
     console.error(`uri: ${e?.uri}`)
     console.error(`message: ${e?.message}`)
     console.error(`config used: ${JSON.stringify(conf, null, 2)}`)
     console.error(`Entire error: ${JSON.stringify(e, null, 2)}`)
+    /* eslint-enable */
     npmCache[dependencyName] = {
       asyncstate: AsyncState.Rejected,
     }

@@ -1,12 +1,13 @@
 import * as config from 'libnpmconfig'
+import npmRegistryFetch = require('npm-registry-fetch')
 import { getConfig } from './config'
 import { Dict } from './types'
 
 let skippedNpmConfigLastTime: boolean | undefined
 
-const pathToConfMap: Dict<string, object> = {}
+const pathToConfMap: Dict<string, npmRegistryFetch.Options> = {}
 
-export const getNpmConfig = (path: string): object => {
+export const getNpmConfig = (path: string): npmRegistryFetch.Options => {
   let conf = pathToConfMap[path]
   const skipNpmConfig = getConfig().skipNpmConfig
   if (conf === undefined || skipNpmConfig !== skippedNpmConfigLastTime) {
@@ -14,6 +15,7 @@ export const getNpmConfig = (path: string): object => {
       conf = {}
       console.debug('Defaulting to empty config')
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       conf = config
         .read(
           {
@@ -27,7 +29,7 @@ export const getNpmConfig = (path: string): object => {
           },
           { cwd: path },
         )
-        .toJSON() as object
+        .toJSON() as npmRegistryFetch.Options
       pathToConfMap[path] = conf
     }
 

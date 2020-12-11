@@ -94,7 +94,7 @@ export const decorateDiscreet = (contentText: string) => {
 // "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
 export const getDecoratorForUpdate = (
   releaseType: ReleaseType | null,
-  latestVersion?: string,
+  latestVersion: string,
 ): TextEditorDecorationType | undefined => {
   switch (releaseType) {
     case 'major':

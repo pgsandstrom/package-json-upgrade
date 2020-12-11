@@ -29,9 +29,12 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-use-before-define': 'off',
     '@typescript-eslint/camelcase': 'off', // There are a few exceptions, like variables from the backend and stuff
+    '@typescript-eslint/explicit-module-boundary-types': 'off', // This feels unnecessary and verbose
+    '@typescript-eslint/no-floating-promises': 'off', // just feels a bit verbose with the vscode API
 
     // activate extra rules:
     eqeqeq: ['error', 'smart'],
+    curly: ['error'],
     '@typescript-eslint/no-unnecessary-type-assertion': ['error'],
     '@typescript-eslint/no-extra-non-null-assertion': ['error'],
     '@typescript-eslint/no-unused-vars': [
@@ -41,20 +44,8 @@ module.exports = {
         args: 'none',
       },
     ],
-    '@typescript-eslint/no-unnecessary-condition': [
-      'error',
-      {
-        ignoreRhs: true,
-      },
-    ],
-    '@typescript-eslint/strict-boolean-expressions': [
-      'error',
-      {
-        allowSafe: true,
-        allowNullable: true,
-        ignoreRhs: true,
-      },
-    ],
+    '@typescript-eslint/no-unnecessary-condition': ['error'],
+    '@typescript-eslint/strict-boolean-expressions': ['error'],
 
     // here is frontend/backend exclusive rules
 
