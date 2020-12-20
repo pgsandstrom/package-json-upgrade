@@ -9,4 +9,3 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 out/test/**
-**/*.png

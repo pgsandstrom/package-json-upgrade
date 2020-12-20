@@ -35,3 +35,5 @@ A config is available to control if the updates should always be shown when a pa
 ## Install
 
 [How to install vscode extensions](https://code.visualstudio.com/docs/editor/extension-gallery)
+
+[ Logo Credit ](https://smashicons.com)
