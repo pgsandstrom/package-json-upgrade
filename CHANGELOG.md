@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 1.2.3
+
+- Show all prereleases when current version is a prerelease. This fixes a bug when all releases were prereleases.
+
 ## 1.2.2
 
 - Fix bug in finding changelog
