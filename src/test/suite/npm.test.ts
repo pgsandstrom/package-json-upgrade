@@ -138,8 +138,8 @@ suite('Npm Test Suite', () => {
   test('Prerelease upgrade to final', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0-alpha.1')
     const expected: DependencyUpdateInfo = {
-      major: undefined,
-      minor: undefined,
+      major: { name: 'test1', version: '3.0.0-alpha.2' },
+      minor: { name: 'test1', version: '2.1.1' },
       patch: undefined,
       prerelease: { name: 'test1', version: '2.0.0' },
       validVersion: true,
@@ -185,6 +185,40 @@ suite('Npm Test Suite', () => {
       major: undefined,
       minor: undefined,
       patch: { name: 'test1', version: '2.0.1' },
+      prerelease: undefined,
+      validVersion: true,
+    }
+    assert.deepStrictEqual(result, expected)
+  })
+
+  const testDataWithOnlyPrereleases: NpmData = {
+    'dist-tags': {
+      latest: '1.0.0',
+    },
+    versions: {
+      '1.0.0-build100': {
+        name: 'test1',
+        version: '1.0.0-build100',
+      },
+      '2.0.0-build100': {
+        name: 'test1',
+        version: '2.0.0-build100',
+      },
+    },
+  }
+
+  test('Should work even if all releases are pre-releases', () => {
+    const result: DependencyUpdateInfo = getPossibleUpgrades(
+      testDataWithOnlyPrereleases,
+      '1.0.0-build100',
+    )
+    const expected: DependencyUpdateInfo = {
+      major: {
+        name: 'test1',
+        version: '2.0.0-build100',
+      },
+      minor: undefined,
+      patch: undefined,
       prerelease: undefined,
       validVersion: true,
     }

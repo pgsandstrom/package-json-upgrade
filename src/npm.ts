@@ -72,11 +72,6 @@ export const getCachedChangelog = (dependencyName: string) => {
   return changelogCache[dependencyName]
 }
 
-// export type ReleaseType = "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
-
-// By not including 'premajor', 'preminor', 'prepatch' we make sure prereleases are only offered prerelease-upgrades
-const ACCEPTABLE_UPGRADES = ['major', 'minor', 'patch']
-
 export const getLatestVersion = (
   npmData: NpmData,
   includePrerelease: boolean,
@@ -145,30 +140,23 @@ export const getPossibleUpgrades = (
         lte(version.version, latest)
       )
     })
-    .filter((version) => {
-      const upgrade = diff(version.version, coercedVersion)
-      if (upgrade !== null && currentVersionIsPrerelease && upgrade === 'prerelease') {
-        return true
-      }
-      if (upgrade !== null && ACCEPTABLE_UPGRADES.includes(upgrade)) {
-        return true
-      }
-      return false
-    })
 
-  const helper = (releaseType: ReleaseType) => {
-    const matchingUpgradeTypes = possibleUpgrades.filter(
-      (version) => diff(version.version, coercedVersion) === releaseType,
-    )
+  const helper = (releaseTypeList: ReleaseType[]) => {
+    const matchingUpgradeTypes = possibleUpgrades.filter((version) => {
+      const diffType = diff(version.version, coercedVersion)
+      return diffType !== null && releaseTypeList.includes(diffType)
+    })
     return matchingUpgradeTypes.length === 0
       ? undefined
       : matchingUpgradeTypes.reduce((a, b) => (gt(a.version, b.version) ? a : b))
   }
 
-  const majorUpgrade = helper('major')
-  const minorUpgrade = helper('minor')
-  const patchUpgrade = helper('patch')
-  const prereleaseUpgrade = currentVersionIsPrerelease ? helper('prerelease') : undefined
+  // If we are at a prerelease, then show all pre-x.
+  // This is partially done to account for when there are only pre-x versions.
+  const majorUpgrade = helper(currentVersionIsPrerelease ? ['major', 'premajor'] : ['major'])
+  const minorUpgrade = helper(currentVersionIsPrerelease ? ['minor', 'preminor'] : ['minor'])
+  const patchUpgrade = helper(currentVersionIsPrerelease ? ['patch', 'prepatch'] : ['patch'])
+  const prereleaseUpgrade = currentVersionIsPrerelease ? helper(['prerelease']) : undefined
   return {
     major: majorUpgrade,
     minor: minorUpgrade,
