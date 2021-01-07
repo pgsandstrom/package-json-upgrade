@@ -138,7 +138,7 @@ suite('Npm Test Suite', () => {
   test('Prerelease upgrade to final', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0-alpha.1')
     const expected: DependencyUpdateInfo = {
-      major: { name: 'test1', version: '3.0.0-alpha.2' },
+      major: undefined,
       minor: { name: 'test1', version: '2.1.1' },
       patch: undefined,
       prerelease: { name: 'test1', version: '2.0.0' },
@@ -193,7 +193,7 @@ suite('Npm Test Suite', () => {
 
   const testDataWithOnlyPrereleases: NpmData = {
     'dist-tags': {
-      latest: '1.0.0',
+      latest: '2.0.0-build100',
     },
     versions: {
       '1.0.0-build100': {

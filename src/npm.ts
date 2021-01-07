@@ -132,13 +132,9 @@ export const getPossibleUpgrades = (
     .filter((version) => valid(version.version))
     .filter((version) => gt(version.version, coercedVersion))
     .filter((version) => {
-      // If the current version is a pre-release or already higher than latest, then we ignore the latest tag.
+      // If the current version is higher than latest, then we ignore the latest tag.
       // Otherwise, remove all versions higher than the latest tag
-      return (
-        currentVersionIsPrerelease === true ||
-        gt(coercedVersion, latest) ||
-        lte(version.version, latest)
-      )
+      return gt(coercedVersion, latest) || lte(version.version, latest)
     })
 
   const helper = (releaseTypeList: ReleaseType[]) => {
