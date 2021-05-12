@@ -20,7 +20,7 @@ module.exports = {
       generators: false,
       experimentalObjectRestSpread: true,
     },
-    project: './tsconfig.eslint.json',
+    project: './tsconfig.json',
   },
   plugins: ['@typescript-eslint'],
   rules: {
