@@ -99,9 +99,10 @@ export const getExactVersion = (rawVersion: string) => {
 export const isVersionPrerelease = (rawVersion: string) => {
   const version = getExactVersion(rawVersion)
   // regex gotten from https://github.com/semver/semver/blob/master/semver.md
-  const result: RegExpExecArray | null = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/.exec(
-    version,
-  )
+  const result: RegExpExecArray | null =
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/.exec(
+      version,
+    )
   if (result === null) {
     return false
   }
@@ -207,7 +208,7 @@ const fetchNpmData = async (dependencyName: string, path: string) => {
 
   const conf = { ...getNpmConfig(path), spec: dependencyName }
   try {
-    const json = ((await npmRegistryFetch.json(dependencyName, conf)) as unknown) as NpmData
+    const json = (await npmRegistryFetch.json(dependencyName, conf)) as unknown as NpmData
     if (changelogCache[dependencyName] === undefined) {
       findChangelog(dependencyName, json)
     }
