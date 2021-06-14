@@ -8,6 +8,7 @@ interface Config {
   patchUpgradeColorOverwrite: string
   prereleaseUpgradeColorOverwrite: string
   ignorePatterns: string[]
+  decorationString: string
 }
 
 let currentConfig: Config | undefined
@@ -29,6 +30,7 @@ export const reloadConfig = () => {
     minorUpgradeColorOverwrite: config.get<string>('minorUpgradeColorOverwrite') ?? '',
     patchUpgradeColorOverwrite: config.get<string>('patchUpgradeColorOverwrite') ?? '',
     prereleaseUpgradeColorOverwrite: config.get<string>('prereleaseUpgradeColorOverwrite') ?? '',
+    decorationString: config.get<string>('decorationString') ?? '\t\tUpdate available: %s',
   }
 
   currentConfig = newConfig

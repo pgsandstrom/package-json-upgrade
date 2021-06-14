@@ -99,17 +99,21 @@ export const getDecoratorForUpdate = (
   switch (releaseType) {
     case 'major':
     case 'premajor':
-      return decorateMajorUpdate(`\t\tUpdate available: ${latestVersion}`)
+      return decorateMajorUpdate(getUpdateDescription(latestVersion))
     case 'minor':
     case 'preminor':
-      return decorateMinorUpdate(`\t\tUpdate available: ${latestVersion}`)
+      return decorateMinorUpdate(getUpdateDescription(latestVersion))
     case 'patch':
     case 'prepatch':
-      return decoratePatchUpdate(`\t\tUpdate available: ${latestVersion}`)
+      return decoratePatchUpdate(getUpdateDescription(latestVersion))
     case 'prerelease':
-      return decoratePrereleaseUpdate(`\t\tUpdate available: ${latestVersion}`)
+      return decoratePrereleaseUpdate(getUpdateDescription(latestVersion))
     case null:
     default:
       return undefined
   }
+}
+
+function getUpdateDescription(latestVersion: string): string {
+  return getConfig().decorationString.replace('%s', latestVersion)
 }
