@@ -7,6 +7,7 @@ interface Config {
   minorUpgradeColorOverwrite: string
   patchUpgradeColorOverwrite: string
   prereleaseUpgradeColorOverwrite: string
+  ignorePatterns: string[]
 }
 
 let currentConfig: Config | undefined
@@ -21,6 +22,7 @@ export const getConfig = (): Config => {
 export const reloadConfig = () => {
   const config = vscode.workspace.getConfiguration('package-json-upgrade')
   const newConfig: Config = {
+    ignorePatterns: config.get<string[]>('ignorePatterns') ?? [],
     showUpdatesAtStart: config.get<boolean>('showUpdatesAtStart') === true,
     skipNpmConfig: config.get<boolean>('skipNpmConfig') === true,
     majorUpgradeColorOverwrite: config.get<string>('majorUpgradeColorOverwrite') ?? '',
