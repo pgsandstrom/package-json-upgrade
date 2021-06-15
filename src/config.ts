@@ -30,7 +30,8 @@ export const reloadConfig = () => {
     minorUpgradeColorOverwrite: config.get<string>('minorUpgradeColorOverwrite') ?? '',
     patchUpgradeColorOverwrite: config.get<string>('patchUpgradeColorOverwrite') ?? '',
     prereleaseUpgradeColorOverwrite: config.get<string>('prereleaseUpgradeColorOverwrite') ?? '',
-    decorationString: config.get<string>('decorationString') ?? '\t\tUpdate available: %s',
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    decorationString: config.get<string>('decorationString') || '\t\tUpdate available: %s',
   }
 
   currentConfig = newConfig
