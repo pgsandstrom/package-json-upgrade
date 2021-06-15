@@ -57,7 +57,16 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 
   await refreshPackageJsonData(document)
 
-  const ignorePatterns = getConfig().ignorePatterns.map((pattern) => new RegExp(pattern))
+  const ignorePatterns: RegExp[] = []
+  for (const pattern of getConfig().ignorePatterns) {
+    try {
+      ignorePatterns.push(new RegExp(pattern))
+    } catch (err) {
+      vscode.window.showErrorMessage(
+        `Invalid ignore pattern ${pattern}${err instanceof Error ? `: ${err.message}` : ``}`,
+      )
+    }
+  }
 
   clearCurrentDecorations()
 
