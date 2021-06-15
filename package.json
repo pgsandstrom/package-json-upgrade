@@ -54,6 +54,16 @@
           "type": "string",
           "default": "",
           "description": "Specify a color (like #00FF00) to override the color of prerelease upgrades. Leave empty for default color."
+        },
+        "package-json-upgrade.decorationString": {
+          "type": "string",
+          "default": "\t\tUpdate available: %s",
+          "description": "Customize update string. %s will be replaced by version, so 'Update: %s' will result in 'Update: 1.0.1'."
+        },
+        "package-json-upgrade.ignorePatterns": {
+          "type": "array",
+          "default": [],
+          "description": "Regex pattern of packages to not show decoration string for. To ignore all material-ui packages the JSON should be [\"^(?=@material-ui).+$\"]"
         }
       }
     },
