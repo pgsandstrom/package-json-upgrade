@@ -2,6 +2,11 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 1.4.0
+
+- Add config for changing decoration string
+- Add ignorePatterns for dependencies
+
 ## 1.3.0
 
 - We no longer ignore latest-tag when current version is a prerelease. Instead latest-tag is ignored if current version is higher than latest.
