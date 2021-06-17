@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { getConfig } from './config'
 import { decorateDiscreet, getDecoratorForUpdate } from './decorations'
 import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
 import { parseDependencyLine } from './packageJson'
@@ -56,6 +57,17 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 
   await refreshPackageJsonData(document)
 
+  const ignorePatterns: RegExp[] = []
+  for (const pattern of getConfig().ignorePatterns) {
+    try {
+      ignorePatterns.push(new RegExp(pattern))
+    } catch (err) {
+      vscode.window.showErrorMessage(
+        `Invalid ignore pattern ${pattern}${err instanceof Error ? `: ${err.message}` : ``}`,
+      )
+    }
+  }
+
   clearCurrentDecorations()
 
   Array.from({ length: document.lineCount })
@@ -71,6 +83,12 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 
       if (dep === undefined) {
         return
+      }
+
+      for (const ignorePattern of ignorePatterns) {
+        if (ignorePattern.exec(dep.dependencyName) !== null) {
+          return
+        }
       }
 
       const range = new vscode.Range(
