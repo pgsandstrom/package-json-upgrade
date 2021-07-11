@@ -115,7 +115,11 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
         return
       }
 
-      const possibleUpgrades = getPossibleUpgrades(npmCache.item.npmData, dep.currentVersion)
+      const possibleUpgrades = getPossibleUpgrades(
+        npmCache.item.npmData,
+        dep.currentVersion,
+        dep.dependencyName,
+      )
 
       let decorator
       if (possibleUpgrades.major !== undefined) {

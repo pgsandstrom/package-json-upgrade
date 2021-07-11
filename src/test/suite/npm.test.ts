@@ -1,6 +1,11 @@
 import * as assert from 'assert'
 
-import { getPossibleUpgrades, NpmData, DependencyUpdateInfo } from '../../npm'
+import {
+  getPossibleUpgrades,
+  NpmData,
+  DependencyUpdateInfo,
+  getPossibleUpgradesWithIgnoredVersions,
+} from '../../npm'
 
 const testData: NpmData = {
   'dist-tags': {
@@ -56,7 +61,7 @@ const testData: NpmData = {
 
 suite('Npm Test Suite', () => {
   test('Major upgrade', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.1.1')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.1.1', 'whatever')
     const expected: DependencyUpdateInfo = {
       major: { name: 'test1', version: '2.1.1' },
       minor: undefined,
@@ -68,7 +73,7 @@ suite('Npm Test Suite', () => {
   })
 
   test('Minor upgrade', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0', 'whatever')
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: { name: 'test1', version: '2.1.1' },
@@ -80,7 +85,7 @@ suite('Npm Test Suite', () => {
   })
 
   test('Patch upgrade', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.1.0')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.1.0', 'whatever')
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
@@ -92,7 +97,7 @@ suite('Npm Test Suite', () => {
   })
 
   test('Many upgrades', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.0.0')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.0.0', 'whatever')
     const expected: DependencyUpdateInfo = {
       major: { name: 'test1', version: '2.1.1' },
       minor: { name: 'test1', version: '1.1.1' },
@@ -104,7 +109,7 @@ suite('Npm Test Suite', () => {
   })
 
   test('Invalid version', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, 'tjena')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, 'tjena', 'whatever')
     const expected: DependencyUpdateInfo = {
       validVersion: false,
     }
@@ -112,7 +117,7 @@ suite('Npm Test Suite', () => {
   })
 
   test('Prerelease upgrade', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '3.0.0-alpha.1')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '3.0.0-alpha.1', 'whatever')
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
@@ -124,7 +129,7 @@ suite('Npm Test Suite', () => {
   })
 
   test('Prerelease upgrade with inexact version', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '^3.0.0-alpha.1')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '^3.0.0-alpha.1', 'whatever')
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
@@ -136,7 +141,7 @@ suite('Npm Test Suite', () => {
   })
 
   test('Prerelease upgrade to final', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0-alpha.1')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0-alpha.1', 'whatever')
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: { name: 'test1', version: '2.1.1' },
@@ -168,7 +173,11 @@ suite('Npm Test Suite', () => {
   }
 
   test('Latest dist-tag blocks major upgrade', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testDataWithLatest, '1.0.0')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(
+      testDataWithLatest,
+      '1.0.0',
+      'whatever',
+    )
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
@@ -180,7 +189,11 @@ suite('Npm Test Suite', () => {
   })
 
   test('Latest dist-tag ignored if current version is already higher than latest dist-tag', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testDataWithLatest, '2.0.0')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(
+      testDataWithLatest,
+      '2.0.0',
+      'whatever',
+    )
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
@@ -210,13 +223,31 @@ suite('Npm Test Suite', () => {
   test('Should work even if all releases are pre-releases', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(
       testDataWithOnlyPrereleases,
-      '1.0.0-build100',
+      '1.0.1-build100',
+      'whatever',
     )
     const expected: DependencyUpdateInfo = {
       major: {
         name: 'test1',
         version: '2.0.0-build100',
       },
+      minor: undefined,
+      patch: undefined,
+      prerelease: undefined,
+      validVersion: true,
+    }
+    assert.deepStrictEqual(result, expected)
+  })
+
+  test('Ignored versions should work', () => {
+    const result: DependencyUpdateInfo = getPossibleUpgradesWithIgnoredVersions(
+      testData,
+      '1.1.1',
+      'whatever',
+      '>=2.1.1',
+    )
+    const expected: DependencyUpdateInfo = {
+      major: { name: 'test1', version: '2.1.0' },
       minor: undefined,
       patch: undefined,
       prerelease: undefined,

@@ -36,7 +36,11 @@ export class UpdateAction implements vscode.CodeActionProvider {
     const actions = []
 
     if (lineLimit.isPeerDependency === false) {
-      const possibleUpgrades = getPossibleUpgrades(npmCache.item.npmData, dep.currentVersion)
+      const possibleUpgrades = getPossibleUpgrades(
+        npmCache.item.npmData,
+        dep.currentVersion,
+        dep.dependencyName,
+      )
       if (possibleUpgrades.major !== undefined) {
         actions.push(
           this.createFix(

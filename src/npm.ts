@@ -1,7 +1,18 @@
 import fetch from 'node-fetch'
 import * as npmRegistryFetch from 'npm-registry-fetch'
-import { coerce, diff, gt, lte, prerelease, ReleaseType, valid } from 'semver'
+import {
+  coerce,
+  diff,
+  gt,
+  lte,
+  prerelease,
+  ReleaseType,
+  valid,
+  satisfies,
+  validRange,
+} from 'semver'
 import * as vscode from 'vscode'
+import { getConfig } from './config'
 import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
 
@@ -113,6 +124,7 @@ export const isVersionPrerelease = (rawVersion: string) => {
 export const getPossibleUpgrades = (
   npmData: NpmData,
   rawCurrentVersion: string,
+  dependencyName: string,
 ): DependencyUpdateInfo => {
   if (rawCurrentVersion === '*' || rawCurrentVersion === 'x') {
     return { validVersion: true }
@@ -129,9 +141,24 @@ export const getPossibleUpgrades = (
 
   const latest = npmData['dist-tags'].latest
 
+  const ignoredVersions = getConfig().ignoreVersions[dependencyName]
+
   const possibleUpgrades = Object.values(npmData.versions)
     .filter((version) => valid(version.version))
     .filter((version) => gt(version.version, coercedVersion))
+    .filter((version) => {
+      if (ignoredVersions === undefined) {
+        return true
+      }
+      if (!validRange(ignoredVersions)) {
+        console.warn(
+          `invalid semver range detected in ignored version for depedency ${dependencyName}: ${ignoredVersions}`,
+        )
+        return true
+      }
+      const result = !satisfies(version.version, ignoredVersions)
+      return result
+    })
     .filter((version) => {
       // If the current version is higher than latest, then we ignore the latest tag.
       // Otherwise, remove all versions higher than the latest tag
