@@ -140,7 +140,7 @@ export const getPossibleUpgradesWithIgnoredVersions = (
   npmData: NpmData,
   rawCurrentVersion: string,
   dependencyName: string,
-  ignoredVersions: string | undefined,
+  ignoredVersions: string | undefined | string[],
 ): DependencyUpdateInfo => {
   if (rawCurrentVersion === '*' || rawCurrentVersion === 'x') {
     return { validVersion: true }
@@ -190,7 +190,7 @@ export const getPossibleUpgradesWithIgnoredVersions = (
 const getRawPossibleUpgradeList = (
   npmData: NpmData,
   dependencyName: string,
-  ignoredVersions: string | undefined,
+  ignoredVersions: string | undefined | string[],
   coercedVersion: string | SemVer,
 ) => {
   const latest = npmData['dist-tags'].latest
@@ -201,20 +201,32 @@ const getRawPossibleUpgradeList = (
       if (ignoredVersions === undefined) {
         return true
       }
-      if (!validRange(ignoredVersions)) {
-        console.warn(
-          `invalid semver range detected in ignored version for depedency ${dependencyName}: ${ignoredVersions}`,
-        )
+      if (Array.isArray(ignoredVersions)) {
+        for (const ignoredVersion of ignoredVersions) {
+          if (isVersionIgnored(version, dependencyName, ignoredVersion)) {
+            return false
+          }
+        }
         return true
+      } else {
+        return !isVersionIgnored(version, dependencyName, ignoredVersions)
       }
-      const result = !satisfies(version.version, ignoredVersions)
-      return result
     })
     .filter((version) => {
       // If the current version is higher than latest, then we ignore the latest tag.
       // Otherwise, remove all versions higher than the latest tag
       return gt(coercedVersion, latest) || lte(version.version, latest)
     })
+}
+
+const isVersionIgnored = (version: VersionData, dependencyName: string, ignoredVersion: string) => {
+  if (!validRange(ignoredVersion)) {
+    console.warn(
+      `invalid semver range detected in ignored version for depedency ${dependencyName}: ${ignoredVersion}`,
+    )
+    return true
+  }
+  return satisfies(version.version, ignoredVersion)
 }
 
 export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {

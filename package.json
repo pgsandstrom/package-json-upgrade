@@ -63,12 +63,12 @@
         "package-json-upgrade.ignorePatterns": {
           "type": "array",
           "default": [],
-          "description": "Regex pattern of packages to not show decoration string for. To ignore all material-ui packages the JSON should be [\"^(?=@material-ui).+$\"]"
+          "description": "A list of regex pattern of packages to not show decoration string for. To ignore all material-ui packages the JSON should be [\"^(?=@material-ui).+$\"]"
         },
         "package-json-upgrade.ignoreVersions": {
           "type": "object",
           "default": {},
-          "description": "Semver pattern to ignore versions for a package. If you  want to ignore all @types/node versions 12 or greater the JSON should be {\"@types/node\": \">= 12\"}"
+          "description": "Semver ranges of versions to ignore for specific packages. If you  want to ignore all @types/node versions 12 or greater the JSON should be {\"@types/node\": \">=12\"}. If you want to add several ignored semver ranges you can do {\"@types/node\": [\"=12.0.0\", \"=12.0.1\"]}."
         }
       }
     },

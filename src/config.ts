@@ -9,7 +9,7 @@ interface Config {
   prereleaseUpgradeColorOverwrite: string
   decorationString: string
   ignorePatterns: string[]
-  ignoreVersions: Record<string, string | undefined>
+  ignoreVersions: Record<string, string | undefined | string[]>
 }
 
 let currentConfig: Config | undefined
@@ -33,7 +33,8 @@ export const reloadConfig = () => {
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     decorationString: config.get<string>('decorationString') || '\t\tUpdate available: %s',
     ignorePatterns: config.get<string[]>('ignorePatterns') ?? [],
-    ignoreVersions: config.get<Record<string, string | undefined>>('ignoreVersions') ?? {},
+    ignoreVersions:
+      config.get<Record<string, string | undefined | string[]>>('ignoreVersions') ?? {},
   }
 
   currentConfig = newConfig

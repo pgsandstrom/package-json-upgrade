@@ -255,4 +255,21 @@ suite('Npm Test Suite', () => {
     }
     assert.deepStrictEqual(result, expected)
   })
+
+  test('Multiple ignored versions should work', () => {
+    const result: DependencyUpdateInfo = getPossibleUpgradesWithIgnoredVersions(
+      testData,
+      '1.1.1',
+      'whatever',
+      ['=2.1.1', '=2.1.0'],
+    )
+    const expected: DependencyUpdateInfo = {
+      major: { name: 'test1', version: '2.0.0' },
+      minor: undefined,
+      patch: undefined,
+      prerelease: undefined,
+      validVersion: true,
+    }
+    assert.deepStrictEqual(result, expected)
+  })
 })
