@@ -10,6 +10,7 @@ import {
   valid,
   satisfies,
   validRange,
+  SemVer,
 } from 'semver'
 import * as vscode from 'vscode'
 import { getConfig } from './config'
@@ -126,6 +127,21 @@ export const getPossibleUpgrades = (
   rawCurrentVersion: string,
   dependencyName: string,
 ): DependencyUpdateInfo => {
+  const ignoredVersions = getConfig().ignoreVersions[dependencyName]
+  return getPossibleUpgradesWithIgnoredVersions(
+    npmData,
+    rawCurrentVersion,
+    dependencyName,
+    ignoredVersions,
+  )
+}
+
+export const getPossibleUpgradesWithIgnoredVersions = (
+  npmData: NpmData,
+  rawCurrentVersion: string,
+  dependencyName: string,
+  ignoredVersions: string | undefined,
+): DependencyUpdateInfo => {
   if (rawCurrentVersion === '*' || rawCurrentVersion === 'x') {
     return { validVersion: true }
   }
@@ -139,31 +155,12 @@ export const getPossibleUpgrades = (
     return { validVersion: false }
   }
 
-  const latest = npmData['dist-tags'].latest
-
-  const ignoredVersions = getConfig().ignoreVersions[dependencyName]
-
-  const possibleUpgrades = Object.values(npmData.versions)
-    .filter((version) => valid(version.version))
-    .filter((version) => gt(version.version, coercedVersion))
-    .filter((version) => {
-      if (ignoredVersions === undefined) {
-        return true
-      }
-      if (!validRange(ignoredVersions)) {
-        console.warn(
-          `invalid semver range detected in ignored version for depedency ${dependencyName}: ${ignoredVersions}`,
-        )
-        return true
-      }
-      const result = !satisfies(version.version, ignoredVersions)
-      return result
-    })
-    .filter((version) => {
-      // If the current version is higher than latest, then we ignore the latest tag.
-      // Otherwise, remove all versions higher than the latest tag
-      return gt(coercedVersion, latest) || lte(version.version, latest)
-    })
+  const possibleUpgrades = getRawPossibleUpgradeList(
+    npmData,
+    dependencyName,
+    ignoredVersions,
+    coercedVersion,
+  )
 
   const helper = (releaseTypeList: ReleaseType[]) => {
     const matchingUpgradeTypes = possibleUpgrades.filter((version) => {
@@ -188,6 +185,36 @@ export const getPossibleUpgrades = (
     prerelease: prereleaseUpgrade,
     validVersion: true,
   }
+}
+
+const getRawPossibleUpgradeList = (
+  npmData: NpmData,
+  dependencyName: string,
+  ignoredVersions: string | undefined,
+  coercedVersion: string | SemVer,
+) => {
+  const latest = npmData['dist-tags'].latest
+  return Object.values(npmData.versions)
+    .filter((version) => valid(version.version))
+    .filter((version) => gt(version.version, coercedVersion))
+    .filter((version) => {
+      if (ignoredVersions === undefined) {
+        return true
+      }
+      if (!validRange(ignoredVersions)) {
+        console.warn(
+          `invalid semver range detected in ignored version for depedency ${dependencyName}: ${ignoredVersions}`,
+        )
+        return true
+      }
+      const result = !satisfies(version.version, ignoredVersions)
+      return result
+    })
+    .filter((version) => {
+      // If the current version is higher than latest, then we ignore the latest tag.
+      // Otherwise, remove all versions higher than the latest tag
+      return gt(coercedVersion, latest) || lte(version.version, latest)
+    })
 }
 
 export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
