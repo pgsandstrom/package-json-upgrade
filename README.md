@@ -18,17 +18,11 @@ The extension will pick up your npm configurations and use them, so it works wit
 
 The extension also adds a command to update all dependencies in the package.json file.
 
-## Reason to exist
-
-There exists good alternatives to this extension:
-
-[Version Lens](https://github.com/vscode-contrib/vscode-versionlens)
-
-[Better package json](https://github.com/ldd/better-package-json)
-
-I didnt like that Version Lens interface and missed quick access to the changelog. But Version Lens was the only extension that made it simple to update specific dependencies. This extension aims to solve these issues, and at the same time offering perfect npm integration and version parsing.
-
 ## Extension Settings
+
+It is possible to add a regexp of dependencies that should be ignored by the extension.
+
+It is also possible to add semver ranges for versions that you wish to ignore. Lets say your application uses node v15. Then you can specify to ignore ">=16" for "@types/node".
 
 A config is available to control if the updates should always be shown when a package.json is opened, or if they should only be shown after triggering a command called "Toggle showing package.json available updates". This can be useful if you find that this extension is in the way when you are doing other work in your package.json file.
 

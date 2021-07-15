@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 1.5.0
+
+- Add config to ignore semver ranges for specific dependencies
+
 ## 1.4.0
 
 - Add config for changing decoration string
