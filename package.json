@@ -4,6 +4,7 @@
   "description": "Shows available updates in package.json files. Offers quick fix command to update them and to show the changelog.",
   "version": "1.5.0",
   "publisher": "codeandstuff",
+  "license": "MIT",
   "icon": "logo/icon.png",
   "engines": {
     "vscode": "^1.41.1"
@@ -11,6 +12,13 @@
   "categories": [
     "Programming Languages",
     "Other"
+  ],
+  "keywords": [
+    "npm",
+    "package.json",
+    "dependencies",
+    "upgrade",
+    "update"
   ],
   "repository": {
     "type": "git",
