@@ -45,13 +45,13 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
         new vscode.Position(lineLimit.startLine, lineText.length),
         new vscode.Position(lineLimit.startLine, lineText.length),
       )
-      const notFoundDecoration = decorateDiscreet('Loading updates...')
-      textEditor.setDecorations(notFoundDecoration, [
+      const loadingUpdatesDecoration = decorateDiscreet('Loading updates...')
+      textEditor.setDecorations(loadingUpdatesDecoration, [
         {
           range,
         },
       ])
-      currentDecorationTypes.push(notFoundDecoration)
+      currentDecorationTypes.push(loadingUpdatesDecoration)
     })
   }
 
@@ -178,13 +178,13 @@ export const getDependencyLineLimits = (document: vscode.TextDocument) => {
   if (devDependencies !== undefined) {
     limits.push(devDependencies)
   }
-  const peerDepdencies = getFlatTagStartEnd(document, /\s*"peerDependencies"\s*/, true)
-  if (peerDepdencies !== undefined) {
-    limits.push(peerDepdencies)
+  const peerDependencies = getFlatTagStartEnd(document, /\s*"peerDependencies"\s*/, true)
+  if (peerDependencies !== undefined) {
+    limits.push(peerDependencies)
   }
-  const depdencies = getFlatTagStartEnd(document, /\s*"dependencies"\s*/, false)
-  if (depdencies !== undefined) {
-    limits.push(depdencies)
+  const dependencies = getFlatTagStartEnd(document, /\s*"dependencies"\s*/, false)
+  if (dependencies !== undefined) {
+    limits.push(dependencies)
   }
   return limits
 }
