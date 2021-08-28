@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { getConfig, reloadConfig } from './config'
 import { cleanNpmCache } from './npm'
-import { handleFile } from './texteditor'
+import { handleFileDecoration } from './texteditor'
 import { UpdateAction } from './updateAction'
 import { updateAll } from './updateAll'
 
@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
   const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor(
     (texteditor: vscode.TextEditor | undefined) => {
       if (texteditor !== undefined) {
-        handleFile(texteditor.document, showDecorations)
+        handleFileDecoration(texteditor.document, showDecorations)
       }
     },
   )
@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
     (e: vscode.TextDocumentChangeEvent) => {
       clearTimeout(timeout)
       timeout = setTimeout(() => {
-        handleFile(e.document, showDecorations)
+        handleFileDecoration(e.document, showDecorations)
       }, 500)
     },
   )
@@ -73,7 +73,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 const checkCurrentFiles = (showDecorations: boolean) => {
   vscode.window.visibleTextEditors.forEach((textEditor) => {
-    handleFile(textEditor.document, showDecorations)
+    handleFileDecoration(textEditor.document, showDecorations)
   })
 }
 

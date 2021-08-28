@@ -11,26 +11,26 @@ export interface LineLimit {
   isPeerDependency: boolean
 }
 
-export const handleFile = (document: vscode.TextDocument, showDecorations: boolean) => {
+export const handleFileDecoration = (document: vscode.TextDocument, showDecorations: boolean) => {
   if (showDecorations === false) {
-    clearCurrentDecorations()
+    clearDecorations()
     return
   }
 
   if (isPackageJson(document)) {
-    updatePackageJson(document)
+    loadDecoration(document)
   }
 }
 
 // TODO maybe have cooler handling of decorationtypes? Investigate!
 let currentDecorationTypes: vscode.TextEditorDecorationType[] = []
 
-export const clearCurrentDecorations = () => {
+export const clearDecorations = () => {
   currentDecorationTypes.forEach((d) => d.dispose())
   currentDecorationTypes = []
 }
 
-const updatePackageJson = async (document: vscode.TextDocument) => {
+const loadDecoration = async (document: vscode.TextDocument) => {
   const dependencyLineLimits = getDependencyLineLimits(document)
 
   const textEditor = getTextEditorFromDocument(document)
@@ -59,7 +59,7 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 
   const ignorePatterns = getIgnorePattern()
 
-  clearCurrentDecorations()
+  clearDecorations()
 
   Array.from({ length: document.lineCount })
     .map((_, index) => index)
