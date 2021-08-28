@@ -1,17 +1,6 @@
 import fetch from 'node-fetch'
 import * as npmRegistryFetch from 'npm-registry-fetch'
-import {
-  coerce,
-  diff,
-  gt,
-  lte,
-  prerelease,
-  ReleaseType,
-  valid,
-  satisfies,
-  validRange,
-  SemVer,
-} from 'semver'
+import { coerce, diff, gt, lte, ReleaseType, valid, satisfies, validRange, SemVer } from 'semver'
 import * as vscode from 'vscode'
 import { getConfig } from './config'
 import { getNpmConfig } from './npmConfig'
@@ -86,20 +75,36 @@ export const getCachedChangelog = (dependencyName: string) => {
 
 export const getLatestVersion = (
   npmData: NpmData,
-  includePrerelease: boolean,
+  rawCurrentVersion: string,
+  dependencyName: string,
 ): VersionData | undefined => {
-  const versions = Object.values<VersionData>(npmData.versions)
-  if (versions.length === 0) {
-    return undefined
-  } else {
-    const filteredVersions = includePrerelease
-      ? versions
-      : versions.filter((item) => prerelease(item.version) === null)
-    if (filteredVersions.length === 0) {
-      return undefined
-    }
-    return filteredVersions.reduce((a, b) => (gt(a.version, b.version) ? a : b))
-  }
+  const ignoredVersions = getConfig().ignoreVersions[dependencyName]
+  return getLatestVersionWithIgnoredVersions(
+    npmData,
+    rawCurrentVersion,
+    dependencyName,
+    ignoredVersions,
+  )
+}
+
+export const getLatestVersionWithIgnoredVersions = (
+  npmData: NpmData,
+  rawCurrentVersion: string,
+  dependencyName: string,
+  ignoredVersions: string | undefined | string[],
+): VersionData | undefined => {
+  const possibleUpgrades = getPossibleUpgradesWithIgnoredVersions(
+    npmData,
+    rawCurrentVersion,
+    dependencyName,
+    ignoredVersions,
+  )
+  return (
+    possibleUpgrades.major ??
+    possibleUpgrades.minor ??
+    possibleUpgrades.patch ??
+    possibleUpgrades.prerelease
+  )
 }
 
 export const getExactVersion = (rawVersion: string) => {

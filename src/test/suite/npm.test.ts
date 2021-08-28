@@ -5,6 +5,8 @@ import {
   NpmData,
   DependencyUpdateInfo,
   getPossibleUpgradesWithIgnoredVersions,
+  getLatestVersionWithIgnoredVersions,
+  VersionData,
 } from '../../npm'
 
 const testData: NpmData = {
@@ -271,5 +273,43 @@ suite('Npm Test Suite', () => {
       validVersion: true,
     }
     assert.deepStrictEqual(result, expected)
+  })
+
+  test('getLatestVersion major', () => {
+    const result: VersionData | undefined = getLatestVersionWithIgnoredVersions(
+      testData,
+      '1.1.1',
+      'whatever',
+      ['=2.1.1', '=2.1.0'],
+    )
+    const expected: VersionData = {
+      name: 'test1',
+      version: '2.0.0',
+    }
+    assert.deepStrictEqual(result, expected)
+  })
+
+  test('getLatestVersion patch', () => {
+    const result: VersionData | undefined = getLatestVersionWithIgnoredVersions(
+      testData,
+      '2.1.0',
+      'whatever',
+      [],
+    )
+    const expected: VersionData = {
+      name: 'test1',
+      version: '2.1.1',
+    }
+    assert.deepStrictEqual(result, expected)
+  })
+
+  test('getLatestVersion star', () => {
+    const result: VersionData | undefined = getLatestVersionWithIgnoredVersions(
+      testData,
+      '*',
+      'whatever',
+      [],
+    )
+    assert.deepStrictEqual(result, undefined)
   })
 })
