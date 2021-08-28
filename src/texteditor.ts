@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { getConfig } from './config'
 import { decorateDiscreet, getDecoratorForUpdate } from './decorations'
+import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
 import { parseDependencyLine } from './packageJson'
 import { AsyncState } from './types'
@@ -57,16 +57,7 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
 
   await refreshPackageJsonData(document)
 
-  const ignorePatterns: RegExp[] = []
-  for (const pattern of getConfig().ignorePatterns) {
-    try {
-      ignorePatterns.push(new RegExp(pattern))
-    } catch (err) {
-      vscode.window.showErrorMessage(
-        `Invalid ignore pattern ${pattern}${err instanceof Error ? `: ${err.message}` : ``}`,
-      )
-    }
-  }
+  const ignorePatterns = getIgnorePattern()
 
   clearCurrentDecorations()
 
@@ -85,10 +76,8 @@ const updatePackageJson = async (document: vscode.TextDocument) => {
         return
       }
 
-      for (const ignorePattern of ignorePatterns) {
-        if (ignorePattern.exec(dep.dependencyName) !== null) {
-          return
-        }
+      if (isDependencyIgnored(dep.dependencyName, ignorePatterns)) {
+        return
       }
 
       const range = new vscode.Range(

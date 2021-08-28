@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getExactVersion, getLatestVersion } from './npm'
 import { parseDependencyLine } from './packageJson'
 import { getDependencyLineLimits, getLineLimitForLine, isPackageJson } from './texteditor'
@@ -17,6 +18,8 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
   const document = textEditor.document
 
   if (isPackageJson(document)) {
+    const ignorePatterns = getIgnorePattern()
+
     const dependencyLineLimits = getDependencyLineLimits(document)
     const edits: UpdateEdit[] = Array.from({ length: document.lineCount })
       .map((_, index) => index)
@@ -28,14 +31,20 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
         const lineText = document.lineAt(index).text
         const wholeLineRange = new vscode.Range(index, 0, index, lineText.length)
         const dep = parseDependencyLine(lineText)
+
         if (dep === undefined) {
           return
         }
+
+        if (isDependencyIgnored(dep.dependencyName, ignorePatterns)) {
+          return
+        }
+
         const npmCache = getCachedNpmData(dep.dependencyName)
         if (npmCache?.item === undefined) {
           return
         }
-        const currentExactVersion = getExactVersion(dep.currentVersion)
+
         const latestVersion = getLatestVersion(
           npmCache.item.npmData,
           dep.currentVersion,
@@ -44,6 +53,8 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
         if (latestVersion === undefined) {
           return
         }
+
+        const currentExactVersion = getExactVersion(dep.currentVersion)
         const newLineText = replaceLastOccuranceOf(
           lineText,
           currentExactVersion,
