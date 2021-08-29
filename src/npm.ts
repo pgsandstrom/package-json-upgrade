@@ -225,7 +225,7 @@ const getRawPossibleUpgradeList = (
 }
 
 const isVersionIgnored = (version: VersionData, dependencyName: string, ignoredVersion: string) => {
-  if (!validRange(ignoredVersion)) {
+  if (validRange(ignoredVersion) === null) {
     console.warn(
       `invalid semver range detected in ignored version for depedency ${dependencyName}: ${ignoredVersion}`,
     )
@@ -290,7 +290,7 @@ const fetchNpmData = async (dependencyName: string, path: string) => {
         npmData: json,
       },
     }
-  } catch (e) {
+  } catch (e: any) {
     /* eslint-disable */
     console.error(`failed to load dependency ${dependencyName}`)
     console.error(`status code: ${e?.statusCode}`)
