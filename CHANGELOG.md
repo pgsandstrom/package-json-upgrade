@@ -2,6 +2,12 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 1.5.3
+
+- Fix issue with "update all" command not respecting ignored version ranges
+- Fix issue with "update all" command not respecting ignored dependencies
+- Fix issue with "update all" command replacing "\*" with latest version
+
 ## 1.5.2
 
 - Add license and keywords
