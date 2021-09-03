@@ -1,6 +1,11 @@
 # Change Log
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
+## 1.5.4
+
+- Enabled "peerDependency" support
+- Updated dependencies
+- Update vscode engine
 
 ## 1.5.3
 
