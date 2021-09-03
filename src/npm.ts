@@ -8,6 +8,7 @@ import { AsyncState, Dict, Loader, StrictDict } from './types'
 
 interface PackageJson {
   dependencies: StrictDict<string, PackageJsonDependency>
+  peerDependencies: StrictDict<string, PackageJsonDependency>
   devDependencies: StrictDict<string, PackageJsonDependency>
 }
 
@@ -243,6 +244,7 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
     const dependencies = {
       ...json.dependencies,
       ...json.devDependencies,
+      ...json.peerDependencies
     }
 
     const promises = Object.entries(dependencies).map(([dependencyName, _version]) => {
