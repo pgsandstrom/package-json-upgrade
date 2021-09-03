@@ -167,7 +167,7 @@ export const getDependencyLineLimits = (document: vscode.TextDocument) => {
   if (devDependencies !== undefined) {
     limits.push(devDependencies)
   }
-  const peerDependencies = getFlatTagStartEnd(document, /\s*"peerDependencies"\s*/, true)
+  const peerDependencies = getFlatTagStartEnd(document, /\s*"peerDependencies"\s*/, false)
   if (peerDependencies !== undefined) {
     limits.push(peerDependencies)
   }
