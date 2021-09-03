@@ -2,12 +2,12 @@
   "name": "package-json-upgrade",
   "displayName": "Package Json Upgrade",
   "description": "Shows available updates in package.json files. Offers quick fix command to update them and to show the changelog.",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "publisher": "codeandstuff",
   "license": "MIT",
   "icon": "logo/icon.png",
   "engines": {
-    "vscode": "^1.41.1"
+    "vscode": "^1.60.0"
   },
   "categories": [
     "Programming Languages",
@@ -126,26 +126,26 @@
   "devDependencies": {
     "@types/glob": "7.1.4",
     "@types/mocha": "9.0.0",
-    "@types/node": "13.13.52",
+    "@types/node": "16.7.10",
     "@types/node-fetch": "2.5.12",
     "@types/npm-registry-fetch": "8.0.1",
     "@types/semver": "7.3.8",
-    "@types/vscode": "1.41.0",
-    "@typescript-eslint/eslint-plugin": "4.29.3",
-    "@typescript-eslint/parser": "4.29.3",
+    "@types/vscode": "1.60.0",
+    "@typescript-eslint/eslint-plugin": "4.30.0",
+    "@typescript-eslint/parser": "4.30.0",
     "cross-env": "7.0.3",
     "eslint": "7.32.0",
     "eslint-config-prettier": "8.3.0",
     "glob": "7.1.7",
-    "husky": "7.0.1",
+    "husky": "7.0.2",
     "lint-staged": "11.1.2",
     "mocha": "9.1.1",
     "prettier": "2.3.2",
     "ts-loader": "9.2.5",
     "typescript": "4.4.2",
-    "vsce": "1.96.1",
+    "vsce": "1.96.3",
     "vscode-test": "1.6.1",
-    "webpack": "5.51.1",
+    "webpack": "5.51.2",
     "webpack-cli": "4.8.0"
   }
 }
