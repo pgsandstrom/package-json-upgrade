@@ -26,11 +26,8 @@ module.exports = {
   rules: {
     // turn off unwanted rules:
     '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
-    '@typescript-eslint/no-use-before-define': 'off',
     '@typescript-eslint/camelcase': 'off', // There are a few exceptions, like variables from the backend and stuff
-    '@typescript-eslint/explicit-module-boundary-types': 'off', // This feels unnecessary and verbose
     '@typescript-eslint/no-floating-promises': 'off', // just feels a bit verbose with the vscode API
 
     // activate extra rules:
