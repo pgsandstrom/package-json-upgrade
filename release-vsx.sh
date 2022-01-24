@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Add the release token to .env as variable TOKEN. Like this:
 # TOKEN=my_token
 
