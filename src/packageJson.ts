@@ -6,17 +6,19 @@ export interface LineLimit {
   isPeerDependency: boolean
 }
 
+// TODO this function is still a hax that breakes if you have a "dependency" key higher up in package.json.
+// It would be nice with a function that works correctly.
 export const getDependencyLineLimits = (document: vscode.TextDocument): LineLimit[] => {
   const limits = []
-  const devDependencies = getFlatTagStartEnd(document, /\s*"devDependencies"\s*/, false)
+  const devDependencies = getFlatTagStartEnd(document, /\s*"devDependencies"\s*:/, false)
   if (devDependencies !== undefined) {
     limits.push(devDependencies)
   }
-  const peerDependencies = getFlatTagStartEnd(document, /\s*"peerDependencies"\s*/, true)
+  const peerDependencies = getFlatTagStartEnd(document, /\s*"peerDependencies"\s*:/, true)
   if (peerDependencies !== undefined) {
     limits.push(peerDependencies)
   }
-  const dependencies = getFlatTagStartEnd(document, /\s*"dependencies"\s*/, false)
+  const dependencies = getFlatTagStartEnd(document, /\s*"dependencies"\s*:/, false)
   if (dependencies !== undefined) {
     limits.push(dependencies)
   }
