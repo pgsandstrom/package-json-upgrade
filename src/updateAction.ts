@@ -1,8 +1,7 @@
 import * as vscode from 'vscode'
 import { OPEN_URL_COMMAND } from './extension'
 import { getCachedChangelog, getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
-import { parseDependencyLine } from './packageJson'
-import { getLineLimitForLine, isPackageJson } from './texteditor'
+import { getLineLimitForLine, isPackageJson, parseDependencyLine } from './packageJson'
 import { replaceLastOccuranceOf } from './util/util'
 
 export class UpdateAction implements vscode.CodeActionProvider {

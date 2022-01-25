@@ -1,8 +1,12 @@
 import * as vscode from 'vscode'
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getExactVersion, getLatestVersion } from './npm'
-import { parseDependencyLine } from './packageJson'
-import { getDependencyLineLimits, getLineLimitForLine, isPackageJson } from './texteditor'
+import {
+  getDependencyLineLimits,
+  getLineLimitForLine,
+  isPackageJson,
+  parseDependencyLine,
+} from './packageJson'
 import { replaceLastOccuranceOf } from './util/util'
 
 export interface UpdateEdit {
