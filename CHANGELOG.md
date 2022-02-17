@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 1.6.0
+
+- Add a warning when a non-existing version is used
+
 ## 1.5.3
 
 - Fix issue with "update all" command not respecting ignored version ranges
