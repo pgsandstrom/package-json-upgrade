@@ -85,7 +85,7 @@ const activateCodeActionStuff = (context: vscode.ExtensionContext) => {
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(OPEN_URL_COMMAND, (url) => {
+    vscode.commands.registerCommand(OPEN_URL_COMMAND, (url: string) => {
       vscode.env.openExternal(vscode.Uri.parse(url))
     }),
   )
