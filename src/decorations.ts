@@ -95,25 +95,31 @@ export const decorateDiscreet = (contentText: string) => {
 export const getDecoratorForUpdate = (
   releaseType: ReleaseType | null,
   latestVersion: string,
+  currentVersionExisting: boolean,
 ): TextEditorDecorationType | undefined => {
   switch (releaseType) {
     case 'major':
     case 'premajor':
-      return decorateMajorUpdate(getUpdateDescription(latestVersion))
+      return decorateMajorUpdate(getUpdateDescription(latestVersion, currentVersionExisting))
     case 'minor':
     case 'preminor':
-      return decorateMinorUpdate(getUpdateDescription(latestVersion))
+      return decorateMinorUpdate(getUpdateDescription(latestVersion, currentVersionExisting))
     case 'patch':
     case 'prepatch':
-      return decoratePatchUpdate(getUpdateDescription(latestVersion))
+      return decoratePatchUpdate(getUpdateDescription(latestVersion, currentVersionExisting))
     case 'prerelease':
-      return decoratePrereleaseUpdate(getUpdateDescription(latestVersion))
+      return decoratePrereleaseUpdate(getUpdateDescription(latestVersion, currentVersionExisting))
     case null:
     default:
       return undefined
   }
 }
 
-function getUpdateDescription(latestVersion: string): string {
-  return getConfig().decorationString.replace('%s', latestVersion)
+function getUpdateDescription(latestVersion: string, currentVersionExisting: boolean): string {
+  const versionString = getConfig().decorationString.replace('%s', latestVersion)
+  if (currentVersionExisting) {
+    return versionString
+  } else {
+    return `${versionString} (current version not found)`
+  }
 }

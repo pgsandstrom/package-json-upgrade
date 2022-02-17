@@ -40,6 +40,7 @@ export interface DependencyUpdateInfo {
   patch?: VersionData
   prerelease?: VersionData
   validVersion: boolean
+  existingVersion: boolean
 }
 
 export interface CacheItem {
@@ -148,7 +149,7 @@ export const getPossibleUpgradesWithIgnoredVersions = (
   ignoredVersions: string | undefined | string[],
 ): DependencyUpdateInfo => {
   if (rawCurrentVersion === '*' || rawCurrentVersion === 'x') {
-    return { validVersion: true }
+    return { validVersion: true, existingVersion: true }
   }
 
   const exactVersion = getExactVersion(rawCurrentVersion)
@@ -157,8 +158,12 @@ export const getPossibleUpgradesWithIgnoredVersions = (
 
   const coercedVersion = currentVersionIsPrerelease ? exactVersion : coerce(exactVersion)
   if (coercedVersion === null) {
-    return { validVersion: false }
+    return { validVersion: false, existingVersion: false }
   }
+
+  const existingVersion = Object.values(npmData.versions).some(
+    (version) => version.version === exactVersion,
+  )
 
   const possibleUpgrades = getRawPossibleUpgradeList(
     npmData,
@@ -189,6 +194,7 @@ export const getPossibleUpgradesWithIgnoredVersions = (
     patch: patchUpgrade,
     prerelease: prereleaseUpgrade,
     validVersion: true,
+    existingVersion,
   }
 }
 

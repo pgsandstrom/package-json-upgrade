@@ -70,6 +70,7 @@ suite('Npm Test Suite', () => {
       patch: undefined,
       prerelease: undefined,
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -82,6 +83,7 @@ suite('Npm Test Suite', () => {
       patch: undefined,
       prerelease: undefined,
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -94,6 +96,7 @@ suite('Npm Test Suite', () => {
       patch: { name: 'test1', version: '2.1.1' },
       prerelease: undefined,
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -106,6 +109,7 @@ suite('Npm Test Suite', () => {
       patch: { name: 'test1', version: '1.0.1' },
       prerelease: undefined,
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -114,6 +118,7 @@ suite('Npm Test Suite', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(testData, 'tjena', 'whatever')
     const expected: DependencyUpdateInfo = {
       validVersion: false,
+      existingVersion: false,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -126,6 +131,7 @@ suite('Npm Test Suite', () => {
       patch: undefined,
       prerelease: { name: 'test1', version: '3.0.0-alpha.2' },
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -138,6 +144,7 @@ suite('Npm Test Suite', () => {
       patch: undefined,
       prerelease: { name: 'test1', version: '3.0.0-alpha.2' },
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -150,6 +157,7 @@ suite('Npm Test Suite', () => {
       patch: undefined,
       prerelease: { name: 'test1', version: '2.0.0' },
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -186,6 +194,7 @@ suite('Npm Test Suite', () => {
       patch: undefined,
       prerelease: undefined,
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -202,6 +211,7 @@ suite('Npm Test Suite', () => {
       patch: { name: 'test1', version: '2.0.1' },
       prerelease: undefined,
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -237,6 +247,7 @@ suite('Npm Test Suite', () => {
       patch: undefined,
       prerelease: undefined,
       validVersion: true,
+      existingVersion: false,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -254,6 +265,7 @@ suite('Npm Test Suite', () => {
       patch: undefined,
       prerelease: undefined,
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })
@@ -271,6 +283,7 @@ suite('Npm Test Suite', () => {
       patch: undefined,
       prerelease: undefined,
       validVersion: true,
+      existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })

@@ -113,13 +113,29 @@ const loadDecoration = async (document: vscode.TextDocument) => {
       let decorator
       if (possibleUpgrades.major !== undefined) {
         // TODO add info about patch version?
-        decorator = getDecoratorForUpdate('major', possibleUpgrades.major.version)
+        decorator = getDecoratorForUpdate(
+          'major',
+          possibleUpgrades.major.version,
+          possibleUpgrades.existingVersion,
+        )
       } else if (possibleUpgrades.minor !== undefined) {
-        decorator = getDecoratorForUpdate('minor', possibleUpgrades.minor.version)
+        decorator = getDecoratorForUpdate(
+          'minor',
+          possibleUpgrades.minor.version,
+          possibleUpgrades.existingVersion,
+        )
       } else if (possibleUpgrades.patch !== undefined) {
-        decorator = getDecoratorForUpdate('patch', possibleUpgrades.patch.version)
+        decorator = getDecoratorForUpdate(
+          'patch',
+          possibleUpgrades.patch.version,
+          possibleUpgrades.existingVersion,
+        )
       } else if (possibleUpgrades.prerelease !== undefined) {
-        decorator = getDecoratorForUpdate('prerelease', possibleUpgrades.prerelease.version)
+        decorator = getDecoratorForUpdate(
+          'prerelease',
+          possibleUpgrades.prerelease.version,
+          possibleUpgrades.existingVersion,
+        )
       } else if (possibleUpgrades.validVersion === false) {
         decorator = decorateDiscreet('Failed to parse version')
       } else {
