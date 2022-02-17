@@ -341,4 +341,43 @@ suite('Npm Test Suite', () => {
     )
     assert.deepStrictEqual(result, undefined)
   })
+
+  test('existingVersion should work with caret', () => {
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '^1.1.1', 'dependencyName')
+    const expected: DependencyUpdateInfo = {
+      major: { name: 'dependencyName', version: '2.1.1' },
+      minor: undefined,
+      patch: undefined,
+      prerelease: undefined,
+      validVersion: true,
+      existingVersion: true,
+    }
+    assert.deepStrictEqual(result, expected)
+  })
+
+  test('existingVersion should work with tilde', () => {
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '~1.1.1', 'dependencyName')
+    const expected: DependencyUpdateInfo = {
+      major: { name: 'dependencyName', version: '2.1.1' },
+      minor: undefined,
+      patch: undefined,
+      prerelease: undefined,
+      validVersion: true,
+      existingVersion: true,
+    }
+    assert.deepStrictEqual(result, expected)
+  })
+
+  test('existingVersion should be true when version does not exist', () => {
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.1.11', 'dependencyName')
+    const expected: DependencyUpdateInfo = {
+      major: { name: 'dependencyName', version: '2.1.1' },
+      minor: undefined,
+      patch: undefined,
+      prerelease: undefined,
+      validVersion: true,
+      existingVersion: false,
+    }
+    assert.deepStrictEqual(result, expected)
+  })
 })
