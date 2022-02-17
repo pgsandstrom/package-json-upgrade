@@ -15,47 +15,47 @@ const testData: NpmData = {
   },
   versions: {
     '1.0.0': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '1.0.0',
     },
     '1.0.1': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '1.0.1',
     },
     '1.1.0': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '1.1.0',
     },
     '1.1.1': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '1.1.1',
     },
     '2.0.0-alpha.1': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '2.0.0-alpha.1',
     },
     '2.0.0-alpha.2': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '2.0.0-alpha.2',
     },
     '2.0.0': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '2.0.0',
     },
     '2.1.0': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '2.1.0',
     },
     '2.1.1': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '2.1.1',
     },
     '3.0.0-alpha.1': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '3.0.0-alpha.1',
     },
     '3.0.0-alpha.2': {
-      name: 'test1',
+      name: 'dependencyName',
       version: '3.0.0-alpha.2',
     },
   },
@@ -63,9 +63,9 @@ const testData: NpmData = {
 
 suite('Npm Test Suite', () => {
   test('Major upgrade', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.1.1', 'whatever')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.1.1', 'dependencyName')
     const expected: DependencyUpdateInfo = {
-      major: { name: 'test1', version: '2.1.1' },
+      major: { name: 'dependencyName', version: '2.1.1' },
       minor: undefined,
       patch: undefined,
       prerelease: undefined,
@@ -76,10 +76,10 @@ suite('Npm Test Suite', () => {
   })
 
   test('Minor upgrade', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0', 'whatever')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0', 'dependencyName')
     const expected: DependencyUpdateInfo = {
       major: undefined,
-      minor: { name: 'test1', version: '2.1.1' },
+      minor: { name: 'dependencyName', version: '2.1.1' },
       patch: undefined,
       prerelease: undefined,
       validVersion: true,
@@ -89,11 +89,11 @@ suite('Npm Test Suite', () => {
   })
 
   test('Patch upgrade', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.1.0', 'whatever')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.1.0', 'dependencyName')
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
-      patch: { name: 'test1', version: '2.1.1' },
+      patch: { name: 'dependencyName', version: '2.1.1' },
       prerelease: undefined,
       validVersion: true,
       existingVersion: true,
@@ -102,11 +102,11 @@ suite('Npm Test Suite', () => {
   })
 
   test('Many upgrades', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.0.0', 'whatever')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.0.0', 'dependencyName')
     const expected: DependencyUpdateInfo = {
-      major: { name: 'test1', version: '2.1.1' },
-      minor: { name: 'test1', version: '1.1.1' },
-      patch: { name: 'test1', version: '1.0.1' },
+      major: { name: 'dependencyName', version: '2.1.1' },
+      minor: { name: 'dependencyName', version: '1.1.1' },
+      patch: { name: 'dependencyName', version: '1.0.1' },
       prerelease: undefined,
       validVersion: true,
       existingVersion: true,
@@ -115,7 +115,11 @@ suite('Npm Test Suite', () => {
   })
 
   test('Invalid version', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, 'tjena', 'whatever')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(
+      testData,
+      'non-existing-version',
+      'dependencyName',
+    )
     const expected: DependencyUpdateInfo = {
       validVersion: false,
       existingVersion: false,
@@ -124,12 +128,16 @@ suite('Npm Test Suite', () => {
   })
 
   test('Prerelease upgrade', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '3.0.0-alpha.1', 'whatever')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(
+      testData,
+      '3.0.0-alpha.1',
+      'dependencyName',
+    )
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
       patch: undefined,
-      prerelease: { name: 'test1', version: '3.0.0-alpha.2' },
+      prerelease: { name: 'dependencyName', version: '3.0.0-alpha.2' },
       validVersion: true,
       existingVersion: true,
     }
@@ -137,12 +145,16 @@ suite('Npm Test Suite', () => {
   })
 
   test('Prerelease upgrade with inexact version', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '^3.0.0-alpha.1', 'whatever')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(
+      testData,
+      '^3.0.0-alpha.1',
+      'dependencyName',
+    )
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
       patch: undefined,
-      prerelease: { name: 'test1', version: '3.0.0-alpha.2' },
+      prerelease: { name: 'dependencyName', version: '3.0.0-alpha.2' },
       validVersion: true,
       existingVersion: true,
     }
@@ -150,12 +162,16 @@ suite('Npm Test Suite', () => {
   })
 
   test('Prerelease upgrade to final', () => {
-    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '2.0.0-alpha.1', 'whatever')
+    const result: DependencyUpdateInfo = getPossibleUpgrades(
+      testData,
+      '2.0.0-alpha.1',
+      'dependencyName',
+    )
     const expected: DependencyUpdateInfo = {
       major: undefined,
-      minor: { name: 'test1', version: '2.1.1' },
+      minor: { name: 'dependencyName', version: '2.1.1' },
       patch: undefined,
-      prerelease: { name: 'test1', version: '2.0.0' },
+      prerelease: { name: 'dependencyName', version: '2.0.0' },
       validVersion: true,
       existingVersion: true,
     }
@@ -168,15 +184,15 @@ suite('Npm Test Suite', () => {
     },
     versions: {
       '1.0.0': {
-        name: 'test1',
+        name: 'dependencyName',
         version: '1.0.0',
       },
       '2.0.0': {
-        name: 'test1',
+        name: 'dependencyName',
         version: '2.0.0',
       },
       '2.0.1': {
-        name: 'test1',
+        name: 'dependencyName',
         version: '2.0.1',
       },
     },
@@ -186,7 +202,7 @@ suite('Npm Test Suite', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(
       testDataWithLatest,
       '1.0.0',
-      'whatever',
+      'dependencyName',
     )
     const expected: DependencyUpdateInfo = {
       major: undefined,
@@ -203,12 +219,12 @@ suite('Npm Test Suite', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(
       testDataWithLatest,
       '2.0.0',
-      'whatever',
+      'dependencyName',
     )
     const expected: DependencyUpdateInfo = {
       major: undefined,
       minor: undefined,
-      patch: { name: 'test1', version: '2.0.1' },
+      patch: { name: 'dependencyName', version: '2.0.1' },
       prerelease: undefined,
       validVersion: true,
       existingVersion: true,
@@ -222,11 +238,11 @@ suite('Npm Test Suite', () => {
     },
     versions: {
       '1.0.0-build100': {
-        name: 'test1',
+        name: 'dependencyName',
         version: '1.0.0-build100',
       },
       '2.0.0-build100': {
-        name: 'test1',
+        name: 'dependencyName',
         version: '2.0.0-build100',
       },
     },
@@ -236,11 +252,11 @@ suite('Npm Test Suite', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(
       testDataWithOnlyPrereleases,
       '1.0.1-build100',
-      'whatever',
+      'dependencyName',
     )
     const expected: DependencyUpdateInfo = {
       major: {
-        name: 'test1',
+        name: 'dependencyName',
         version: '2.0.0-build100',
       },
       minor: undefined,
@@ -256,11 +272,11 @@ suite('Npm Test Suite', () => {
     const result: DependencyUpdateInfo = getPossibleUpgradesWithIgnoredVersions(
       testData,
       '1.1.1',
-      'whatever',
+      'dependencyName',
       '>=2.1.1',
     )
     const expected: DependencyUpdateInfo = {
-      major: { name: 'test1', version: '2.1.0' },
+      major: { name: 'dependencyName', version: '2.1.0' },
       minor: undefined,
       patch: undefined,
       prerelease: undefined,
@@ -274,11 +290,11 @@ suite('Npm Test Suite', () => {
     const result: DependencyUpdateInfo = getPossibleUpgradesWithIgnoredVersions(
       testData,
       '1.1.1',
-      'whatever',
+      'dependencyName',
       ['=2.1.1', '=2.1.0'],
     )
     const expected: DependencyUpdateInfo = {
-      major: { name: 'test1', version: '2.0.0' },
+      major: { name: 'dependencyName', version: '2.0.0' },
       minor: undefined,
       patch: undefined,
       prerelease: undefined,
@@ -292,11 +308,11 @@ suite('Npm Test Suite', () => {
     const result: VersionData | undefined = getLatestVersionWithIgnoredVersions(
       testData,
       '1.1.1',
-      'whatever',
+      'dependencyName',
       ['=2.1.1', '=2.1.0'],
     )
     const expected: VersionData = {
-      name: 'test1',
+      name: 'dependencyName',
       version: '2.0.0',
     }
     assert.deepStrictEqual(result, expected)
@@ -306,11 +322,11 @@ suite('Npm Test Suite', () => {
     const result: VersionData | undefined = getLatestVersionWithIgnoredVersions(
       testData,
       '2.1.0',
-      'whatever',
+      'dependencyName',
       [],
     )
     const expected: VersionData = {
-      name: 'test1',
+      name: 'dependencyName',
       version: '2.1.1',
     }
     assert.deepStrictEqual(result, expected)
@@ -320,7 +336,7 @@ suite('Npm Test Suite', () => {
     const result: VersionData | undefined = getLatestVersionWithIgnoredVersions(
       testData,
       '*',
-      'whatever',
+      'dependencyName',
       [],
     )
     assert.deepStrictEqual(result, undefined)
