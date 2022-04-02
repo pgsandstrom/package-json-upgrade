@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import * as npmRegistryFetch from 'npm-registry-fetch'
-import { coerce, diff, gt, lte, ReleaseType, valid, satisfies, validRange, SemVer } from 'semver'
+import { ReleaseType, SemVer, coerce, diff, gt, lte, satisfies, valid, validRange } from 'semver'
 import * as vscode from 'vscode'
 import { getConfig } from './config'
 import { getNpmConfig } from './npmConfig'

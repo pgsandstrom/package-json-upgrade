@@ -1,12 +1,12 @@
 import * as assert from 'assert'
 
 import {
-  getPossibleUpgrades,
-  NpmData,
   DependencyUpdateInfo,
-  getPossibleUpgradesWithIgnoredVersions,
-  getLatestVersionWithIgnoredVersions,
+  NpmData,
   VersionData,
+  getLatestVersionWithIgnoredVersions,
+  getPossibleUpgrades,
+  getPossibleUpgradesWithIgnoredVersions,
 } from '../../npm'
 
 const testData: NpmData = {
