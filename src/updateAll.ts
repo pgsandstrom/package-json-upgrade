@@ -1,12 +1,7 @@
 import * as vscode from 'vscode'
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getExactVersion, getLatestVersion } from './npm'
-import {
-  getDependencyLineLimits,
-  getLineLimitForLine,
-  isPackageJson,
-  parseDependencyLine,
-} from './packageJson'
+import { getDependencyInformation, isPackageJson } from './packageJson'
 import { replaceLastOccuranceOf } from './util/util'
 
 export interface UpdateEdit {
@@ -24,21 +19,13 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
   if (isPackageJson(document)) {
     const ignorePatterns = getIgnorePattern()
 
-    const dependencyLineLimits = getDependencyLineLimits(document)
-    const edits: UpdateEdit[] = Array.from({ length: document.lineCount })
-      .map((_, index) => index)
-      .filter((index) => {
-        const lineLimit = getLineLimitForLine(document, index, dependencyLineLimits)
-        return lineLimit !== undefined
-      })
-      .map((index) => {
-        const lineText = document.lineAt(index).text
-        const wholeLineRange = new vscode.Range(index, 0, index, lineText.length)
-        const dep = parseDependencyLine(lineText)
-
-        if (dep === undefined) {
-          return
-        }
+    const dependencies = getDependencyInformation(document.getText())
+      .map((d) => d.deps)
+      .flat()
+    const edits: UpdateEdit[] = dependencies
+      .map((dep) => {
+        const lineText = document.lineAt(dep.line).text
+        const wholeLineRange = new vscode.Range(dep.line, 0, dep.line, lineText.length)
 
         if (isDependencyIgnored(dep.dependencyName, ignorePatterns)) {
           return
@@ -71,14 +58,16 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
       })
       .filter((edit): edit is UpdateEdit => edit !== undefined)
 
-    textEditor.edit((editBuilder: vscode.TextEditorEdit) => {
+    void textEditor.edit((editBuilder: vscode.TextEditorEdit) => {
       edits.forEach((edit) => {
         editBuilder.replace(edit.range, edit.text)
       })
     })
     return edits
   } else {
-    vscode.window.showWarningMessage('Update failed: File not recognized as valid package.json')
+    void vscode.window.showWarningMessage(
+      'Update failed: File not recognized as valid package.json',
+    )
     return []
   }
 }

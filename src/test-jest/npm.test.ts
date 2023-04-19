@@ -7,7 +7,8 @@ import {
   getLatestVersionWithIgnoredVersions,
   getPossibleUpgrades,
   getPossibleUpgradesWithIgnoredVersions,
-} from '../../npm'
+} from '../npm'
+import { Config, setConfig } from '../config'
 
 const testData: NpmData = {
   'dist-tags': {
@@ -61,7 +62,22 @@ const testData: NpmData = {
   },
 }
 
-suite('Npm Test Suite', () => {
+describe('Npm Test Suite', () => {
+  beforeAll(() => {
+    const config: Config = {
+      showUpdatesAtStart: true,
+      skipNpmConfig: true,
+      majorUpgradeColorOverwrite: '',
+      minorUpgradeColorOverwrite: '',
+      patchUpgradeColorOverwrite: '',
+      prereleaseUpgradeColorOverwrite: '',
+      decorationString: '',
+      ignorePatterns: [],
+      ignoreVersions: {},
+    }
+    setConfig(config)
+  })
+
   test('Major upgrade', () => {
     const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.1.1', 'dependencyName')
     const expected: DependencyUpdateInfo = {

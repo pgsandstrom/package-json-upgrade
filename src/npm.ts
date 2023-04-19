@@ -1,7 +1,6 @@
 import fetch from 'node-fetch'
 import * as npmRegistryFetch from 'npm-registry-fetch'
 import { ReleaseType, SemVer, coerce, diff, gt, lte, satisfies, valid, validRange } from 'semver'
-import * as vscode from 'vscode'
 import { getConfig } from './config'
 import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
@@ -240,12 +239,11 @@ const isVersionIgnored = (version: VersionData, dependencyName: string, ignoredV
   return satisfies(version.version, ignoredVersion)
 }
 
-export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
+export const refreshPackageJsonData = (packageJsonString: string, packageJsonFilePath: string) => {
   const cacheCutoff = new Date(new Date().getTime() - 1000 * 60 * 120) // 120 minutes
 
-  const text = packageJson.getText()
   try {
-    const json = JSON.parse(text) as PackageJson
+    const json = JSON.parse(packageJsonString) as PackageJson
     const dependencies = {
       ...json.dependencies,
       ...json.devDependencies,
@@ -258,7 +256,7 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
         cache.item === undefined ||
         cache.item.date.getTime() < cacheCutoff.getTime()
       ) {
-        return fetchNpmData(dependencyName, packageJson.uri.fsPath)
+        return fetchNpmData(dependencyName, packageJsonFilePath)
       } else {
         return Promise.resolve()
       }
@@ -266,12 +264,12 @@ export const refreshPackageJsonData = (packageJson: vscode.TextDocument) => {
 
     return Promise.all(promises)
   } catch (e) {
-    console.warn(`Failed to parse package.json: ${packageJson.uri.fsPath}`)
+    console.warn(`Failed to parse package.json: ${packageJsonFilePath}`)
     return Promise.resolve()
   }
 }
 
-const fetchNpmData = async (dependencyName: string, path: string) => {
+const fetchNpmData = async (dependencyName: string, packageJsonPath: string) => {
   if (
     npmCache[dependencyName] !== undefined &&
     (npmCache[dependencyName]?.asyncstate === AsyncState.InProgress ||
@@ -283,11 +281,12 @@ const fetchNpmData = async (dependencyName: string, path: string) => {
     asyncstate: AsyncState.InProgress,
   }
 
-  const conf = { ...getNpmConfig(path), spec: dependencyName }
+  const conf = { ...getNpmConfig(packageJsonPath), spec: dependencyName }
   try {
     const json = (await npmRegistryFetch.json(dependencyName, conf)) as unknown as NpmData
     if (changelogCache[dependencyName] === undefined) {
-      findChangelog(dependencyName, json)
+      // we currently do not wait for this to speed things up
+      void findChangelog(dependencyName, json)
     }
     npmCache[dependencyName] = {
       asyncstate: AsyncState.Fulfilled,

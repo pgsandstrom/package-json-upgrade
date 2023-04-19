@@ -1,80 +1,76 @@
 import * as vscode from 'vscode'
+import { parse } from '@typescript-eslint/parser'
+import { TSESTree } from '@typescript-eslint/types'
+import { VariableDeclaration } from '@typescript-eslint/types/dist/generated/ast-spec'
 
-export interface LineLimit {
+export interface DependencyGroups {
   startLine: number
-  endLine: number
+  deps: Dependency[]
 }
 
-// TODO this function is still a hax that breakes if you have a "dependency" key higher up in package.json.
-// It would be nice with a function that works correctly.
-export const getDependencyLineLimits = (document: vscode.TextDocument): LineLimit[] => {
-  const limits = []
-  const devDependencies = getFlatTagStartEnd(document, /\s*"devDependencies"\s*:/)
-  if (devDependencies !== undefined) {
-    limits.push(devDependencies)
-  }
-  const dependencies = getFlatTagStartEnd(document, /\s*"dependencies"\s*:/)
-  if (dependencies !== undefined) {
-    limits.push(dependencies)
-  }
-  return limits
+export interface Dependency {
+  dependencyName: string
+  currentVersion: string
+  line: number
 }
 
-// lineLimits can be supplied here to save some cpu
-export const getLineLimitForLine = (
-  document: vscode.TextDocument,
-  line: number,
-  lineLimits?: LineLimit[],
-) => {
-  if (lineLimits === undefined) {
-    lineLimits = getDependencyLineLimits(document)
-  }
+export const getDependencyFromLine = (jsonAsString: string, line: number) => {
+  const dependencies = getDependencyInformation(jsonAsString)
+    .map((d) => d.deps)
+    .flat()
 
-  return lineLimits.find((limit) => limit.startLine < line && limit.endLine > line)
+  return dependencies.find((d) => d.line === line)
 }
 
-export const parseDependencyLine = (line: string) => {
-  const regexResult = /\s*"([^"]*)"\s*:\s*"([^"]*)"\s*/.exec(line)
-  if (regexResult === null || regexResult.length !== 3) {
-    console.error(`detected weird dependency string: ${line}`)
-    return undefined
+export const getDependencyInformation = (jsonAsString: string): DependencyGroups[] => {
+  const jsonAsTypescript = `let tmp=${jsonAsString}`
+
+  const ast = parse(jsonAsTypescript, {
+    loc: true,
+  })
+
+  const variable = ast.body[0] as VariableDeclaration
+
+  const tmp = variable.declarations[0]
+
+  const init = tmp.init
+  if (init == null || init.type !== 'ObjectExpression') {
+    throw new Error(`unexpected type: ${init?.type}`)
   }
+
+  const properties = init.properties as TSESTree.Property[]
+
+  const dependencies = properties.find(
+    (p) => (p.key as TSESTree.StringLiteral).value === 'dependencies',
+  )
+
+  const devDependencies = properties.find(
+    (p) => (p.key as TSESTree.StringLiteral).value === 'devDependencies',
+  )
+
+  return [dependencies, devDependencies]
+    .filter((i): i is TSESTree.Property => i !== undefined)
+    .map(toDependencyGroup)
+}
+
+function toDependencyGroup(dependencyProperty: TSESTree.Property): DependencyGroups {
+  if (dependencyProperty.value.type !== 'ObjectExpression') {
+    throw new Error('unexpected type')
+  }
+  const dependencies = dependencyProperty.value.properties as TSESTree.Property[]
+
+  const d = dependencies.map((dep) => {
+    return {
+      dependencyName: (dep.key as TSESTree.StringLiteral).value,
+      currentVersion: (dep.value as TSESTree.StringLiteral).value,
+      // TODO investigate exactly why we have "off by one" error
+      line: dep.loc.end.line - 1,
+    }
+  })
 
   return {
-    dependencyName: regexResult[1],
-    currentVersion: regexResult[2],
-  }
-}
-
-const getFlatTagStartEnd = (
-  document: vscode.TextDocument,
-  regexp: RegExp,
-): LineLimit | undefined => {
-  // TODO this whole limit detection is nooby. How to do it smarter? Is there a cool library for parsing json and finding lines in it?
-  const array = Array.from({ length: document.lineCount }).map((_, index) => index)
-
-  const startLine = array.find((i) => {
-    const lineText = document.lineAt(i).text
-    return regexp.test(lineText)
-  })
-  if (startLine === undefined) {
-    return undefined
-  }
-
-  // detect if it opens and closes on same line:
-  if (document.lineAt(startLine).text.includes('}')) {
-    return undefined
-  }
-
-  const endLine = array.slice(startLine + 1).find((i) => {
-    return document.lineAt(i).text.includes('}')
-  })
-  if (endLine === undefined) {
-    return undefined
-  }
-  return {
-    startLine,
-    endLine,
+    startLine: dependencyProperty.loc.start.line,
+    deps: d,
   }
 }
 

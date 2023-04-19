@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { OPEN_URL_COMMAND } from './extension'
 import { getCachedChangelog, getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
-import { getLineLimitForLine, isPackageJson, parseDependencyLine } from './packageJson'
+import { getDependencyFromLine, isPackageJson } from './packageJson'
 import { replaceLastOccuranceOf } from './util/util'
 
 export class UpdateAction implements vscode.CodeActionProvider {
@@ -11,9 +11,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
     document: vscode.TextDocument,
     range: vscode.Range,
   ): vscode.CodeAction[] | undefined {
-    const lineLimit = getLineLimitForLine(document, range.start.line)
-
-    if (isPackageJson(document) === false || lineLimit === undefined) {
+    if (isPackageJson(document) === false) {
       return
     }
 
@@ -21,8 +19,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
       return
     }
 
-    const lineText = document.lineAt(range.start.line).text
-    const dep = parseDependencyLine(lineText)
+    const dep = getDependencyFromLine(document.getText(), range.start.line)
     if (dep === undefined) {
       return
     }
@@ -31,8 +28,9 @@ export class UpdateAction implements vscode.CodeActionProvider {
       return
     }
 
+    const lineText = document.lineAt(range.start.line).text
     const wholeLineRange = new vscode.Range(range.start.line, 0, range.start.line, lineText.length)
-    const actions = []
+    const actions: vscode.CodeAction[] = []
 
     const possibleUpgrades = getPossibleUpgrades(
       npmCache.item.npmData,

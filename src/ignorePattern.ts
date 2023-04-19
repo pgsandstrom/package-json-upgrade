@@ -7,7 +7,7 @@ export function getIgnorePattern(): RegExp[] {
     try {
       ignorePatterns.push(new RegExp(pattern))
     } catch (err) {
-      vscode.window.showErrorMessage(
+      void vscode.window.showErrorMessage(
         `Invalid ignore pattern ${pattern}${err instanceof Error ? `: ${err.message}` : ``}`,
       )
     }

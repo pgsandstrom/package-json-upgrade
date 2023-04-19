@@ -5,10 +5,10 @@ import { Dict } from './types'
 
 let skippedNpmConfigLastTime: boolean | undefined
 
-const pathToConfMap: Dict<string, npmRegistryFetch.Options> = {}
+const packageJsonPathToConfMap: Dict<string, npmRegistryFetch.Options> = {}
 
-export const getNpmConfig = (path: string): npmRegistryFetch.Options => {
-  let conf = pathToConfMap[path]
+export const getNpmConfig = (packageJsonPath: string): npmRegistryFetch.Options => {
+  let conf = packageJsonPathToConfMap[packageJsonPath]
   const skipNpmConfig = getConfig().skipNpmConfig
   if (conf === undefined || skipNpmConfig !== skippedNpmConfigLastTime) {
     if (skipNpmConfig) {
@@ -27,10 +27,10 @@ export const getNpmConfig = (path: string): npmRegistryFetch.Options => {
             cache: null,
             // registry: 'https://registry.npmjs.org',
           },
-          { cwd: path },
+          { cwd: packageJsonPath },
         )
         .toJSON() as npmRegistryFetch.Options
-      pathToConfMap[path] = conf
+      packageJsonPathToConfMap[packageJsonPath] = conf
     }
 
     skippedNpmConfigLastTime = skipNpmConfig

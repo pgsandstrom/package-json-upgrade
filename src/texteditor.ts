@@ -2,12 +2,7 @@ import * as vscode from 'vscode'
 import { decorateDiscreet, getDecoratorForUpdate } from './decorations'
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
-import {
-  getDependencyLineLimits,
-  getLineLimitForLine,
-  isPackageJson,
-  parseDependencyLine,
-} from './packageJson'
+import { getDependencyInformation, isPackageJson } from './packageJson'
 import { AsyncState } from './types'
 
 export const handleFileDecoration = (document: vscode.TextDocument, showDecorations: boolean) => {
@@ -17,7 +12,7 @@ export const handleFileDecoration = (document: vscode.TextDocument, showDecorati
   }
 
   if (isPackageJson(document)) {
-    loadDecoration(document)
+    void loadDecoration(document)
   }
 }
 
@@ -30,7 +25,8 @@ export const clearDecorations = () => {
 }
 
 const loadDecoration = async (document: vscode.TextDocument) => {
-  const dependencyLineLimits = getDependencyLineLimits(document)
+  const text = document.getText()
+  const dependencyGroups = getDependencyInformation(text)
 
   const textEditor = getTextEditorFromDocument(document)
   if (textEditor === undefined) {
@@ -39,7 +35,7 @@ const loadDecoration = async (document: vscode.TextDocument) => {
 
   // Add "loading" to each dependency group
   if (currentDecorationTypes.length === 0) {
-    dependencyLineLimits.forEach((lineLimit) => {
+    dependencyGroups.forEach((lineLimit) => {
       const lineText = document.lineAt(lineLimit.startLine).text
       const range = new vscode.Range(
         new vscode.Position(lineLimit.startLine, lineText.length),
@@ -55,102 +51,92 @@ const loadDecoration = async (document: vscode.TextDocument) => {
     })
   }
 
-  await refreshPackageJsonData(document)
+  await refreshPackageJsonData(document.getText(), document.uri.fsPath)
 
   const ignorePatterns = getIgnorePattern()
 
   clearDecorations()
 
-  Array.from({ length: document.lineCount })
-    .map((_, index) => index)
-    .filter((index) => {
-      const lineLimit = getLineLimitForLine(document, index, dependencyLineLimits)
-      return lineLimit !== undefined
-    })
-    .forEach((index) => {
-      const lineText = document.lineAt(index).text
+  const dependencies = dependencyGroups.map((d) => d.deps).flat()
 
-      const dep = parseDependencyLine(lineText)
+  dependencies.forEach((dep) => {
+    if (isDependencyIgnored(dep.dependencyName, ignorePatterns)) {
+      return
+    }
 
-      if (dep === undefined) {
-        return
-      }
+    const lineText = document.lineAt(dep.line).text
 
-      if (isDependencyIgnored(dep.dependencyName, ignorePatterns)) {
-        return
-      }
+    const range = new vscode.Range(
+      new vscode.Position(dep.line, lineText.length),
+      new vscode.Position(dep.line, lineText.length),
+    )
 
-      const range = new vscode.Range(
-        new vscode.Position(index, lineText.length),
-        new vscode.Position(index, lineText.length),
+    const npmCache = getCachedNpmData(dep.dependencyName)
+    if (npmCache === undefined) {
+      return
+    }
+    if (npmCache.asyncstate === AsyncState.Rejected) {
+      const notFoundDecoration = decorateDiscreet('Dependency not found')
+      textEditor.setDecorations(notFoundDecoration, [
+        {
+          range,
+        },
+      ])
+      currentDecorationTypes.push(notFoundDecoration)
+      return
+    }
+
+    if (npmCache.item === undefined) {
+      return
+    }
+
+    const possibleUpgrades = getPossibleUpgrades(
+      npmCache.item.npmData,
+      dep.currentVersion,
+      dep.dependencyName,
+    )
+
+    let decorator
+    if (possibleUpgrades.major !== undefined) {
+      // TODO add info about patch version?
+      decorator = getDecoratorForUpdate(
+        'major',
+        possibleUpgrades.major.version,
+        possibleUpgrades.existingVersion,
       )
-
-      const npmCache = getCachedNpmData(dep.dependencyName)
-      if (npmCache === undefined) {
-        return
-      }
-      if (npmCache.asyncstate === AsyncState.Rejected) {
-        const notFoundDecoration = decorateDiscreet('Dependency not found')
-        textEditor.setDecorations(notFoundDecoration, [
-          {
-            range,
-          },
-        ])
-        currentDecorationTypes.push(notFoundDecoration)
-        return
-      }
-
-      if (npmCache.item === undefined) {
-        return
-      }
-
-      const possibleUpgrades = getPossibleUpgrades(
-        npmCache.item.npmData,
-        dep.currentVersion,
-        dep.dependencyName,
+    } else if (possibleUpgrades.minor !== undefined) {
+      decorator = getDecoratorForUpdate(
+        'minor',
+        possibleUpgrades.minor.version,
+        possibleUpgrades.existingVersion,
       )
+    } else if (possibleUpgrades.patch !== undefined) {
+      decorator = getDecoratorForUpdate(
+        'patch',
+        possibleUpgrades.patch.version,
+        possibleUpgrades.existingVersion,
+      )
+    } else if (possibleUpgrades.prerelease !== undefined) {
+      decorator = getDecoratorForUpdate(
+        'prerelease',
+        possibleUpgrades.prerelease.version,
+        possibleUpgrades.existingVersion,
+      )
+    } else if (possibleUpgrades.validVersion === false) {
+      decorator = decorateDiscreet('Failed to parse version')
+    } else {
+      decorator = undefined
+    }
 
-      let decorator
-      if (possibleUpgrades.major !== undefined) {
-        // TODO add info about patch version?
-        decorator = getDecoratorForUpdate(
-          'major',
-          possibleUpgrades.major.version,
-          possibleUpgrades.existingVersion,
-        )
-      } else if (possibleUpgrades.minor !== undefined) {
-        decorator = getDecoratorForUpdate(
-          'minor',
-          possibleUpgrades.minor.version,
-          possibleUpgrades.existingVersion,
-        )
-      } else if (possibleUpgrades.patch !== undefined) {
-        decorator = getDecoratorForUpdate(
-          'patch',
-          possibleUpgrades.patch.version,
-          possibleUpgrades.existingVersion,
-        )
-      } else if (possibleUpgrades.prerelease !== undefined) {
-        decorator = getDecoratorForUpdate(
-          'prerelease',
-          possibleUpgrades.prerelease.version,
-          possibleUpgrades.existingVersion,
-        )
-      } else if (possibleUpgrades.validVersion === false) {
-        decorator = decorateDiscreet('Failed to parse version')
-      } else {
-        decorator = undefined
-      }
-
-      if (decorator !== undefined) {
-        currentDecorationTypes.push(decorator)
-        textEditor.setDecorations(decorator, [
-          {
-            range,
-          },
-        ])
-      }
-    })
+    if (decorator !== undefined) {
+      currentDecorationTypes.push(decorator)
+      textEditor.setDecorations(decorator, [
+        {
+          range,
+        },
+      ])
+    }
+  })
 }
 
 const getTextEditorFromDocument = (document: vscode.TextDocument) => {

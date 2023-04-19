@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { getConfig, reloadConfig } from './config'
+import { Config, getConfig, setConfig } from './config'
 import { cleanNpmCache } from './npm'
 import { handleFileDecoration } from './texteditor'
 import { UpdateAction } from './updateAction'
@@ -8,13 +8,13 @@ import { updateAll } from './updateAll'
 export const OPEN_URL_COMMAND = 'package-json-upgrade.open-url-command'
 
 export function activate(context: vscode.ExtensionContext) {
-  reloadConfig()
+  fixConfig()
 
   let showDecorations = getConfig().showUpdatesAtStart
 
   const onConfigChange = vscode.workspace.onDidChangeConfiguration((e) => {
     if (e.affectsConfiguration('package-json-upgrade')) {
-      reloadConfig()
+      fixConfig()
       cleanNpmCache()
       checkCurrentFiles(showDecorations)
     }
@@ -86,11 +86,30 @@ const activateCodeActionStuff = (context: vscode.ExtensionContext) => {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(OPEN_URL_COMMAND, (url: string) => {
-      vscode.env.openExternal(vscode.Uri.parse(url))
+      void vscode.env.openExternal(vscode.Uri.parse(url))
     }),
   )
 }
 
 export function deactivate() {
   //
+}
+
+const fixConfig = () => {
+  const workspaceConfig = vscode.workspace.getConfiguration('package-json-upgrade')
+  const config: Config = {
+    showUpdatesAtStart: workspaceConfig.get<boolean>('showUpdatesAtStart') === true,
+    skipNpmConfig: workspaceConfig.get<boolean>('skipNpmConfig') === true,
+    majorUpgradeColorOverwrite: workspaceConfig.get<string>('majorUpgradeColorOverwrite') ?? '',
+    minorUpgradeColorOverwrite: workspaceConfig.get<string>('minorUpgradeColorOverwrite') ?? '',
+    patchUpgradeColorOverwrite: workspaceConfig.get<string>('patchUpgradeColorOverwrite') ?? '',
+    prereleaseUpgradeColorOverwrite:
+      workspaceConfig.get<string>('prereleaseUpgradeColorOverwrite') ?? '',
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    decorationString: workspaceConfig.get<string>('decorationString') || '\t\tUpdate available: %s',
+    ignorePatterns: workspaceConfig.get<string[]>('ignorePatterns') ?? [],
+    ignoreVersions:
+      workspaceConfig.get<Record<string, string | undefined | string[]>>('ignoreVersions') ?? {},
+  }
+  setConfig(config)
 }

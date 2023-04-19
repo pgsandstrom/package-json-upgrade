@@ -8,51 +8,61 @@ module.exports = {
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    // 'prettier' disables linting rules that conflict with prettier (this is dependency eslint-config-prettier)
     'prettier',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    ecmaVersion: 2017,
-    sourceType: 'module',
+    ecmaVersion: 2021,
     ecmaFeatures: {
       jsx: true,
-      generators: false,
-      experimentalObjectRestSpread: true,
     },
-    project: './tsconfig.json',
+    project: ['./tsconfig.json'],
+    sourceType: 'module',
   },
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'no-only-tests'],
   rules: {
     // turn off unwanted rules:
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
-    '@typescript-eslint/camelcase': 'off', // There are a few exceptions, like variables from the backend and stuff
-    '@typescript-eslint/no-floating-promises': 'off', // just feels a bit verbose with the vscode API
+    '@typescript-eslint/restrict-template-expressions': 'off', // this feels too verbose
+    '@typescript-eslint/no-inferrable-types': 'off', // this brings very little value
 
     // activate extra rules:
     eqeqeq: ['error', 'smart'],
     curly: ['error'],
+    'no-console': ['error', { allow: ['debug', 'warn', 'error'] }],
     '@typescript-eslint/no-unnecessary-type-assertion': ['error'],
     '@typescript-eslint/no-extra-non-null-assertion': ['error'],
     '@typescript-eslint/no-unused-vars': [
       'error',
       {
         vars: 'all',
+        varsIgnorePattern: '_.*',
         args: 'none',
       },
     ],
     '@typescript-eslint/no-unnecessary-condition': ['error'],
-    '@typescript-eslint/strict-boolean-expressions': ['error'],
+    '@typescript-eslint/strict-boolean-expressions': [
+      'error',
+      {
+        allowNullableBoolean: true,
+      },
+    ],
+    '@typescript-eslint/prefer-enum-initializers': ['error'],
+    'no-only-tests/no-only-tests': 'error',
     'sort-imports': [
       'error',
       {
         ignoreDeclarationSort: true,
       },
     ],
-
-    // here is frontend/backend exclusive rules
-
-    'require-atomic-updates': 'off', // Currently a bit too buggy. See https://github.com/eslint/eslint/issues/11899
+    '@typescript-eslint/no-misused-promises': [
+      'error',
+      {
+        checksVoidReturn: {
+          attributes: false,
+        },
+      },
+    ],
   },
 }
