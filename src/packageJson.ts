@@ -3,22 +3,17 @@ import * as vscode from 'vscode'
 export interface LineLimit {
   startLine: number
   endLine: number
-  isPeerDependency: boolean
 }
 
 // TODO this function is still a hax that breakes if you have a "dependency" key higher up in package.json.
 // It would be nice with a function that works correctly.
 export const getDependencyLineLimits = (document: vscode.TextDocument): LineLimit[] => {
   const limits = []
-  const devDependencies = getFlatTagStartEnd(document, /\s*"devDependencies"\s*:/, false)
+  const devDependencies = getFlatTagStartEnd(document, /\s*"devDependencies"\s*:/)
   if (devDependencies !== undefined) {
     limits.push(devDependencies)
   }
-  const peerDependencies = getFlatTagStartEnd(document, /\s*"peerDependencies"\s*:/, true)
-  if (peerDependencies !== undefined) {
-    limits.push(peerDependencies)
-  }
-  const dependencies = getFlatTagStartEnd(document, /\s*"dependencies"\s*:/, false)
+  const dependencies = getFlatTagStartEnd(document, /\s*"dependencies"\s*:/)
   if (dependencies !== undefined) {
     limits.push(dependencies)
   }
@@ -54,7 +49,6 @@ export const parseDependencyLine = (line: string) => {
 const getFlatTagStartEnd = (
   document: vscode.TextDocument,
   regexp: RegExp,
-  isPeerDependency: boolean,
 ): LineLimit | undefined => {
   // TODO this whole limit detection is nooby. How to do it smarter? Is there a cool library for parsing json and finding lines in it?
   const array = Array.from({ length: document.lineCount }).map((_, index) => index)
@@ -81,7 +75,6 @@ const getFlatTagStartEnd = (
   return {
     startLine,
     endLine,
-    isPeerDependency,
   }
 }
 

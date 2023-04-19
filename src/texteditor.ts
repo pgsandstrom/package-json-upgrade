@@ -65,7 +65,7 @@ const loadDecoration = async (document: vscode.TextDocument) => {
     .map((_, index) => index)
     .filter((index) => {
       const lineLimit = getLineLimitForLine(document, index, dependencyLineLimits)
-      return lineLimit !== undefined && lineLimit.isPeerDependency === false
+      return lineLimit !== undefined
     })
     .forEach((index) => {
       const lineText = document.lineAt(index).text

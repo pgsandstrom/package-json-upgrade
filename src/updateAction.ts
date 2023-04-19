@@ -34,56 +34,54 @@ export class UpdateAction implements vscode.CodeActionProvider {
     const wholeLineRange = new vscode.Range(range.start.line, 0, range.start.line, lineText.length)
     const actions = []
 
-    if (lineLimit.isPeerDependency === false) {
-      const possibleUpgrades = getPossibleUpgrades(
-        npmCache.item.npmData,
-        dep.currentVersion,
-        dep.dependencyName,
+    const possibleUpgrades = getPossibleUpgrades(
+      npmCache.item.npmData,
+      dep.currentVersion,
+      dep.dependencyName,
+    )
+    if (possibleUpgrades.major !== undefined) {
+      actions.push(
+        this.createFix(
+          document,
+          wholeLineRange,
+          'major',
+          dep.currentVersion,
+          possibleUpgrades.major.version,
+        ),
       )
-      if (possibleUpgrades.major !== undefined) {
-        actions.push(
-          this.createFix(
-            document,
-            wholeLineRange,
-            'major',
-            dep.currentVersion,
-            possibleUpgrades.major.version,
-          ),
-        )
-      }
-      if (possibleUpgrades.minor !== undefined) {
-        actions.push(
-          this.createFix(
-            document,
-            wholeLineRange,
-            'minor',
-            dep.currentVersion,
-            possibleUpgrades.minor.version,
-          ),
-        )
-      }
-      if (possibleUpgrades.patch !== undefined) {
-        actions.push(
-          this.createFix(
-            document,
-            wholeLineRange,
-            'patch',
-            dep.currentVersion,
-            possibleUpgrades.patch.version,
-          ),
-        )
-      }
-      if (possibleUpgrades.prerelease !== undefined) {
-        actions.push(
-          this.createFix(
-            document,
-            wholeLineRange,
-            'prerelease',
-            dep.currentVersion,
-            possibleUpgrades.prerelease.version,
-          ),
-        )
-      }
+    }
+    if (possibleUpgrades.minor !== undefined) {
+      actions.push(
+        this.createFix(
+          document,
+          wholeLineRange,
+          'minor',
+          dep.currentVersion,
+          possibleUpgrades.minor.version,
+        ),
+      )
+    }
+    if (possibleUpgrades.patch !== undefined) {
+      actions.push(
+        this.createFix(
+          document,
+          wholeLineRange,
+          'patch',
+          dep.currentVersion,
+          possibleUpgrades.patch.version,
+        ),
+      )
+    }
+    if (possibleUpgrades.prerelease !== undefined) {
+      actions.push(
+        this.createFix(
+          document,
+          wholeLineRange,
+          'prerelease',
+          dep.currentVersion,
+          possibleUpgrades.prerelease.version,
+        ),
+      )
     }
 
     if (npmCache.item.npmData.homepage !== undefined) {
