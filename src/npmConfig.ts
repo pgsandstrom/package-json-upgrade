@@ -1,5 +1,5 @@
 import * as config from 'libnpmconfig'
-import npmRegistryFetch = require('npm-registry-fetch')
+import * as npmRegistryFetch from 'npm-registry-fetch'
 import { getConfig } from './config'
 import { Dict } from './types'
 
