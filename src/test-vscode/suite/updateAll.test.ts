@@ -4,6 +4,7 @@ import * as assert from 'assert'
 import { updateAll } from '../../updateAll'
 import { setCachedNpmData } from '../../npm'
 import { AsyncState } from '../../types'
+import { Config, setConfig } from '../../config'
 
 const packageJsonTestContent = `
 {
@@ -60,6 +61,19 @@ const npmCache = {
 
 suite('UpdateAll Test Suite', () => {
   test('When all releases are prereleases', async function () {
+    const config: Config = {
+      showUpdatesAtStart: true,
+      skipNpmConfig: true,
+      majorUpgradeColorOverwrite: '',
+      minorUpgradeColorOverwrite: '',
+      patchUpgradeColorOverwrite: '',
+      prereleaseUpgradeColorOverwrite: '',
+      decorationString: '',
+      ignorePatterns: [],
+      ignoreVersions: {},
+    }
+    setConfig(config)
+
     this.timeout(0)
     const uri = vscode.Uri.parse(`./tmp/package.json`)
     await vscode.workspace.fs.writeFile(uri, Buffer.from(packageJsonTestContent))

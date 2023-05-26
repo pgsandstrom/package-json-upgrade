@@ -1,6 +1,6 @@
 import * as path from 'path'
 
-import { runTests } from 'vscode-test'
+import { runTests } from '@vscode/test-electron'
 
 async function main() {
   try {
@@ -8,7 +8,7 @@ async function main() {
     // Passed to `--extensionDevelopmentPath`
     const extensionDevelopmentPath = path.resolve(__dirname, '../../')
 
-    // The path to test runner
+    // The path to the extension test script
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './suite/index')
 
@@ -16,7 +16,6 @@ async function main() {
     await runTests({ extensionDevelopmentPath, extensionTestsPath })
   } catch (err) {
     console.error('Failed to run tests')
-    console.error(err)
     process.exit(1)
   }
 }

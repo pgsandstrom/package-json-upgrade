@@ -7,7 +7,7 @@ export function run(): Promise<void> {
   const mocha = new Mocha({
     ui: 'tdd',
   })
-  mocha.options.color = true
+  // mocha.options.color = true
 
   const testsRoot = path.resolve(__dirname, '..')
 
