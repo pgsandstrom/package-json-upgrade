@@ -124,7 +124,7 @@
     "libnpmconfig": "1.2.1",
     "node-fetch": "2.6.11",
     "npm-registry-fetch": "14.0.5",
-    "semver": "7.3.5"
+    "semver": "7.3.8"
   },
   "devDependencies": {
     "@jest/globals": "29.5.0",
