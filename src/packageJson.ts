@@ -69,7 +69,7 @@ function toDependencyGroup(dependencyProperty: TSESTree.Property): DependencyGro
   })
 
   return {
-    startLine: dependencyProperty.loc.start.line,
+    startLine: dependencyProperty.loc.start.line - 1,
     deps: d,
   }
 }

@@ -44,7 +44,7 @@ describe('packageJson', () => {
           { currentVersion: '7.2.0', dependencyName: '@types/glob', line: 12 },
           { currentVersion: '2.6.7', dependencyName: 'node-fetch', line: 13 },
         ],
-        startLine: 12,
+        startLine: 11,
       },
     ])
   })
