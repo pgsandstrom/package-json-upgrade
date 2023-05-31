@@ -239,7 +239,10 @@ const isVersionIgnored = (version: VersionData, dependencyName: string, ignoredV
   return satisfies(version.version, ignoredVersion)
 }
 
-export const refreshPackageJsonData = (packageJsonString: string, packageJsonFilePath: string) => {
+export const refreshPackageJsonData = (
+  packageJsonString: string,
+  packageJsonFilePath: string,
+): Promise<void>[] => {
   const cacheCutoff = new Date(new Date().getTime() - 1000 * 60 * 120) // 120 minutes
 
   try {
@@ -262,10 +265,10 @@ export const refreshPackageJsonData = (packageJsonString: string, packageJsonFil
       }
     })
 
-    return Promise.all(promises)
+    return promises
   } catch (e) {
     console.warn(`Failed to parse package.json: ${packageJsonFilePath}`)
-    return Promise.resolve()
+    return [Promise.resolve()]
   }
 }
 

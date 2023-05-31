@@ -2,8 +2,9 @@ import * as vscode from 'vscode'
 import { decorateDiscreet, getDecoratorForUpdate } from './decorations'
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
-import { getDependencyInformation, isPackageJson } from './packageJson'
+import { DependencyGroups, getDependencyInformation, isPackageJson } from './packageJson'
 import { AsyncState } from './types'
+import { TextEditorDecorationType } from 'vscode'
 
 export const handleFileDecoration = (document: vscode.TextDocument, showDecorations: boolean) => {
   if (showDecorations === false) {
@@ -24,7 +25,7 @@ export const clearDecorations = () => {
   currentDecorationTypes = []
 }
 
-const loadDecoration = async (document: vscode.TextDocument) => {
+const loadDecoration = (document: vscode.TextDocument) => {
   const text = document.getText()
   const dependencyGroups = getDependencyInformation(text)
 
@@ -35,23 +36,39 @@ const loadDecoration = async (document: vscode.TextDocument) => {
 
   // Add "loading" to each dependency group
   if (currentDecorationTypes.length === 0) {
-    dependencyGroups.forEach((lineLimit) => {
-      const lineText = document.lineAt(lineLimit.startLine).text
-      const range = new vscode.Range(
-        new vscode.Position(lineLimit.startLine, lineText.length),
-        new vscode.Position(lineLimit.startLine, lineText.length),
-      )
-      const loadingUpdatesDecoration = decorateDiscreet('Loading updates...')
-      textEditor.setDecorations(loadingUpdatesDecoration, [
-        {
-          range,
-        },
-      ])
-      currentDecorationTypes.push(loadingUpdatesDecoration)
-    })
+    paintLoadingOnDependencyGroups(dependencyGroups, document, textEditor)
   }
 
-  await refreshPackageJsonData(document.getText(), document.uri.fsPath)
+  const promises = refreshPackageJsonData(document.getText(), document.uri.fsPath)
+
+  return waitForPromises(promises, document, dependencyGroups)
+}
+
+const waitForPromises = async (
+  promises: Promise<void>[],
+  document: vscode.TextDocument,
+  dependencyGroups: DependencyGroups[],
+) => {
+  let settledCount = 0
+
+  promises.forEach((promise) => {
+    void promise.then(() => {
+      settledCount++
+      if (settledCount % 10 === 0 && settledCount !== promises.length) {
+        paintDecorations(document, dependencyGroups)
+      }
+    })
+  })
+
+  await Promise.all(promises)
+  return paintDecorations(document, dependencyGroups)
+}
+
+const paintDecorations = (document: vscode.TextDocument, dependencyGroups: DependencyGroups[]) => {
+  const textEditor = getTextEditorFromDocument(document)
+  if (textEditor === undefined) {
+    return
+  }
 
   const ignorePatterns = getIgnorePattern()
 
@@ -96,7 +113,7 @@ const loadDecoration = async (document: vscode.TextDocument) => {
       dep.dependencyName,
     )
 
-    let decorator
+    let decorator: TextEditorDecorationType | undefined
     if (possibleUpgrades.major !== undefined) {
       // TODO add info about patch version?
       decorator = getDecoratorForUpdate(
@@ -136,6 +153,27 @@ const loadDecoration = async (document: vscode.TextDocument) => {
         },
       ])
     }
+  })
+}
+
+const paintLoadingOnDependencyGroups = (
+  dependencyGroups: DependencyGroups[],
+  document: vscode.TextDocument,
+  textEditor: vscode.TextEditor,
+) => {
+  dependencyGroups.forEach((lineLimit) => {
+    const lineText = document.lineAt(lineLimit.startLine).text
+    const range = new vscode.Range(
+      new vscode.Position(lineLimit.startLine, lineText.length),
+      new vscode.Position(lineLimit.startLine, lineText.length),
+    )
+    const loadingUpdatesDecoration = decorateDiscreet('Loading updates...')
+    textEditor.setDecorations(loadingUpdatesDecoration, [
+      {
+        range,
+      },
+    ])
+    currentDecorationTypes.push(loadingUpdatesDecoration)
   })
 }
 
