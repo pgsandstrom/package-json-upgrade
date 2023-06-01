@@ -77,6 +77,11 @@
           "type": "object",
           "default": {},
           "description": "Semver ranges of versions to ignore for specific packages. If you  want to ignore all @types/node versions 12 or greater the JSON should be {\"@types/node\": \">=12\"}. If you want to add several ignored semver ranges you can do {\"@types/node\": [\"=12.0.0\", \"=12.0.1\"]}."
+        },
+        "package-json-upgrade.msUntilRowLoading": {
+          "type": "number",
+          "default": 10000,
+          "description": "Number of milliseconds until 'Loading...' is displayed on each dependency row that has not yet been loaded. 0 to disable, 1 to show immediately."
         }
       }
     },

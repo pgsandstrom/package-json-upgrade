@@ -110,6 +110,7 @@ const fixConfig = () => {
     ignorePatterns: workspaceConfig.get<string[]>('ignorePatterns') ?? [],
     ignoreVersions:
       workspaceConfig.get<Record<string, string | undefined | string[]>>('ignoreVersions') ?? {},
+    msUntilRowLoading: workspaceConfig.get<number>('msUntilRowLoading') ?? 0,
   }
   setConfig(config)
 }

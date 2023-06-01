@@ -72,6 +72,7 @@ suite('UpdateAll Test Suite', () => {
       decorationString: '',
       ignorePatterns: [],
       ignoreVersions: {},
+      msUntilRowLoading: 6000,
     }
     setConfig(config)
 

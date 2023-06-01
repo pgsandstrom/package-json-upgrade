@@ -5,6 +5,7 @@ import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from '.
 import { DependencyGroups, getDependencyInformation, isPackageJson } from './packageJson'
 import { AsyncState } from './types'
 import { TextEditorDecorationType } from 'vscode'
+import { getConfig } from './config'
 
 export const handleFileDecoration = (document: vscode.TextDocument, showDecorations: boolean) => {
   if (showDecorations === false) {
@@ -117,7 +118,12 @@ const paintDecorations = (
     }
 
     if (npmCache.item === undefined) {
-      if (npmCache.startTime + 3000 < new Date().getTime()) {
+      const msUntilRowLoading = getConfig().msUntilRowLoading
+      if (
+        msUntilRowLoading !== 0 &&
+        (msUntilRowLoading < 100 ||
+          npmCache.startTime + getConfig().msUntilRowLoading < new Date().getTime())
+      ) {
         const decorator = decorateDiscreet('Loading...')
         setDecorator(decorator, textEditor, range)
       }

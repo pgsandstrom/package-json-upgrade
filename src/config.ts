@@ -8,6 +8,7 @@ export interface Config {
   decorationString: string
   ignorePatterns: string[]
   ignoreVersions: Record<string, string | undefined | string[]>
+  msUntilRowLoading: number
 }
 
 let currentConfig: Config | undefined
