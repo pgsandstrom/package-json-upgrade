@@ -5,6 +5,13 @@ import { getConfig } from './config'
 import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
 
+export interface NpmLoader<T> {
+  asyncstate: AsyncState
+  startTime: number
+  promise?: Promise<unknown>
+  item?: T
+}
+
 interface PackageJson {
   dependencies: StrictDict<string, PackageJsonDependency>
   devDependencies: StrictDict<string, PackageJsonDependency>
@@ -17,6 +24,7 @@ interface PackageJsonDependency {
 export interface NpmData {
   'dist-tags': {
     latest: string
+    next?: string // not used currently
   }
   versions: {
     [key in string]: VersionData
@@ -47,7 +55,7 @@ export interface CacheItem {
   npmData: NpmData
 }
 
-let npmCache: Dict<string, Loader<CacheItem>> = {}
+let npmCache: Dict<string, NpmLoader<CacheItem>> = {}
 
 // dependencyname pointing to a potential changelog
 let changelogCache: Dict<string, Loader<string>> = {}
@@ -65,7 +73,7 @@ export const getCachedNpmData = (dependencyName: string) => {
   return npmCache[dependencyName]
 }
 
-export const setCachedNpmData = (newNpmCache: Dict<string, Loader<CacheItem>>) => {
+export const setCachedNpmData = (newNpmCache: Dict<string, NpmLoader<CacheItem>>) => {
   npmCache = newNpmCache
 }
 
@@ -252,18 +260,20 @@ export const refreshPackageJsonData = (
       ...json.devDependencies,
     }
 
-    const promises = Object.entries(dependencies).map(([dependencyName, _version]) => {
-      const cache = npmCache[dependencyName]
-      if (
-        cache === undefined ||
-        cache.item === undefined ||
-        cache.item.date.getTime() < cacheCutoff.getTime()
-      ) {
-        return fetchNpmData(dependencyName, packageJsonFilePath)
-      } else {
-        return Promise.resolve()
-      }
-    })
+    const promises = Object.entries(dependencies)
+      .map(([dependencyName, _version]) => {
+        const cache = npmCache[dependencyName]
+        if (
+          cache === undefined ||
+          cache.asyncstate === AsyncState.NotStarted ||
+          (cache.item !== undefined && cache.item.date.getTime() < cacheCutoff.getTime())
+        ) {
+          return fetchNpmData(dependencyName, packageJsonFilePath)
+        } else {
+          return npmCache[dependencyName]?.promise
+        }
+      })
+      .filter((p): p is Promise<void> => p !== undefined)
 
     return promises
   } catch (e) {
@@ -272,45 +282,56 @@ export const refreshPackageJsonData = (
   }
 }
 
-const fetchNpmData = async (dependencyName: string, packageJsonPath: string) => {
+const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
   if (
     npmCache[dependencyName] !== undefined &&
     (npmCache[dependencyName]?.asyncstate === AsyncState.InProgress ||
       npmCache[dependencyName]?.asyncstate === AsyncState.Rejected)
   ) {
-    return
-  }
-  npmCache[dependencyName] = {
-    asyncstate: AsyncState.InProgress,
+    return npmCache[dependencyName]?.promise
   }
 
   const conf = { ...getNpmConfig(packageJsonPath), spec: dependencyName }
-  try {
-    const json = (await npmRegistryFetch.json(dependencyName, conf)) as unknown as NpmData
-    if (changelogCache[dependencyName] === undefined) {
-      // we currently do not wait for this to speed things up
-      void findChangelog(dependencyName, json)
-    }
-    npmCache[dependencyName] = {
-      asyncstate: AsyncState.Fulfilled,
-      item: {
-        date: new Date(),
-        npmData: json,
-      },
-    }
-  } catch (e: any) {
-    /* eslint-disable */
-    console.error(`failed to load dependency ${dependencyName}`)
-    console.error(`status code: ${e?.statusCode}`)
-    console.error(`uri: ${e?.uri}`)
-    console.error(`message: ${e?.message}`)
-    console.error(`config used: ${JSON.stringify(conf, null, 2)}`)
-    console.error(`Entire error: ${JSON.stringify(e, null, 2)}`)
-    /* eslint-enable */
-    npmCache[dependencyName] = {
-      asyncstate: AsyncState.Rejected,
-    }
+  const promise = npmRegistryFetch.json(dependencyName, conf) as unknown as Promise<NpmData>
+
+  const startTime = new Date().getTime()
+  npmCache[dependencyName] = {
+    asyncstate: AsyncState.InProgress,
+    promise,
+    startTime,
   }
+
+  promise
+    .then((json) => {
+      if (changelogCache[dependencyName] === undefined) {
+        // we currently do not wait for this to speed things up
+        void findChangelog(dependencyName, json)
+      }
+      npmCache[dependencyName] = {
+        asyncstate: AsyncState.Fulfilled,
+        startTime,
+        item: {
+          date: new Date(),
+          npmData: json,
+        },
+      }
+    })
+    .catch((e) => {
+      /* eslint-disable */
+      console.error(`failed to load dependency ${dependencyName}`)
+      console.error(`status code: ${e?.statusCode}`)
+      console.error(`uri: ${e?.uri}`)
+      console.error(`message: ${e?.message}`)
+      console.error(`config used: ${JSON.stringify(conf, null, 2)}`)
+      console.error(`Entire error: ${JSON.stringify(e, null, 2)}`)
+      /* eslint-enable */
+      npmCache[dependencyName] = {
+        asyncstate: AsyncState.Rejected,
+        startTime,
+      }
+    })
+
+  return promise
 }
 
 const findChangelog = async (dependencyName: string, npmData: NpmData) => {

@@ -25,7 +25,7 @@ export const clearDecorations = () => {
   currentDecorationTypes = []
 }
 
-const loadDecoration = (document: vscode.TextDocument) => {
+const loadDecoration = async (document: vscode.TextDocument) => {
   const text = document.getText()
   const dependencyGroups = getDependencyInformation(text)
 
@@ -34,12 +34,12 @@ const loadDecoration = (document: vscode.TextDocument) => {
     return
   }
 
-  // Add "loading" to each dependency group
-  if (currentDecorationTypes.length === 0) {
-    paintLoadingOnDependencyGroups(dependencyGroups, document, textEditor)
-  }
-
   const promises = refreshPackageJsonData(document.getText(), document.uri.fsPath)
+
+  await Promise.race([...promises, Promise.resolve()])
+
+  // initial paint
+  paintDecorations(document, dependencyGroups, true)
 
   return waitForPromises(promises, document, dependencyGroups)
 }
@@ -51,20 +51,29 @@ const waitForPromises = async (
 ) => {
   let settledCount = 0
 
+  if (promises.length === 0) {
+    return
+  }
+
+  // TODO update more frequently when there are fewer promises
   promises.forEach((promise) => {
     void promise.then(() => {
       settledCount++
       if (settledCount % 10 === 0 && settledCount !== promises.length) {
-        paintDecorations(document, dependencyGroups)
+        paintDecorations(document, dependencyGroups, true)
       }
     })
   })
 
   await Promise.all(promises)
-  return paintDecorations(document, dependencyGroups)
+  return paintDecorations(document, dependencyGroups, false)
 }
 
-const paintDecorations = (document: vscode.TextDocument, dependencyGroups: DependencyGroups[]) => {
+const paintDecorations = (
+  document: vscode.TextDocument,
+  dependencyGroups: DependencyGroups[],
+  stillLoading: boolean,
+) => {
   const textEditor = getTextEditorFromDocument(document)
   if (textEditor === undefined) {
     return
@@ -73,6 +82,10 @@ const paintDecorations = (document: vscode.TextDocument, dependencyGroups: Depen
   const ignorePatterns = getIgnorePattern()
 
   clearDecorations()
+
+  if (stillLoading) {
+    paintLoadingOnDependencyGroups(dependencyGroups, document, textEditor)
+  }
 
   const dependencies = dependencyGroups.map((d) => d.deps).flat()
 
@@ -104,6 +117,10 @@ const paintDecorations = (document: vscode.TextDocument, dependencyGroups: Depen
     }
 
     if (npmCache.item === undefined) {
+      if (npmCache.startTime + 3000 < new Date().getTime()) {
+        const decorator = decorateDiscreet('Loading...')
+        setDecorator(decorator, textEditor, range)
+      }
       return
     }
 
@@ -141,18 +158,9 @@ const paintDecorations = (document: vscode.TextDocument, dependencyGroups: Depen
       )
     } else if (possibleUpgrades.validVersion === false) {
       decorator = decorateDiscreet('Failed to parse version')
-    } else {
-      decorator = undefined
     }
 
-    if (decorator !== undefined) {
-      currentDecorationTypes.push(decorator)
-      textEditor.setDecorations(decorator, [
-        {
-          range,
-        },
-      ])
-    }
+    setDecorator(decorator, textEditor, range)
   })
 }
 
@@ -168,13 +176,24 @@ const paintLoadingOnDependencyGroups = (
       new vscode.Position(lineLimit.startLine, lineText.length),
     )
     const loadingUpdatesDecoration = decorateDiscreet('Loading updates...')
-    textEditor.setDecorations(loadingUpdatesDecoration, [
-      {
-        range,
-      },
-    ])
-    currentDecorationTypes.push(loadingUpdatesDecoration)
+    setDecorator(loadingUpdatesDecoration, textEditor, range)
   })
+}
+
+const setDecorator = (
+  decorator: TextEditorDecorationType | undefined,
+  textEditor: vscode.TextEditor,
+  range: vscode.Range,
+) => {
+  if (decorator === undefined) {
+    return
+  }
+  currentDecorationTypes.push(decorator)
+  textEditor.setDecorations(decorator, [
+    {
+      range,
+    },
+  ])
 }
 
 const getTextEditorFromDocument = (document: vscode.TextDocument) => {

@@ -2,8 +2,8 @@ import * as vscode from 'vscode'
 import * as assert from 'assert'
 
 import { updateAll } from '../../updateAll'
-import { setCachedNpmData } from '../../npm'
-import { AsyncState } from '../../types'
+import { CacheItem, NpmLoader, setCachedNpmData } from '../../npm'
+import { AsyncState, Dict } from '../../types'
 import { Config, setConfig } from '../../config'
 
 const packageJsonTestContent = `
@@ -16,9 +16,10 @@ const packageJsonTestContent = `
 }
 `
 
-const npmCache = {
+const npmCache: Dict<string, NpmLoader<CacheItem>> = {
   '@emotion/babel-plugin': {
     asyncstate: AsyncState.Fulfilled,
+    startTime: 0,
     item: {
       date: new Date('2020-09-14T11:01:26.768Z'),
       npmData: {
