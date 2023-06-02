@@ -7,26 +7,30 @@ import { AsyncState } from './types'
 import { TextEditorDecorationType } from 'vscode'
 import { getConfig } from './config'
 
+// If a user opens the same package.json several times quickly, several "loads" of decorators will
+// be ongoing at the same time. So here we keep track of the latest start time and only use that.
+const decorationStart: Record<string, number> = {}
+
 export const handleFileDecoration = (document: vscode.TextDocument, showDecorations: boolean) => {
   if (showDecorations === false) {
     clearDecorations()
     return
   }
 
-  if (isPackageJson(document)) {
-    void loadDecoration(document)
+  if (!isPackageJson(document)) {
+    return
   }
+
+  const startTime = new Date().getTime()
+  decorationStart[document.fileName] = startTime
+
+  void loadDecoration(document, startTime)
 }
 
 // TODO maybe have cooler handling of decorationtypes? Investigate!
 let currentDecorationTypes: vscode.TextEditorDecorationType[] = []
 
-export const clearDecorations = () => {
-  currentDecorationTypes.forEach((d) => d.dispose())
-  currentDecorationTypes = []
-}
-
-const loadDecoration = async (document: vscode.TextDocument) => {
+const loadDecoration = async (document: vscode.TextDocument, startTime: number) => {
   const text = document.getText()
   const dependencyGroups = getDependencyInformation(text)
 
@@ -44,45 +48,57 @@ const loadDecoration = async (document: vscode.TextDocument) => {
   }
 
   // initial paint
-  paintDecorations(document, dependencyGroups, true)
+  paintDecorations(document, dependencyGroups, true, startTime)
 
-  return waitForPromises(promises, document, dependencyGroups)
+  return waitForPromises(promises, document, dependencyGroups, startTime)
 }
 
 const waitForPromises = async (
   promises: Promise<void>[],
   document: vscode.TextDocument,
   dependencyGroups: DependencyGroups[],
+  startTime: number,
 ) => {
-  let settledCount = 0
+  let newSettled = false
 
   if (promises.length === 0) {
     return
   }
 
-  // TODO update more frequently when there are fewer promises
   promises.forEach((promise) => {
     void promise
       .then(() => {
-        settledCount++
-        if (settledCount % 10 === 0 && settledCount !== promises.length) {
-          paintDecorations(document, dependencyGroups, true)
-        }
+        newSettled = true
       })
       .catch(() => {
         //
       })
   })
 
+  const interval = setInterval(() => {
+    if (newSettled === true) {
+      newSettled = false
+      paintDecorations(document, dependencyGroups, true, startTime)
+    }
+  }, 1000)
+
   await Promise.allSettled(promises)
-  return paintDecorations(document, dependencyGroups, false)
+
+  clearInterval(interval)
+
+  return paintDecorations(document, dependencyGroups, false, startTime)
 }
 
 const paintDecorations = (
   document: vscode.TextDocument,
   dependencyGroups: DependencyGroups[],
   stillLoading: boolean,
+  startTime: number,
 ) => {
+  if (decorationStart[document.fileName] !== startTime) {
+    return
+  }
+
   const textEditor = getTextEditorFromDocument(document)
   if (textEditor === undefined) {
     return
@@ -90,6 +106,7 @@ const paintDecorations = (
 
   const ignorePatterns = getIgnorePattern()
 
+  // TODO it would be nice to not clear everything, but to simply replace it. But I guess that could be hard...
   clearDecorations()
 
   if (stillLoading) {
@@ -214,4 +231,9 @@ const getTextEditorFromDocument = (document: vscode.TextDocument) => {
   return vscode.window.visibleTextEditors.find((textEditor) => {
     return textEditor.document === document
   })
+}
+
+const clearDecorations = () => {
+  currentDecorationTypes.forEach((d) => d.dispose())
+  currentDecorationTypes = []
 }
