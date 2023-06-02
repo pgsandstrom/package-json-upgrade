@@ -37,7 +37,11 @@ const loadDecoration = async (document: vscode.TextDocument) => {
 
   const promises = refreshPackageJsonData(document.getText(), document.uri.fsPath)
 
-  await Promise.race([...promises, Promise.resolve()])
+  try {
+    await Promise.race([...promises, Promise.resolve()])
+  } catch (e) {
+    //
+  }
 
   // initial paint
   paintDecorations(document, dependencyGroups, true)
@@ -58,15 +62,19 @@ const waitForPromises = async (
 
   // TODO update more frequently when there are fewer promises
   promises.forEach((promise) => {
-    void promise.then(() => {
-      settledCount++
-      if (settledCount % 10 === 0 && settledCount !== promises.length) {
-        paintDecorations(document, dependencyGroups, true)
-      }
-    })
+    void promise
+      .then(() => {
+        settledCount++
+        if (settledCount % 10 === 0 && settledCount !== promises.length) {
+          paintDecorations(document, dependencyGroups, true)
+        }
+      })
+      .catch(() => {
+        //
+      })
   })
 
-  await Promise.all(promises)
+  await Promise.allSettled(promises)
   return paintDecorations(document, dependencyGroups, false)
 }
 
