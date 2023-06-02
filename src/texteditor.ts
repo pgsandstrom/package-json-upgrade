@@ -1,15 +1,24 @@
 import * as vscode from 'vscode'
-import { decorateDiscreet, getDecoratorForUpdate } from './decorations'
+import { decorateDiscreet, getDecoratorForUpdate, getUpdateDescription } from './decorations'
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
 import { DependencyGroups, getDependencyInformation, isPackageJson } from './packageJson'
 import { AsyncState } from './types'
 import { TextEditorDecorationType } from 'vscode'
 import { getConfig } from './config'
+import { objectEntries } from './util/util'
+
+interface DecorationWrapper {
+  line: number
+  text: string
+  decoration: TextEditorDecorationType
+}
 
 // If a user opens the same package.json several times quickly, several "loads" of decorators will
 // be ongoing at the same time. So here we keep track of the latest start time and only use that.
 const decorationStart: Record<string, number> = {}
+
+let rowToDecoration: Record<number, DecorationWrapper | undefined> = {}
 
 export const handleFileDecoration = (document: vscode.TextDocument, showDecorations: boolean) => {
   if (showDecorations === false) {
@@ -26,9 +35,6 @@ export const handleFileDecoration = (document: vscode.TextDocument, showDecorati
 
   void loadDecoration(document, startTime)
 }
-
-// TODO maybe have cooler handling of decorationtypes? Investigate!
-let currentDecorationTypes: vscode.TextEditorDecorationType[] = []
 
 const loadDecoration = async (document: vscode.TextDocument, startTime: number) => {
   const text = document.getText()
@@ -48,7 +54,8 @@ const loadDecoration = async (document: vscode.TextDocument, startTime: number) 
   }
 
   // initial paint
-  paintDecorations(document, dependencyGroups, true, startTime)
+  const stillLoading = promises.length !== 0
+  paintDecorations(document, dependencyGroups, stillLoading, startTime)
 
   return waitForPromises(promises, document, dependencyGroups, startTime)
 }
@@ -106,11 +113,10 @@ const paintDecorations = (
 
   const ignorePatterns = getIgnorePattern()
 
-  // TODO it would be nice to not clear everything, but to simply replace it. But I guess that could be hard...
-  clearDecorations()
-
   if (stillLoading) {
     paintLoadingOnDependencyGroups(dependencyGroups, document, textEditor)
+  } else {
+    clearLoadingOnDependencyGroups(dependencyGroups)
   }
 
   const dependencies = dependencyGroups.map((d) => d.deps).flat()
@@ -131,14 +137,13 @@ const paintDecorations = (
     if (npmCache === undefined) {
       return
     }
+
     if (npmCache.asyncstate === AsyncState.Rejected) {
-      const notFoundDecoration = decorateDiscreet('Dependency not found')
-      textEditor.setDecorations(notFoundDecoration, [
-        {
-          range,
-        },
-      ])
-      currentDecorationTypes.push(notFoundDecoration)
+      const text = 'Dependency not found'
+      const notFoundDecoration = decorateDiscreet(text)
+      if (updateCache(notFoundDecoration, range.start.line, text)) {
+        setDecorator(notFoundDecoration, textEditor, range)
+      }
       return
     }
 
@@ -149,8 +154,11 @@ const paintDecorations = (
         (msUntilRowLoading < 100 ||
           npmCache.startTime + getConfig().msUntilRowLoading < new Date().getTime())
       ) {
-        const decorator = decorateDiscreet('Loading...')
-        setDecorator(decorator, textEditor, range)
+        const text = 'Loading...'
+        const decorator = decorateDiscreet(text)
+        if (updateCache(decorator, range.start.line, text)) {
+          setDecorator(decorator, textEditor, range)
+        }
       }
       return
     }
@@ -162,36 +170,35 @@ const paintDecorations = (
     )
 
     let decorator: TextEditorDecorationType | undefined
+    let text: string | undefined
     if (possibleUpgrades.major !== undefined) {
       // TODO add info about patch version?
-      decorator = getDecoratorForUpdate(
-        'major',
-        possibleUpgrades.major.version,
-        possibleUpgrades.existingVersion,
-      )
+      text = getUpdateDescription(possibleUpgrades.major.version, possibleUpgrades.existingVersion)
+      decorator = getDecoratorForUpdate('major', text)
     } else if (possibleUpgrades.minor !== undefined) {
-      decorator = getDecoratorForUpdate(
-        'minor',
-        possibleUpgrades.minor.version,
-        possibleUpgrades.existingVersion,
-      )
+      text = getUpdateDescription(possibleUpgrades.minor.version, possibleUpgrades.existingVersion)
+      decorator = getDecoratorForUpdate('minor', text)
     } else if (possibleUpgrades.patch !== undefined) {
-      decorator = getDecoratorForUpdate(
-        'patch',
-        possibleUpgrades.patch.version,
-        possibleUpgrades.existingVersion,
-      )
+      text = getUpdateDescription(possibleUpgrades.patch.version, possibleUpgrades.existingVersion)
+      decorator = getDecoratorForUpdate('patch', text)
     } else if (possibleUpgrades.prerelease !== undefined) {
-      decorator = getDecoratorForUpdate(
-        'prerelease',
+      text = getUpdateDescription(
         possibleUpgrades.prerelease.version,
         possibleUpgrades.existingVersion,
       )
+      decorator = getDecoratorForUpdate('prerelease', text)
     } else if (possibleUpgrades.validVersion === false) {
-      decorator = decorateDiscreet('Failed to parse version')
+      text = 'Failed to parse version'
+      decorator = decorateDiscreet(text)
     }
 
-    setDecorator(decorator, textEditor, range)
+    if (decorator === undefined || text === undefined) {
+      return
+    }
+
+    if (updateCache(decorator, range.start.line, text)) {
+      setDecorator(decorator, textEditor, range)
+    }
   })
 }
 
@@ -206,20 +213,29 @@ const paintLoadingOnDependencyGroups = (
       new vscode.Position(lineLimit.startLine, lineText.length),
       new vscode.Position(lineLimit.startLine, lineText.length),
     )
-    const loadingUpdatesDecoration = decorateDiscreet('Loading updates...')
-    setDecorator(loadingUpdatesDecoration, textEditor, range)
+    const text = 'Loading updates...'
+    const loadingUpdatesDecoration = decorateDiscreet(text)
+    if (updateCache(loadingUpdatesDecoration, range.start.line, text)) {
+      setDecorator(loadingUpdatesDecoration, textEditor, range)
+    }
+  })
+}
+
+const clearLoadingOnDependencyGroups = (dependencyGroups: DependencyGroups[]) => {
+  dependencyGroups.forEach((lineLimit) => {
+    const current = rowToDecoration[lineLimit.startLine]
+    if (current) {
+      current.decoration.dispose()
+      rowToDecoration[lineLimit.startLine] = undefined
+    }
   })
 }
 
 const setDecorator = (
-  decorator: TextEditorDecorationType | undefined,
+  decorator: TextEditorDecorationType,
   textEditor: vscode.TextEditor,
   range: vscode.Range,
 ) => {
-  if (decorator === undefined) {
-    return
-  }
-  currentDecorationTypes.push(decorator)
   textEditor.setDecorations(decorator, [
     {
       range,
@@ -233,7 +249,26 @@ const getTextEditorFromDocument = (document: vscode.TextDocument) => {
   })
 }
 
-const clearDecorations = () => {
-  currentDecorationTypes.forEach((d) => d.dispose())
-  currentDecorationTypes = []
+export const clearDecorations = () => {
+  objectEntries(rowToDecoration).forEach(([k, v]) => {
+    v?.decoration.dispose()
+  })
+  rowToDecoration = {}
+}
+
+const updateCache = (decoration: TextEditorDecorationType, line: number, text: string) => {
+  const current = rowToDecoration[line]
+  if (current === undefined || current.text !== text) {
+    if (current) {
+      current.decoration.dispose()
+    }
+    rowToDecoration[line] = {
+      decoration,
+      line,
+      text,
+    }
+    return true
+  } else {
+    return false
+  }
 }

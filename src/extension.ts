@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { Config, getConfig, setConfig } from './config'
 import { cleanNpmCache } from './npm'
-import { handleFileDecoration } from './texteditor'
+import { clearDecorations, handleFileDecoration } from './texteditor'
 import { UpdateAction } from './updateAction'
 import { updateAll } from './updateAll'
 
@@ -16,6 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (e.affectsConfiguration('package-json-upgrade')) {
       fixConfig()
       cleanNpmCache()
+      clearDecorations()
       checkCurrentFiles(showDecorations)
     }
   })
@@ -23,6 +24,8 @@ export function activate(context: vscode.ExtensionContext) {
   const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor(
     (texteditor: vscode.TextEditor | undefined) => {
       if (texteditor !== undefined) {
+        // TODO is this really necessary? To clean everything.
+        clearDecorations()
         handleFileDecoration(texteditor.document, showDecorations)
       }
     },
@@ -34,6 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
     (e: vscode.TextDocumentChangeEvent) => {
       clearTimeout(timeout)
       timeout = setTimeout(() => {
+        clearDecorations()
         handleFileDecoration(e.document, showDecorations)
       }, 500)
     },

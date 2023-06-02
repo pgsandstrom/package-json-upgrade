@@ -82,7 +82,7 @@ const getCorrectColor = (settingsColor: string, defaultColor: string): string =>
   }
 }
 
-export const decorateDiscreet = (contentText: string) => {
+export const decorateDiscreet = (contentText: string): TextEditorDecorationType => {
   return decorateUpdatedPackage({
     overviewRulerColor: 'darkgray',
     light: { color: 'lightgray', after: { color: 'lightgray' } },
@@ -94,28 +94,30 @@ export const decorateDiscreet = (contentText: string) => {
 // "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
 export const getDecoratorForUpdate = (
   releaseType: ReleaseType | null,
-  latestVersion: string,
-  currentVersionExisting: boolean,
+  text: string,
 ): TextEditorDecorationType | undefined => {
   switch (releaseType) {
     case 'major':
     case 'premajor':
-      return decorateMajorUpdate(getUpdateDescription(latestVersion, currentVersionExisting))
+      return decorateMajorUpdate(text)
     case 'minor':
     case 'preminor':
-      return decorateMinorUpdate(getUpdateDescription(latestVersion, currentVersionExisting))
+      return decorateMinorUpdate(text)
     case 'patch':
     case 'prepatch':
-      return decoratePatchUpdate(getUpdateDescription(latestVersion, currentVersionExisting))
+      return decoratePatchUpdate(text)
     case 'prerelease':
-      return decoratePrereleaseUpdate(getUpdateDescription(latestVersion, currentVersionExisting))
+      return decoratePrereleaseUpdate(text)
     case null:
     default:
       return undefined
   }
 }
 
-function getUpdateDescription(latestVersion: string, currentVersionExisting: boolean): string {
+export function getUpdateDescription(
+  latestVersion: string,
+  currentVersionExisting: boolean,
+): string {
   const versionString = getConfig().decorationString.replace('%s', latestVersion)
   if (currentVersionExisting) {
     return versionString
