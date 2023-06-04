@@ -108,7 +108,7 @@
     "test-vscode": "node ./out/test-vscode/runTest.js",
     "test-jest": "jest",
     "format": "prettier --write \"src/**/*.{json,md,ts,tsx,css,scss}\"",
-    "lint": "node ./node_modules/eslint/bin/eslint.js --ext .ts --ext .tsx --fix src",
+    "lint": "eslint --ext .ts --ext .tsx --fix src",
     "package": "vsce package",
     "pre-commit": "lint-staged",
     "pre-push": "npm run lint && npm run typecheck && npm run test",
