@@ -25,7 +25,8 @@
     "url": "https://github.com/pgsandstrom/package-json-upgrade.git"
   },
   "activationEvents": [
-    "onLanguage:json"
+    "onLanguage:json",
+    "onLanguage:jsonc"
   ],
   "main": "./out/extension.js",
   "contributes": {
