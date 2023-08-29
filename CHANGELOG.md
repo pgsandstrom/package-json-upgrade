@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 2.1.0
+
+- The extension will also start on detected language "jsonc" as well as "json"
+
 ## 2.0.0
 
 - Package.json will now be decorated as soon as each dependency is loaded, instead of waiting for every dependency to finish.
