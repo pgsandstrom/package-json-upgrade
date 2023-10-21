@@ -83,9 +83,13 @@ const checkCurrentFiles = (showDecorations: boolean) => {
 
 const activateCodeActionStuff = (context: vscode.ExtensionContext) => {
   context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider('json', new UpdateAction(), {
-      providedCodeActionKinds: UpdateAction.providedCodeActionKinds,
-    }),
+    vscode.languages.registerCodeActionsProvider(
+      { pattern: '**/package.json' },
+      new UpdateAction(),
+      {
+        providedCodeActionKinds: UpdateAction.providedCodeActionKinds,
+      },
+    ),
   )
 
   context.subscriptions.push(
