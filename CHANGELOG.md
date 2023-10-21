@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 2.1.1
+
+- Fixed issue with loading in json files associated with jsonc
+
 ## 2.1.0
 
 - The extension will also start on detected language "jsonc" as well as "json"
