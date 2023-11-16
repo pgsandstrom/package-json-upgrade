@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 2.1.2
+
+- Downgrade npm-registry-fetch to avoid issue with npm registry on localhost
+
 ## 2.1.1
 
 - Fixed issue with loading in json files associated with jsonc
