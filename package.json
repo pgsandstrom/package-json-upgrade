@@ -129,7 +129,7 @@
     "@typescript-eslint/parser": "5.62.0",
     "libnpmconfig": "1.2.1",
     "node-fetch": "2.7.0",
-    "npm-registry-fetch": "16.1.0",
+    "npm-registry-fetch": "14.0.5",
     "semver": "7.3.8"
   },
   "devDependencies": {
