@@ -7,7 +7,7 @@
   "license": "MIT",
   "icon": "logo/icon.png",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.87.0"
   },
   "categories": [
     "Programming Languages",
@@ -114,7 +114,7 @@
     "pre-commit": "lint-staged",
     "pre-push": "npm run lint && npm run typecheck && npm run test",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "lint-staged": {
     "*.{json,md,css,scss}": [
@@ -135,31 +135,31 @@
   "devDependencies": {
     "@jest/globals": "29.7.0",
     "@types/glob": "7.2.0",
-    "@types/jest": "29.5.6",
-    "@types/mocha": "10.0.3",
-    "@types/node": "14.18.63",
-    "@types/node-fetch": "2.6.7",
-    "@types/npm-registry-fetch": "8.0.6",
-    "@types/semver": "7.5.4",
-    "@types/vscode": "1.74.1",
-    "@typescript-eslint/eslint-plugin": "5.59.7",
-    "@vscode/vsce": "2.21.1",
-    "@vscode/test-electron": "2.3.5",
+    "@types/jest": "29.5.12",
+    "@types/mocha": "10.0.6",
+    "@types/node": "20.11.25",
+    "@types/node-fetch": "2.6.11",
+    "@types/npm-registry-fetch": "8.0.7",
+    "@types/semver": "7.5.8",
+    "@types/vscode": "1.87.0",
+    "@typescript-eslint/eslint-plugin": "5.62.0",
+    "@vscode/vsce": "2.24.0",
+    "@vscode/test-electron": "2.3.9",
     "cross-env": "7.0.3",
-    "eslint": "8.52.0",
-    "eslint-config-prettier": "8.8.0",
+    "eslint": "8.57.0",
+    "eslint-config-prettier": "9.1.0",
     "eslint-plugin-no-only-tests": "3.1.0",
     "glob": "7.2.3",
-    "husky": "8.0.3",
+    "husky": "9.0.11",
     "jest": "29.7.0",
-    "lint-staged": "15.0.2",
-    "mocha": "10.2.0",
-    "prettier": "3.0.3",
-    "ts-jest": "29.1.1",
-    "ts-loader": "9.5.0",
-    "ts-node": "10.9.1",
-    "typescript": "5.2.2",
-    "webpack": "5.89.0",
+    "lint-staged": "15.2.2",
+    "mocha": "10.3.0",
+    "prettier": "3.2.5",
+    "ts-jest": "29.1.2",
+    "ts-loader": "9.5.1",
+    "ts-node": "10.9.2",
+    "typescript": "5.4.2",
+    "webpack": "5.90.3",
     "webpack-cli": "5.1.4"
   }
 }
