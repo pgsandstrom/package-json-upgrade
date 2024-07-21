@@ -2,6 +2,31 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 3.0.0
+
+- Fix an issue when large non-existing versions would not result in "version not found" text
+- Adjusted colors and text. If you dont like it, you can revert to the old look by adding this to your `settings.json`:
+
+Old dark theme:
+
+```
+  "package-json-upgrade.decorationString": "\tUpdate available: %s",
+  "package-json-upgrade.majorUpgradeColorOverwrite": "#E03419",
+  "package-json-upgrade.minorUpgradeColorOverwrite": "#F8FF99",
+  "package-json-upgrade.patchUpgradeColorOverwrite": "#19E034",
+  "package-json-upgrade.prereleaseUpgradeColorOverwrite": "#EC33FF",
+```
+
+Old light theme:
+
+```
+  "package-json-upgrade.decorationString": "\tUpdate available: %s",
+  "package-json-upgrade.majorUpgradeColorOverwrite": "#C74632",
+  "package-json-upgrade.minorUpgradeColorOverwrite": "#ABAB00",
+  "package-json-upgrade.patchUpgradeColorOverwrite": "#009113",
+  "package-json-upgrade.prereleaseUpgradeColorOverwrite": "#C433FF",
+```
+
 ## 2.1.3
 
 - Upgrades no longer shown in gitDiff view
