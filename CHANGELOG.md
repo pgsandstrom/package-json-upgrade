@@ -2,6 +2,11 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 2.1.3
+
+- Upgrades no longer shown in gitDiff view
+- Fix issue with flickering and disappearing upgrade text
+
 ## 2.1.2
 
 - Downgrade npm-registry-fetch to avoid issue with npm registry on localhost
