@@ -36,9 +36,13 @@ It is also possible to add ranges for versions that you wish to ignore. Lets say
 
 A config is available to control if the updates should always be shown when a package.json is opened, or if they should only be shown after triggering a command called "Toggle showing package.json available updates". This can be useful if you find that this extension is in the way when you are doing other work in your package.json file.
 
-And many more configurations exists. Check out your vscode settings for the complete list.
+Several more configurations exists. Check out your vscode settings for the complete list. Here is an example with customized colors and text:
 
-## Install
+![feature X](images/preview-customized.png)
+
+## Links
+
+[Marketplace](https://marketplace.visualstudio.com/items?itemName=codeandstuff.package-json-upgrade)
 
 [How to install vscode extensions](https://code.visualstudio.com/docs/editor/extension-gallery)
 
