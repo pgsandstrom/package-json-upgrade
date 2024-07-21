@@ -7,17 +7,19 @@ import {
 } from 'vscode'
 import { getConfig } from './config'
 
+type DecorationTypeConfigurables = {
+  overviewRulerColor: string // the color shown on the scrollbar
+  light: ThemableDecorationRenderOptions
+  dark: ThemableDecorationRenderOptions
+  contentText: string
+}
+
 const decorateUpdatedPackage = ({
   overviewRulerColor,
   light,
   dark,
   contentText,
-}: {
-  overviewRulerColor: string
-  light: ThemableDecorationRenderOptions
-  dark: ThemableDecorationRenderOptions
-  contentText: string
-}) => {
+}: DecorationTypeConfigurables) => {
   return window.createTextEditorDecorationType({
     isWholeLine: false,
     overviewRulerLane: OverviewRulerLane.Right,
@@ -34,9 +36,9 @@ const decorateUpdatedPackage = ({
 const decorateMajorUpdate = (contentText: string) => {
   const settingsColor = getConfig().majorUpgradeColorOverwrite
   return decorateUpdatedPackage({
-    overviewRulerColor: 'red',
-    light: { after: { color: getCorrectColor(settingsColor, '#C74632') } },
-    dark: { after: { color: getCorrectColor(settingsColor, '#E03419') } },
+    overviewRulerColor: 'blue',
+    light: { after: { color: getCorrectColor(settingsColor, '#0028A3') } },
+    dark: { after: { color: getCorrectColor(settingsColor, '#578EFF') } },
     contentText,
   })
 }
@@ -45,8 +47,8 @@ const decorateMinorUpdate = (contentText: string) => {
   const settingsColor = getConfig().minorUpgradeColorOverwrite
   return decorateUpdatedPackage({
     overviewRulerColor: 'yellow',
-    light: { after: { color: getCorrectColor(settingsColor, '#ABAB00') } },
-    dark: { after: { color: getCorrectColor(settingsColor, '#F8FF99') } },
+    light: { after: { color: getCorrectColor(settingsColor, '#A37B00') } },
+    dark: { after: { color: getCorrectColor(settingsColor, '#FFC757') } },
     contentText,
   })
 }
@@ -55,8 +57,8 @@ const decoratePatchUpdate = (contentText: string) => {
   const settingsColor = getConfig().patchUpgradeColorOverwrite
   return decorateUpdatedPackage({
     overviewRulerColor: 'green',
-    light: { after: { color: getCorrectColor(settingsColor, '#009113') } },
-    dark: { after: { color: getCorrectColor(settingsColor, '#19E034') } },
+    light: { after: { color: getCorrectColor(settingsColor, '#00A329') } },
+    dark: { after: { color: getCorrectColor(settingsColor, '#57FF73') } },
     contentText,
   })
 }
@@ -65,8 +67,8 @@ const decoratePrereleaseUpdate = (contentText: string) => {
   const settingsColor = getConfig().prereleaseUpgradeColorOverwrite
   return decorateUpdatedPackage({
     overviewRulerColor: 'purple',
-    light: { after: { color: getCorrectColor(settingsColor, '#C433FF') } },
-    dark: { after: { color: getCorrectColor(settingsColor, '#EC33FF') } },
+    light: { after: { color: getCorrectColor(settingsColor, '#A3007A') } },
+    dark: { after: { color: getCorrectColor(settingsColor, '#FF57E3') } },
     contentText,
   })
 }
