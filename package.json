@@ -66,7 +66,7 @@
         },
         "package-json-upgrade.decorationString": {
           "type": "string",
-          "default": "\t\tUpdate available: %s",
+          "default": "\t-> %s",
           "description": "Customize update string. %s will be replaced by version, so 'Update: %s' will result in 'Update: 1.0.1'."
         },
         "package-json-upgrade.ignorePatterns": {
