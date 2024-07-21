@@ -193,6 +193,9 @@ const paintDecorations = (
     } else if (possibleUpgrades.validVersion === false) {
       text = 'Failed to parse version'
       decorator = decorateDiscreet(text)
+    } else if (possibleUpgrades.existingVersion === false) {
+      text = 'current version not found'
+      decorator = decorateDiscreet(text)
     }
 
     if (decorator === undefined || text === undefined) {

@@ -46,8 +46,8 @@ export interface DependencyUpdateInfo {
   minor?: VersionData
   patch?: VersionData
   prerelease?: VersionData
-  validVersion: boolean
-  existingVersion: boolean
+  validVersion: boolean // if the current version is valid semver
+  existingVersion: boolean // if the current version exists on npm
 }
 
 export interface CacheItem {
