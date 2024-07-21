@@ -14,6 +14,11 @@ interface DecorationWrapper {
   decoration: TextEditorDecorationType
 }
 
+function isDiffView() {
+  const schemes = vscode.window.visibleTextEditors.map((editor) => editor.document.uri.scheme)
+  return schemes.length === 2 && schemes.includes('git') && schemes.includes('file')
+}
+
 // If a user opens the same package.json several times quickly, several "loads" of decorators will
 // be ongoing at the same time. So here we keep track of the latest start time and only use that.
 const decorationStart: Record<string, number> = {}
@@ -21,6 +26,10 @@ const decorationStart: Record<string, number> = {}
 let rowToDecoration: Record<number, DecorationWrapper | undefined> = {}
 
 export const handleFileDecoration = (document: vscode.TextDocument, showDecorations: boolean) => {
+  if (isDiffView()) {
+    return
+  }
+
   if (showDecorations === false) {
     clearDecorations()
     return
