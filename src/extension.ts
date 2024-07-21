@@ -37,6 +37,13 @@ export function activate(context: vscode.ExtensionContext) {
   let timeout: NodeJS.Timeout
   const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument(
     (e: vscode.TextDocumentChangeEvent) => {
+      // other sources can trigger document changes in whatever document.
+      // Sometimes I get one from `git\scm0\input` when booting.
+      // Then we can safely ignore the changes.
+      if (e.document !== vscode.window.activeTextEditor?.document) {
+        return
+      }
+
       clearTimeout(timeout)
       timeout = setTimeout(() => {
         clearDecorations()
