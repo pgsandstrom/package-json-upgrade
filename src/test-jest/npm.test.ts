@@ -185,12 +185,12 @@ describe('Npm Test Suite', () => {
       'dependencyName',
     )
     const expected: DependencyUpdateInfo = {
-      major: undefined,
-      minor: { name: 'dependencyName', version: '2.1.1' },
-      patch: undefined,
-      prerelease: { name: 'dependencyName', version: '2.0.0' },
-      validVersion: true,
       existingVersion: true,
+      major: { name: 'dependencyName', version: '2.1.1' },
+      minor: undefined,
+      patch: undefined,
+      prerelease: { name: 'dependencyName', version: '2.0.0-alpha.2' },
+      validVersion: true,
     }
     assert.deepStrictEqual(result, expected)
   })

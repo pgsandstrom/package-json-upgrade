@@ -285,10 +285,10 @@ export const refreshPackageJsonData = (
 const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
   if (
     npmCache[dependencyName] !== undefined &&
-    (npmCache[dependencyName]?.asyncstate === AsyncState.InProgress ||
-      npmCache[dependencyName]?.asyncstate === AsyncState.Rejected)
+    (npmCache[dependencyName].asyncstate === AsyncState.InProgress ||
+      npmCache[dependencyName].asyncstate === AsyncState.Rejected)
   ) {
-    return npmCache[dependencyName]?.promise
+    return npmCache[dependencyName].promise
   }
 
   const conf = { ...getNpmConfig(packageJsonPath), spec: dependencyName }
