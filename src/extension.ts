@@ -26,7 +26,9 @@ export function activate(context: vscode.ExtensionContext) {
       if (texteditor !== undefined) {
         // TODO is this really necessary? To clean everything.
         clearDecorations()
-        handleFileDecoration(texteditor.document, showDecorations)
+        if (showDecorations) {
+          handleFileDecoration(texteditor.document)
+        }
       }
     },
   )
@@ -38,7 +40,9 @@ export function activate(context: vscode.ExtensionContext) {
       clearTimeout(timeout)
       timeout = setTimeout(() => {
         clearDecorations()
-        handleFileDecoration(e.document, showDecorations)
+        if (showDecorations) {
+          handleFileDecoration(e.document)
+        }
       }, 500)
     },
   )
@@ -77,7 +81,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 const checkCurrentFiles = (showDecorations: boolean) => {
   vscode.window.visibleTextEditors.forEach((textEditor) => {
-    handleFileDecoration(textEditor.document, showDecorations)
+    if (showDecorations) {
+      handleFileDecoration(textEditor.document)
+    } else {
+      clearDecorations()
+    }
   })
 }
 

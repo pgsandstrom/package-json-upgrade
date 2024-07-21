@@ -6,7 +6,6 @@ import { DependencyGroups, getDependencyInformation, isPackageJson } from './pac
 import { AsyncState } from './types'
 import { TextEditorDecorationType } from 'vscode'
 import { getConfig } from './config'
-import { objectEntries } from './util/util'
 
 interface DecorationWrapper {
   line: number
@@ -25,13 +24,8 @@ const decorationStart: Record<string, number> = {}
 
 let rowToDecoration: Record<number, DecorationWrapper | undefined> = {}
 
-export const handleFileDecoration = (document: vscode.TextDocument, showDecorations: boolean) => {
+export const handleFileDecoration = (document: vscode.TextDocument) => {
   if (isDiffView()) {
-    return
-  }
-
-  if (showDecorations === false) {
-    clearDecorations()
     return
   }
 
@@ -259,7 +253,7 @@ const getTextEditorFromDocument = (document: vscode.TextDocument) => {
 }
 
 export const clearDecorations = () => {
-  objectEntries(rowToDecoration).forEach(([k, v]) => {
+  Object.values(rowToDecoration).forEach((v) => {
     v?.decoration.dispose()
   })
   rowToDecoration = {}
