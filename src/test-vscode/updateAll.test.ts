@@ -1,10 +1,10 @@
 import * as vscode from 'vscode'
 import * as assert from 'assert'
 
-import { updateAll } from '../../updateAll'
-import { CacheItem, NpmLoader, setCachedNpmData } from '../../npm'
-import { AsyncState, Dict } from '../../types'
-import { Config, setConfig } from '../../config'
+import { updateAll } from '../updateAll'
+import { CacheItem, NpmLoader, setCachedNpmData } from '../npm'
+import { AsyncState, Dict } from '../types'
+import { Config, setConfig } from '../config'
 
 const packageJsonTestContent = `
 {
@@ -76,7 +76,6 @@ suite('UpdateAll Test Suite', () => {
     }
     setConfig(config)
 
-    this.timeout(0)
     const uri = vscode.Uri.parse(`./tmp/package.json`)
     await vscode.workspace.fs.writeFile(uri, Buffer.from(packageJsonTestContent))
     const packageJsonTest = await vscode.workspace.openTextDocument(uri)
