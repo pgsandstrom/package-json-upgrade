@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 3.0.1
+
+- Optimization to load faster
+
 ## 3.0.0
 
 - Fix an issue when large non-existing versions would not result in "version not found" text
