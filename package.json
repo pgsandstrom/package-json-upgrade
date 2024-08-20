@@ -127,7 +127,8 @@
     "libnpmconfig": "1.2.1",
     "node-fetch": "2.7.0",
     "npm-registry-fetch": "14.0.5",
-    "semver": "7.6.3"
+    "semver": "7.6.3",
+    "yaml": "^2.5.0"
   },
   "devDependencies": {
     "@jest/globals": "29.7.0",
@@ -139,9 +140,9 @@
     "@types/semver": "7.5.8",
     "@types/vscode": "1.87.0",
     "@typescript-eslint/eslint-plugin": "5.62.0",
-    "@vscode/vsce": "2.31.1",
     "@vscode/test-cli": "0.0.10",
     "@vscode/test-electron": "2.4.1",
+    "@vscode/vsce": "2.31.1",
     "cross-env": "7.0.3",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",

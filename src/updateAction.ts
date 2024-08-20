@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
+import { getDependencyFromLine, getDependencyInformation } from './dependency'
 import { OPEN_URL_COMMAND } from './extension'
 import { getCachedChangelog, getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
-import { getDependencyFromLine, isPackageJson } from './packageJson'
 import { replaceLastOccuranceOf } from './util/util'
 
 export class UpdateAction implements vscode.CodeActionProvider {
@@ -11,18 +11,22 @@ export class UpdateAction implements vscode.CodeActionProvider {
     document: vscode.TextDocument,
     range: vscode.Range,
   ): vscode.CodeAction[] | undefined {
-    if (isPackageJson(document) === false) {
-      return
-    }
-
     if (range.isSingleLine === false) {
       return
     }
 
-    const dep = getDependencyFromLine(document.getText(), range.start.line)
+    const deps = getDependencyInformation(document)
+
+    if (deps === undefined) {
+      return
+    }
+
+    const dep = getDependencyFromLine(deps, range.start.line)
+
     if (dep === undefined) {
       return
     }
+
     const npmCache = getCachedNpmData(dep.dependencyName)
     if (npmCache === undefined || npmCache.item === undefined) {
       return

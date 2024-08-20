@@ -26,3 +26,36 @@ export const replaceLastOccuranceOf = (s: string, replace: string, replaceWith: 
     return s
   }
 }
+
+export const waitForPromises = async (
+  promises: Promise<void>[],
+  interval: {
+    cb: (newSettled: boolean) => void
+    ms: number
+  },
+) => {
+  let newSettled = false
+
+  if (promises.length === 0) {
+    return
+  }
+
+  promises.forEach((promise) => {
+    void promise
+      .then(() => {
+        newSettled = true
+      })
+      .catch(() => {
+        //
+      })
+  })
+
+  const intervalTimeout = setInterval(() => {
+    interval.cb(newSettled)
+    newSettled = false
+  }, interval.ms)
+
+  await Promise.allSettled(promises)
+
+  clearInterval(intervalTimeout)
+}

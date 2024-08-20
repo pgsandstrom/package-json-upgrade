@@ -1,13 +1,13 @@
 import * as assert from 'assert'
 
 import { readFileSync } from 'fs'
-import { getDependencyInformation } from '../packageJson'
+import { getPackageJsonDependencyInformation } from '../packageJson'
 
 describe('packageJson', () => {
   test('should be able to correctly parse a simple package.json', () => {
     const packageJsonBuffer = readFileSync('./src/test-jest/testdata/package-test1.json')
     const packageJson = packageJsonBuffer.toString()
-    const result = getDependencyInformation(packageJson)
+    const result = getPackageJsonDependencyInformation(packageJson)
     const dependencies = result.map((r) => r.deps).flat()
     if (
       !dependencies.some(
@@ -37,7 +37,7 @@ describe('packageJson', () => {
   test('should be able to correctly parse another simple package.json', () => {
     const packageJsonBuffer = readFileSync('./src/test-jest/testdata/package-test2.json')
     const packageJson = packageJsonBuffer.toString()
-    const result = getDependencyInformation(packageJson)
+    const result = getPackageJsonDependencyInformation(packageJson)
     assert.deepStrictEqual(result, [
       {
         deps: [
