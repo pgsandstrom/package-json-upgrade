@@ -64,6 +64,7 @@ suite('UpdateAll Test Suite', () => {
   test('When all releases are prereleases', async function () {
     const config: Config = {
       showUpdatesAtStart: true,
+      showOverviewRulerColor: true,
       skipNpmConfig: true,
       majorUpgradeColorOverwrite: '',
       minorUpgradeColorOverwrite: '',

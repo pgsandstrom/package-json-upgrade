@@ -1,5 +1,6 @@
 export interface Config {
   showUpdatesAtStart: boolean
+  showOverviewRulerColor: boolean
   skipNpmConfig: boolean
   majorUpgradeColorOverwrite: string
   minorUpgradeColorOverwrite: string

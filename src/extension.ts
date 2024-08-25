@@ -122,6 +122,7 @@ const fixConfig = () => {
   const workspaceConfig = vscode.workspace.getConfiguration('package-json-upgrade')
   const config: Config = {
     showUpdatesAtStart: workspaceConfig.get<boolean>('showUpdatesAtStart') === true,
+    showOverviewRulerColor: workspaceConfig.get<boolean>('showOverviewRulerColor') === true,
     skipNpmConfig: workspaceConfig.get<boolean>('skipNpmConfig') === true,
     majorUpgradeColorOverwrite: workspaceConfig.get<string>('majorUpgradeColorOverwrite') ?? '',
     minorUpgradeColorOverwrite: workspaceConfig.get<string>('minorUpgradeColorOverwrite') ?? '',
