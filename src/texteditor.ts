@@ -1,11 +1,20 @@
 import * as vscode from 'vscode'
-import { decorateDiscreet, getDecoratorForUpdate, getUpdateDescription } from './decorations'
-import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
-import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
-import { DependencyGroups, getDependencyInformation, isPackageJson } from './packageJson'
-import { AsyncState } from './types'
 import { TextEditorDecorationType } from 'vscode'
 import { getConfig } from './config'
+import { decorateDiscreet, getDecoratorForUpdate, getUpdateDescription } from './decorations'
+import { DependencyGroups } from './dependency'
+import { getFileType } from './file'
+import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
+import {
+  getCachedNpmData,
+  getPossibleUpgrades,
+  refreshPackageJsonData,
+  refreshPnpmWorkspaceData,
+} from './npm'
+import { getPackageJsonDependencyInformation } from './packageJson'
+import { getPnpmWorkspaceDependencyInformation } from './pnpm'
+import { AsyncState } from './types'
+import { waitForPromises } from './util/util'
 
 interface DecorationWrapper {
   line: number
@@ -29,26 +38,33 @@ export const handleFileDecoration = (document: vscode.TextDocument) => {
     return
   }
 
-  if (!isPackageJson(document)) {
-    return
-  }
-
-  const startTime = new Date().getTime()
-  decorationStart[document.fileName] = startTime
-
-  void loadDecoration(document, startTime)
-}
-
-const loadDecoration = async (document: vscode.TextDocument, startTime: number) => {
-  const text = document.getText()
-  const dependencyGroups = getDependencyInformation(text)
-
   const textEditor = getTextEditorFromDocument(document)
   if (textEditor === undefined) {
     return
   }
 
-  const promises = refreshPackageJsonData(document.getText(), document.uri.fsPath)
+  const fileType = getFileType(document)
+
+  const startTime = new Date().getTime()
+  decorationStart[document.fileName] = startTime
+
+  switch (fileType) {
+    case 'package.json': {
+      void loadPackageJsonDecoration(document, startTime)
+      return
+    }
+    case 'pnpm-workspace.yaml': {
+      void loadPnpmWorkspaceDecoration(document, startTime)
+      return
+    }
+  }
+}
+
+const loadPnpmWorkspaceDecoration = async (document: vscode.TextDocument, startTime: number) => {
+  const text = document.getText()
+  const dependencyGroups = getPnpmWorkspaceDependencyInformation(text)
+
+  const promises = refreshPnpmWorkspaceData(text, document.uri.fsPath)
 
   try {
     await Promise.race([...promises, Promise.resolve()])
@@ -60,41 +76,42 @@ const loadDecoration = async (document: vscode.TextDocument, startTime: number) 
   const stillLoading = promises.length !== 0
   paintDecorations(document, dependencyGroups, stillLoading, startTime)
 
-  return waitForPromises(promises, document, dependencyGroups, startTime)
-}
-
-const waitForPromises = async (
-  promises: Promise<void>[],
-  document: vscode.TextDocument,
-  dependencyGroups: DependencyGroups[],
-  startTime: number,
-) => {
-  let newSettled = false
-
-  if (promises.length === 0) {
-    return
-  }
-
-  promises.forEach((promise) => {
-    void promise
-      .then(() => {
-        newSettled = true
-      })
-      .catch(() => {
-        //
-      })
+  await waitForPromises(promises, {
+    cb: (newSettled) => {
+      if (newSettled) {
+        paintDecorations(document, dependencyGroups, true, startTime)
+      }
+    },
+    ms: 1000,
   })
 
-  const interval = setInterval(() => {
-    if (newSettled === true) {
-      newSettled = false
-      paintDecorations(document, dependencyGroups, true, startTime)
-    }
-  }, 1000)
+  return paintDecorations(document, dependencyGroups, false, startTime)
+}
 
-  await Promise.allSettled(promises)
+const loadPackageJsonDecoration = async (document: vscode.TextDocument, startTime: number) => {
+  const text = document.getText()
+  const dependencyGroups = getPackageJsonDependencyInformation(text)
 
-  clearInterval(interval)
+  const promises = refreshPackageJsonData(text, document.uri.fsPath)
+
+  try {
+    await Promise.race([...promises, Promise.resolve()])
+  } catch (e) {
+    //
+  }
+
+  // initial paint
+  const stillLoading = promises.length !== 0
+  paintDecorations(document, dependencyGroups, stillLoading, startTime)
+
+  await waitForPromises(promises, {
+    cb: (newSettled) => {
+      if (newSettled) {
+        paintDecorations(document, dependencyGroups, true, startTime)
+      }
+    },
+    ms: 1000,
+  })
 
   return paintDecorations(document, dependencyGroups, false, startTime)
 }

@@ -99,7 +99,7 @@ const checkCurrentFiles = (showDecorations: boolean) => {
 const activateCodeActionStuff = (context: vscode.ExtensionContext) => {
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider(
-      { pattern: '**/package.json' },
+      [{ pattern: '**/package.json' }, { pattern: '**/pnpm-workspace.yaml' }],
       new UpdateAction(),
       {
         providedCodeActionKinds: UpdateAction.providedCodeActionKinds,
