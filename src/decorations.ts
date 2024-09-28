@@ -1,5 +1,6 @@
 import { ReleaseType } from 'semver'
 import {
+  DecorationRenderOptions,
   OverviewRulerLane,
   TextEditorDecorationType,
   ThemableDecorationRenderOptions,
@@ -20,17 +21,23 @@ const decorateUpdatedPackage = ({
   dark,
   contentText,
 }: DecorationTypeConfigurables) => {
-  return window.createTextEditorDecorationType({
+  const config = getConfig()
+  const decorationType: DecorationRenderOptions = {
     isWholeLine: false,
-    overviewRulerLane: OverviewRulerLane.Right,
     after: {
       margin: '2em',
       contentText,
     },
-    overviewRulerColor,
     light,
     dark,
-  })
+  }
+
+  if (config.showOverviewRulerColor) {
+    decorationType.overviewRulerLane = OverviewRulerLane.Right
+    decorationType.overviewRulerColor = overviewRulerColor
+  }
+
+  return window.createTextEditorDecorationType(decorationType)
 }
 
 const decorateMajorUpdate = (contentText: string) => {

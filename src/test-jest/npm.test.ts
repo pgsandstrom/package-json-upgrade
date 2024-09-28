@@ -66,6 +66,7 @@ describe('Npm Test Suite', () => {
   beforeAll(() => {
     const config: Config = {
       showUpdatesAtStart: true,
+      showOverviewRulerColor: true,
       skipNpmConfig: true,
       majorUpgradeColorOverwrite: '',
       minorUpgradeColorOverwrite: '',

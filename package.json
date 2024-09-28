@@ -39,6 +39,11 @@
           "default": true,
           "description": "Available updates will be shown directly when a package.json is opened. Otherwise, this must be toggled with a command."
         },
+        "package-json-upgrade.showOverviewRulerColor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show color indicators on the scrollbar for available updates."
+        },
         "package-json-upgrade.skipNpmConfig": {
           "type": "boolean",
           "default": false,
