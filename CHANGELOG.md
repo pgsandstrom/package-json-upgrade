@@ -2,6 +2,10 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## 3.1.0
+
+- Add option `showOverviewRulerColor` to enable hiding color indicators on the scrollbar for available updates.
+
 ## 3.0.1
 
 - Optimization to load faster
