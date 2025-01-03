@@ -13,8 +13,12 @@ export interface NpmLoader<T> {
 }
 
 interface PackageJson {
-  dependencies: StrictDict<string, PackageJsonDependency>
-  devDependencies: StrictDict<string, PackageJsonDependency>
+  dependencies?: StrictDict<string, PackageJsonDependency>
+  devDependencies?: StrictDict<string, PackageJsonDependency>
+  peerDependencies?: StrictDict<string, PackageJsonDependency>
+  optionalDependencies?: StrictDict<string, PackageJsonDependency>
+  overrides?: StrictDict<string, PackageJsonDependency>
+  resolutions?: StrictDict<string, PackageJsonDependency>
 }
 
 interface PackageJsonDependency {
@@ -258,10 +262,14 @@ export const refreshPackageJsonData = (
     const dependencies = {
       ...json.dependencies,
       ...json.devDependencies,
+      ...json.peerDependencies,
+      ...json.optionalDependencies,
+      ...json.overrides,
+      ...json.resolutions,
     }
 
-    const promises = Object.entries(dependencies)
-      .map(([dependencyName, _version]) => {
+    const promises = Object.keys(dependencies)
+      .map((dependencyName) => {
         const cache = npmCache[dependencyName]
         if (
           cache === undefined ||

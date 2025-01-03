@@ -3,6 +3,15 @@ import { parse } from '@typescript-eslint/parser'
 import { TSESTree } from '@typescript-eslint/types'
 import { VariableDeclaration } from '@typescript-eslint/types/dist/generated/ast-spec'
 
+const DEPENDENCY_KEYS = [
+  'dependencies',
+  'devDependencies',
+  'peerDependencies',
+  'optionalDependencies',
+  'overrides',
+  'resolutions', // yarn
+]
+
 export interface DependencyGroups {
   startLine: number
   deps: Dependency[]
@@ -40,16 +49,8 @@ export const getDependencyInformation = (jsonAsString: string): DependencyGroups
 
   const properties = init.properties as TSESTree.Property[]
 
-  const dependencies = properties.find(
-    (p) => (p.key as TSESTree.StringLiteral).value === 'dependencies',
-  )
-
-  const devDependencies = properties.find(
-    (p) => (p.key as TSESTree.StringLiteral).value === 'devDependencies',
-  )
-
-  return [dependencies, devDependencies]
-    .filter((i): i is TSESTree.Property => i !== undefined)
+  return properties
+    .filter((p) => DEPENDENCY_KEYS.includes((p.key as TSESTree.StringLiteral).value))
     .map(toDependencyGroup)
 }
 
