@@ -43,7 +43,7 @@ const decorateUpdatedPackage = ({
 const decorateMajorUpdate = (contentText: string) => {
   const settingsColor = getConfig().majorUpgradeColorOverwrite
   return decorateUpdatedPackage({
-    overviewRulerColor: 'blue',
+    overviewRulerColor: getCorrectColor(settingsColor, '#578EFF'),
     light: { after: { color: getCorrectColor(settingsColor, '#0028A3') } },
     dark: { after: { color: getCorrectColor(settingsColor, '#578EFF') } },
     contentText,
@@ -53,7 +53,7 @@ const decorateMajorUpdate = (contentText: string) => {
 const decorateMinorUpdate = (contentText: string) => {
   const settingsColor = getConfig().minorUpgradeColorOverwrite
   return decorateUpdatedPackage({
-    overviewRulerColor: 'yellow',
+    overviewRulerColor: getCorrectColor(settingsColor, '#FFC757'),
     light: { after: { color: getCorrectColor(settingsColor, '#A37B00') } },
     dark: { after: { color: getCorrectColor(settingsColor, '#FFC757') } },
     contentText,
@@ -63,7 +63,7 @@ const decorateMinorUpdate = (contentText: string) => {
 const decoratePatchUpdate = (contentText: string) => {
   const settingsColor = getConfig().patchUpgradeColorOverwrite
   return decorateUpdatedPackage({
-    overviewRulerColor: 'green',
+    overviewRulerColor: getCorrectColor(settingsColor, '#57FF73'),
     light: { after: { color: getCorrectColor(settingsColor, '#00A329') } },
     dark: { after: { color: getCorrectColor(settingsColor, '#57FF73') } },
     contentText,
@@ -73,7 +73,7 @@ const decoratePatchUpdate = (contentText: string) => {
 const decoratePrereleaseUpdate = (contentText: string) => {
   const settingsColor = getConfig().prereleaseUpgradeColorOverwrite
   return decorateUpdatedPackage({
-    overviewRulerColor: 'purple',
+    overviewRulerColor: getCorrectColor(settingsColor, '#FF57E3'),
     light: { after: { color: getCorrectColor(settingsColor, '#A3007A') } },
     dark: { after: { color: getCorrectColor(settingsColor, '#FF57E3') } },
     contentText,
