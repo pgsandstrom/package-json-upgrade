@@ -2,6 +2,12 @@
 
 All notable changes to the "package-json-upgrade" extension will be documented in this file.
 
+## Unreleased changes
+
+- Remove extra character in fallback update string
+- Make overview ruler color be affected by customized colors
+- Correctly identify versions with `x` wildcard as an existing version
+
 ## 3.1.0
 
 - Add option `showOverviewRulerColor` to enable hiding color indicators on the scrollbar for available updates.
