@@ -398,4 +398,17 @@ describe('Npm Test Suite', () => {
     }
     assert.deepStrictEqual(result, expected)
   })
+
+  test('version such as 1.x should be correctly identified as a current version', () => {
+    const result: DependencyUpdateInfo = getPossibleUpgrades(testData, '1.x', 'dependencyName')
+    const expected: DependencyUpdateInfo = {
+      major: { name: 'dependencyName', version: '2.1.1' },
+      minor: { name: 'dependencyName', version: '1.1.1' },
+      patch: { name: 'dependencyName', version: '1.0.1' },
+      prerelease: undefined,
+      validVersion: true,
+      existingVersion: true,
+    }
+    assert.deepStrictEqual(result, expected)
+  })
 })
