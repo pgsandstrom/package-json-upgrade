@@ -1,6 +1,17 @@
 import fetch from 'node-fetch'
 import * as npmRegistryFetch from 'npm-registry-fetch'
-import { ReleaseType, SemVer, coerce, diff, gt, lte, satisfies, valid, validRange } from 'semver'
+import {
+  ReleaseType,
+  SemVer,
+  coerce,
+  diff,
+  eq,
+  gt,
+  lte,
+  satisfies,
+  valid,
+  validRange,
+} from 'semver'
 import { getConfig } from './config'
 import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
@@ -168,8 +179,8 @@ export const getPossibleUpgradesWithIgnoredVersions = (
     return { validVersion: false, existingVersion: false }
   }
 
-  const existingVersion = Object.values(npmData.versions).some(
-    (version) => version.version === exactVersion,
+  const existingVersion = Object.values(npmData.versions).some((version) =>
+    eq(version.version, coercedVersion),
   )
 
   const possibleUpgrades = getRawPossibleUpgradeList(
