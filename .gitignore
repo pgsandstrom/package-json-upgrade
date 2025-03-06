@@ -2,6 +2,7 @@ out
 node_modules
 .vscode-test/
 *.vsix
+.npmrc
 
 # local env files
 .env.local

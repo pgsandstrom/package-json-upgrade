@@ -130,7 +130,7 @@ const fixConfig = () => {
     prereleaseUpgradeColorOverwrite:
       workspaceConfig.get<string>('prereleaseUpgradeColorOverwrite') ?? '',
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    decorationString: workspaceConfig.get<string>('decorationString') || '\t->: %s',
+    decorationString: workspaceConfig.get<string>('decorationString') || '\t-> %s',
     ignorePatterns: workspaceConfig.get<string[]>('ignorePatterns') ?? [],
     ignoreVersions:
       workspaceConfig.get<Record<string, string | undefined | string[]>>('ignoreVersions') ?? {},
