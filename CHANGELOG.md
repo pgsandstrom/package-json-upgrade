@@ -4,6 +4,8 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+## 3.2.0
+
 - Remove extra character in fallback update string
 - Make overview ruler color be affected by customized colors
 - Correctly identify versions with `x` wildcard as an existing version
