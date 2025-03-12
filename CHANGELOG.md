@@ -4,6 +4,10 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+## 3.2.1
+
+- Fix issue with crash in npm-registry-fetch dependency
+
 ## 3.2.0
 
 - Remove extra character in fallback update string
