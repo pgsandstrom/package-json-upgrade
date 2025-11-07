@@ -24,12 +24,8 @@ export interface NpmLoader<T> {
 }
 
 interface PackageJson {
-  dependencies: StrictDict<string, PackageJsonDependency>
-  devDependencies: StrictDict<string, PackageJsonDependency>
-}
-
-interface PackageJsonDependency {
-  versions: StrictDict<string, NpmData>
+  dependencies: StrictDict<string, string>
+  devDependencies: StrictDict<string, string>
 }
 
 export interface NpmData {
@@ -37,7 +33,8 @@ export interface NpmData {
     latest: string
     next?: string // not used currently
   }
-  versions: {
+  // "versions" is undefined only in weird edge cases, not completely sure when. Maybe when packages has been removed from the registry?
+  versions?: {
     [key in string]: VersionData
   }
   homepage?: string
@@ -58,7 +55,7 @@ export interface DependencyUpdateInfo {
   patch?: VersionData
   prerelease?: VersionData
   validVersion: boolean // if the current version is valid semver
-  existingVersion: boolean // if the current version exists on npm
+  existingVersion: boolean // if the current version exists
 }
 
 export interface CacheItem {
@@ -170,6 +167,10 @@ export const getPossibleUpgradesWithIgnoredVersions = (
     return { validVersion: true, existingVersion: true }
   }
 
+  if (!npmData.versions) {
+    return { validVersion: true, existingVersion: true }
+  }
+
   const exactVersion = getExactVersion(rawCurrentVersion)
 
   const currentVersionIsPrerelease = isVersionPrerelease(exactVersion)
@@ -221,8 +222,12 @@ const getRawPossibleUpgradeList = (
   dependencyName: string,
   ignoredVersions: string | undefined | string[],
   coercedVersion: string | SemVer,
-) => {
+): VersionData[] => {
   const latest = npmData['dist-tags'].latest
+  if (!npmData.versions) {
+    return []
+  }
+
   return Object.values(npmData.versions)
     .filter((version) => valid(version.version))
     .filter((version) => gt(version.version, coercedVersion))
@@ -272,6 +277,15 @@ export const refreshPackageJsonData = (
     }
 
     const promises = Object.entries(dependencies)
+      .filter(([_dependencyName, version]) => {
+        if (valid(version) == null) {
+          // Example of invalid version is "file:./foo.tgz", or maybe fetched from url or git-path or something else.
+          // When the version isn't a semver, then we should assume it isnt fetched from a registry, so we should bail on it.
+          return false
+        } else {
+          return true
+        }
+      })
       .map(([dependencyName, _version]) => {
         const cache = npmCache[dependencyName]
         if (
