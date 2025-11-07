@@ -4,6 +4,10 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+## 3.2.2
+
+- Fix issue with non-semver versions such as `file:./foo.tgz`
+
 ## 3.2.1
 
 - Fix issue with crash in npm-registry-fetch dependency
