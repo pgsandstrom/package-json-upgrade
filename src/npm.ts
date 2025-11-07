@@ -278,7 +278,8 @@ export const refreshPackageJsonData = (
 
     const promises = Object.entries(dependencies)
       .filter(([_dependencyName, version]) => {
-        if (valid(version) == null) {
+        // TODO I made a release without "coerce" here and test suite didnt detect it. Fix so this is properly tested
+        if (valid(coerce(version)) == null) {
           // Example of invalid version is "file:./foo.tgz", or maybe fetched from url or git-path or something else.
           // When the version isn't a semver, then we should assume it isnt fetched from a registry, so we should bail on it.
           return false
