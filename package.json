@@ -2,7 +2,7 @@
   "name": "package-json-upgrade",
   "displayName": "Package Json Upgrade",
   "description": "Shows available updates in package.json files. Offers quick fix command to update them and to show the changelog.",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "publisher": "codeandstuff",
   "license": "MIT",
   "icon": "logo/icon.png",

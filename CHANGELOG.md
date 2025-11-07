@@ -4,6 +4,10 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+## 3.2.3
+
+- Fix parsing issue introduced in last patch
+
 ## 3.2.2
 
 - Fix issue with non-semver versions such as `file:./foo.tgz`
