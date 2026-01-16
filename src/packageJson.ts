@@ -1,7 +1,5 @@
 import * as vscode from 'vscode'
-import { parse } from '@typescript-eslint/parser'
-import { TSESTree } from '@typescript-eslint/types'
-import { VariableDeclaration } from '@typescript-eslint/types/dist/generated/ast-spec'
+import { Node, findNodeAtLocation, parseTree } from 'jsonc-parser'
 
 export interface DependencyGroups {
   startLine: number
@@ -23,55 +21,60 @@ export const getDependencyFromLine = (jsonAsString: string, line: number) => {
 }
 
 export const getDependencyInformation = (jsonAsString: string): DependencyGroups[] => {
-  const jsonAsTypescript = `let tmp=${jsonAsString}`
+  const tree = parseTree(jsonAsString)
 
-  const ast = parse(jsonAsTypescript, {
-    loc: true,
-  })
-
-  const variable = ast.body[0] as VariableDeclaration
-
-  const tmp = variable.declarations[0]
-
-  const init = tmp.init
-  if (init == null || init.type !== 'ObjectExpression') {
-    throw new Error(`unexpected type: ${init?.type}`)
+  if (tree === undefined) {
+    return []
   }
 
-  const properties = init.properties as TSESTree.Property[]
+  const dependenciesNode = findNodeAtLocation(tree, ['dependencies'])
+  const devDependenciesNode = findNodeAtLocation(tree, ['devDependencies'])
 
-  const dependencies = properties.find(
-    (p) => (p.key as TSESTree.StringLiteral).value === 'dependencies',
-  )
-
-  const devDependencies = properties.find(
-    (p) => (p.key as TSESTree.StringLiteral).value === 'devDependencies',
-  )
-
-  return [dependencies, devDependencies]
-    .filter((i): i is TSESTree.Property => i !== undefined)
-    .map(toDependencyGroup)
+  return [dependenciesNode, devDependenciesNode]
+    .filter((node): node is Node => node !== undefined)
+    .map((node) => toDependencyGroup(jsonAsString, node))
 }
 
-function toDependencyGroup(dependencyProperty: TSESTree.Property): DependencyGroups {
-  if (dependencyProperty.value.type !== 'ObjectExpression') {
-    throw new Error('unexpected type')
+function toDependencyGroup(jsonAsString: string, dependencyNode: Node): DependencyGroups {
+  if (dependencyNode.type !== 'object' || !dependencyNode.children) {
+    return { startLine: 0, deps: [] }
   }
-  const dependencies = dependencyProperty.value.properties as TSESTree.Property[]
 
-  const d = dependencies.map((dep) => {
+  const deps = dependencyNode.children.map((property) => {
+    if (property.type !== 'property' || !property.children || property.children.length < 2) {
+      return null
+    }
+
+    const keyNode = property.children[0]
+    const valueNode = property.children[1]
+
+    if (keyNode.type !== 'string' || valueNode.type !== 'string') {
+      return null
+    }
+
     return {
-      dependencyName: (dep.key as TSESTree.StringLiteral).value,
-      currentVersion: (dep.value as TSESTree.StringLiteral).value,
-      // TODO investigate exactly why we have "off by one" error
-      line: dep.loc.end.line - 1,
+      dependencyName: keyNode.value as string,
+      currentVersion: valueNode.value as string,
+      line: offsetToLine(jsonAsString, property.offset),
     }
   })
 
   return {
-    startLine: dependencyProperty.loc.start.line - 1,
-    deps: d,
+    startLine: offsetToLine(jsonAsString, dependencyNode.offset),
+    deps: deps.filter((d): d is Dependency => d !== null),
   }
+}
+
+// jsonc-parser gives offset in characters, so we have to translate it to line numbers
+// this currently does not respect CR-only line breaks... but no one uses that, right? Add it if someone complains.
+function offsetToLine(text: string, offset: number): number {
+  let line = 0
+  for (let i = 0; i < offset && i < text.length; i++) {
+    if (text[i] === '\n') {
+      line++
+    }
+  }
+  return line
 }
 
 export const isPackageJson = (document: vscode.TextDocument) => {
