@@ -1,4 +1,3 @@
-import fetch from 'node-fetch'
 import * as npmRegistryFetch from 'npm-registry-fetch'
 import {
   coerce,
