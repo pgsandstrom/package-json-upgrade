@@ -364,8 +364,7 @@ const findChangelog = async (dependencyName: string, npmData: NpmData) => {
   if (npmData.homepage === undefined) {
     return
   }
-  // TODO support other stuff than github?
-  const regexResult = /(https?:\/\/github\.com\/[-\w/.]*\/[-\w/.]*)(#[-\w/.]*)?/.exec(
+  const regexResult = /(https?:\/\/github\.com\/([-\w.]+)\/([-\w.]+))(#[-\w/.]*)?/.exec(
     npmData.homepage,
   )
   if (regexResult === null) {
@@ -376,6 +375,10 @@ const findChangelog = async (dependencyName: string, npmData: NpmData) => {
     asyncstate: AsyncState.InProgress,
   }
   const baseGithubUrl = regexResult[1]
+  const owner = regexResult[2]
+  const repo = regexResult[3]
+
+  // First, try to find CHANGELOG.md
   const changelogUrl = `${baseGithubUrl}/blob/master/CHANGELOG.md`
   const result = await fetch(changelogUrl)
   if (result.status >= 200 && result.status < 300) {
@@ -383,9 +386,44 @@ const findChangelog = async (dependencyName: string, npmData: NpmData) => {
       asyncstate: AsyncState.Fulfilled,
       item: changelogUrl,
     }
+    return
+  }
+
+  // If no CHANGELOG.md, check if GitHub releases exist
+  const releasesUrl = await findGithubReleases(owner, repo, baseGithubUrl)
+  if (releasesUrl !== undefined) {
+    changelogCache[dependencyName] = {
+      asyncstate: AsyncState.Fulfilled,
+      item: releasesUrl,
+    }
   } else {
     changelogCache[dependencyName] = {
       asyncstate: AsyncState.Rejected,
     }
   }
+}
+
+const findGithubReleases = async (
+  owner: string,
+  repo: string,
+  baseGithubUrl: string,
+): Promise<string | undefined> => {
+  try {
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/releases?per_page=1`
+    const response = await fetch(apiUrl, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'package-json-upgrade-vscode',
+      },
+    })
+    if (response.status >= 200 && response.status < 300) {
+      const releases = (await response.json()) as unknown[]
+      if (Array.isArray(releases) && releases.length > 0) {
+        return `${baseGithubUrl}/releases`
+      }
+    }
+  } catch (e) {
+    // Silently fail - we'll just not show a releases link
+  }
+  return undefined
 }
