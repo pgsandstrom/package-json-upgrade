@@ -1,3 +1,5 @@
+import { describe, test } from 'node:test'
+
 import * as assert from 'assert'
 import { readFileSync } from 'fs'
 

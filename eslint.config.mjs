@@ -117,6 +117,13 @@ export default tseslint.config(
       '@typescript-eslint/no-invalid-void-type': ['off'],
     },
   },
+  // disable floating promises rule in test files since node:test's describe/test return promises
+  {
+    files: ['src/test-jest/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'off',
+    },
+  },
   // in this object we fix so files not included in tsconfig can still be linted. We skip rules that require typechecking.
   {
     files: ['*.js', '*.mjs', '*.ts'],

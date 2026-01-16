@@ -1,3 +1,5 @@
+import { before, describe, test } from 'node:test'
+
 import * as assert from 'assert'
 
 import { Config, setConfig } from '../config'
@@ -63,7 +65,7 @@ const testData: NpmData = {
 }
 
 describe('Npm Test Suite', () => {
-  beforeAll(() => {
+  before(() => {
     const config: Config = {
       showUpdatesAtStart: true,
       showOverviewRulerColor: true,
