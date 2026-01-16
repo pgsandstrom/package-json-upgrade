@@ -13,8 +13,10 @@ import {
 } from 'semver'
 
 import { getConfig } from './config'
+import { getCacheEntry, setCacheEntry } from './githubCache'
+import { logDebug, logError } from './log'
 import { getNpmConfig } from './npmConfig'
-import { AsyncState, Dict, Loader, StrictDict } from './types'
+import { AsyncState, Dict, StrictDict } from './types'
 
 export interface NpmLoader<T> {
   asyncstate: AsyncState
@@ -65,12 +67,8 @@ export interface CacheItem {
 
 let npmCache: Dict<string, NpmLoader<CacheItem>> = {}
 
-// dependencyname pointing to a potential changelog
-let changelogCache: Dict<string, Loader<string>> = {}
-
 export const cleanNpmCache = () => {
   npmCache = {}
-  changelogCache = {}
 }
 
 export const getAllCachedNpmData = () => {
@@ -85,8 +83,24 @@ export const setCachedNpmData = (newNpmCache: Dict<string, NpmLoader<CacheItem>>
   npmCache = newNpmCache
 }
 
-export const getCachedChangelog = (dependencyName: string) => {
-  return changelogCache[dependencyName]
+export const getChangelogUrl = (homepage: string | undefined): string | undefined => {
+  if (homepage === undefined) {
+    return undefined
+  }
+  const regexResult = /(https?:\/\/github\.com\/([-\w.]+)\/([-\w.]+))(#[-\w/.]*)?/.exec(homepage)
+  if (regexResult === null) {
+    return undefined
+  }
+  const baseGithubUrl = regexResult[1]
+  const repoKey = `${regexResult[2]}/${regexResult[3]}`
+
+  if (getCacheEntry('changelog', repoKey) === true) {
+    return `${baseGithubUrl}/blob/master/CHANGELOG.md`
+  }
+  if (getCacheEntry('releases', repoKey) === true) {
+    return `${baseGithubUrl}/releases`
+  }
+  return undefined
 }
 
 export const getLatestVersion = (
@@ -256,7 +270,7 @@ const getRawPossibleUpgradeList = (
 const isVersionIgnored = (version: VersionData, dependencyName: string, ignoredVersion: string) => {
   if (validRange(ignoredVersion) === null) {
     console.warn(
-      `invalid semver range detected in ignored version for depedency ${dependencyName}: ${ignoredVersion}`,
+      `invalid semver range detected in ignored version for dependency ${dependencyName}: ${ignoredVersion}`,
     )
     return true
   }
@@ -329,10 +343,8 @@ const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
 
   promise
     .then((json) => {
-      if (changelogCache[dependencyName] === undefined) {
-        // we currently do not wait for this to speed things up
-        void findChangelog(dependencyName, json)
-      }
+      // Populate changelog cache (not awaited to speed things up)
+      void retrieveAndCacheChangelog(json)
       npmCache[dependencyName] = {
         asyncstate: AsyncState.Fulfilled,
         startTime,
@@ -343,9 +355,7 @@ const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
       }
     })
     .catch((e: unknown) => {
-      console.error(`failed to load dependency ${dependencyName}`)
-      console.error(`config used: ${JSON.stringify(conf, null, 2)}`)
-      console.error(`Entire error: ${JSON.stringify(e, null, 2)}`)
+      logError(`failed to load dependency ${dependencyName}`, e)
 
       npmCache[dependencyName] = {
         asyncstate: AsyncState.Rejected,
@@ -356,7 +366,7 @@ const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
   return promise
 }
 
-const findChangelog = async (dependencyName: string, npmData: NpmData) => {
+const retrieveAndCacheChangelog = async (npmData: NpmData) => {
   if (npmData.homepage === undefined) {
     return
   }
@@ -367,59 +377,76 @@ const findChangelog = async (dependencyName: string, npmData: NpmData) => {
     return
   }
 
-  changelogCache[dependencyName] = {
-    asyncstate: AsyncState.InProgress,
-  }
   const baseGithubUrl = regexResult[1]
-  const owner = regexResult[2]
-  const repo = regexResult[3]
+  const repoKey = `${regexResult[2]}/${regexResult[3]}`
 
-  // First, try to find CHANGELOG.md
-  const changelogUrl = `${baseGithubUrl}/blob/master/CHANGELOG.md`
-  const result = await fetch(changelogUrl)
-  if (result.status >= 200 && result.status < 300) {
-    changelogCache[dependencyName] = {
-      asyncstate: AsyncState.Fulfilled,
-      item: changelogUrl,
-    }
-    return
+  const cachedChangelog = getCacheEntry('changelog', repoKey)
+  // If we have CHANGELOG.md cached, return it
+  if (cachedChangelog === true) {
+    return `${baseGithubUrl}/blob/master/CHANGELOG.md`
   }
 
-  // If no CHANGELOG.md, check if GitHub releases exist
-  const releasesUrl = await findGithubReleases(owner, repo, baseGithubUrl)
-  if (releasesUrl !== undefined) {
-    changelogCache[dependencyName] = {
-      asyncstate: AsyncState.Fulfilled,
-      item: releasesUrl,
+  // If no CHANGELOG.md cache is present, fetch it
+  // TODO break out to own function
+  try {
+    if (cachedChangelog === undefined) {
+      const changelogUrl = `${baseGithubUrl}/blob/master/CHANGELOG.md`
+      const response = await fetch(changelogUrl)
+      logDebug(`fetched CHANGELOG.md for ${baseGithubUrl}, got ${response.status}`)
+      if (response.status >= 200 && response.status < 300) {
+        setCacheEntry('changelog', repoKey, true)
+        return changelogUrl
+      } else if (response.status === 404) {
+        // No CHANGELOG.md found, cache that and check releases
+        setCacheEntry('changelog', repoKey, false)
+      }
     }
-  } else {
-    changelogCache[dependencyName] = {
-      asyncstate: AsyncState.Rejected,
-    }
+  } catch (e) {
+    logError(`fetch CHANGELOG.md for ${baseGithubUrl} threw error`, e)
   }
+
+  // this is the case where CHANGELOG.md doesnt exist, check for release page
+
+  const cachedReleases = getCacheEntry('releases', repoKey)
+  if (cachedReleases === true) {
+    return `${baseGithubUrl}/releases`
+  }
+  if (cachedReleases === false) {
+    return undefined
+  }
+
+  // Release page not cached, need to fetch
+  await fetchAndCacheReleases(repoKey, baseGithubUrl)
 }
 
-const findGithubReleases = async (
-  owner: string,
-  repo: string,
+const fetchAndCacheReleases = async (
+  repoKey: string,
   baseGithubUrl: string,
 ): Promise<string | undefined> => {
+  const cachedReleases = getCacheEntry('releases', repoKey)
+  if (cachedReleases !== undefined) {
+    return cachedReleases ? `${baseGithubUrl}/releases` : undefined
+  }
+
   try {
-    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/releases?per_page=1`
+    const apiUrl = `https://api.github.com/repos/${repoKey}/releases?per_page=1`
     const response = await fetch(apiUrl, {
       headers: {
         Accept: 'application/vnd.github+json',
         'User-Agent': 'package-json-upgrade-vscode',
       },
     })
+    logDebug(`fetched CHANGELOG.md for ${baseGithubUrl}, got ${response.status}`)
     if (response.status >= 200 && response.status < 300) {
       const releases = (await response.json()) as unknown[]
       if (Array.isArray(releases) && releases.length > 0) {
+        setCacheEntry('releases', repoKey, true)
         return `${baseGithubUrl}/releases`
       }
+      setCacheEntry('releases', repoKey, false)
     }
-  } catch (_) {
-    // Silently fail - we'll just not show a releases link
+  } catch (e) {
+    logError(`fetch release page for ${baseGithubUrl} threw error`, e)
   }
   return undefined
 }

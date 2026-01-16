@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 
 import { OPEN_URL_COMMAND } from './extension'
-import { getCachedChangelog, getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
+import { getCachedNpmData, getChangelogUrl, getExactVersion, getPossibleUpgrades } from './npm'
 import { getDependencyFromLine, isPackageJson } from './packageJson'
 import { replaceLastOccuranceOf } from './util/util'
 
@@ -88,9 +88,9 @@ export class UpdateAction implements vscode.CodeActionProvider {
       actions.push(commandAction)
     }
 
-    const changelog = getCachedChangelog(dep.dependencyName)
-    if (changelog !== undefined && changelog.item !== undefined) {
-      const commandAction = this.createChangelogCommand(changelog.item)
+    const changelogUrl = getChangelogUrl(npmCache.item.npmData.homepage)
+    if (changelogUrl !== undefined) {
+      const commandAction = this.createChangelogCommand(changelogUrl)
       actions.push(commandAction)
     }
 

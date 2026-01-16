@@ -1,6 +1,8 @@
 import * as vscode from 'vscode'
 
 import { Config, getConfig, setConfig } from './config'
+import { initGithubCache } from './githubCache'
+import { initLogger } from './log'
 import { cleanNpmCache } from './npm'
 import { clearDecorations, handleFileDecoration } from './texteditor'
 import { UpdateAction } from './updateAction'
@@ -9,6 +11,21 @@ import { updateAll } from './updateAll'
 export const OPEN_URL_COMMAND = 'package-json-upgrade.open-url-command'
 
 export function activate(context: vscode.ExtensionContext) {
+  try {
+    activateWrapped(context)
+  } catch (e) {
+    console.error(`failed to start`)
+    if (e instanceof Error) {
+      console.error(e.name, e.message)
+      console.error(e.stack)
+    }
+  }
+}
+
+function activateWrapped(context: vscode.ExtensionContext) {
+  initLogger(context)
+  initGithubCache(context.globalState)
+
   fixConfig()
 
   let showDecorations = getConfig().showUpdatesAtStart
