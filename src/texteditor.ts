@@ -1,11 +1,12 @@
 import * as vscode from 'vscode'
+import { TextEditorDecorationType } from 'vscode'
+
+import { getConfig } from './config'
 import { decorateDiscreet, getDecoratorForUpdate, getUpdateDescription } from './decorations'
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
 import { DependencyGroups, getDependencyInformation, isPackageJson } from './packageJson'
 import { AsyncState } from './types'
-import { TextEditorDecorationType } from 'vscode'
-import { getConfig } from './config'
 
 interface DecorationWrapper {
   line: number
@@ -52,7 +53,7 @@ const loadDecoration = async (document: vscode.TextDocument, startTime: number) 
 
   try {
     await Promise.race([...promises, Promise.resolve()])
-  } catch (e) {
+  } catch (_) {
     //
   }
 
@@ -96,7 +97,7 @@ const waitForPromises = async (
 
   clearInterval(interval)
 
-  return paintDecorations(document, dependencyGroups, false, startTime)
+  paintDecorations(document, dependencyGroups, false, startTime)
 }
 
 const paintDecorations = (

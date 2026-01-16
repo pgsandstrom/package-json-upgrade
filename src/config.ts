@@ -16,7 +16,7 @@ let currentConfig: Config | undefined
 
 export const getConfig = (): Config => {
   if (currentConfig === undefined) {
-    throw 'config should be loaded'
+    throw new Error('config should be loaded')
   }
   return currentConfig
 }

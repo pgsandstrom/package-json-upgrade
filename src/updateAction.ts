@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+
 import { OPEN_URL_COMMAND } from './extension'
 import { getCachedChangelog, getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
 import { getDependencyFromLine, isPackageJson } from './packageJson'

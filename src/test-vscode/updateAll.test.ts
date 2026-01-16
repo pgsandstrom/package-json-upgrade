@@ -1,10 +1,10 @@
-import * as vscode from 'vscode'
 import * as assert from 'assert'
+import * as vscode from 'vscode'
 
-import { updateAll } from '../updateAll'
+import { Config, setConfig } from '../config'
 import { CacheItem, NpmLoader, setCachedNpmData } from '../npm'
 import { AsyncState, Dict } from '../types'
-import { Config, setConfig } from '../config'
+import { updateAll } from '../updateAll'
 
 const packageJsonTestContent = `
 {

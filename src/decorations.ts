@@ -6,6 +6,7 @@ import {
   ThemableDecorationRenderOptions,
   window,
 } from 'vscode'
+
 import { getConfig } from './config'
 
 type DecorationTypeConfigurables = {

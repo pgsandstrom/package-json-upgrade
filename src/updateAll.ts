@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getExactVersion, getLatestVersion } from './npm'
 import { getDependencyInformation, isPackageJson } from './packageJson'

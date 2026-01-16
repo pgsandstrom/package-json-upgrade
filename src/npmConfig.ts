@@ -1,5 +1,6 @@
 import * as config from 'libnpmconfig'
 import * as npmRegistryFetch from 'npm-registry-fetch'
+
 import { getConfig } from './config'
 import { Dict } from './types'
 
@@ -13,9 +14,8 @@ export const getNpmConfig = (packageJsonPath: string): npmRegistryFetch.Options 
   if (conf === undefined || skipNpmConfig !== skippedNpmConfigLastTime) {
     if (skipNpmConfig) {
       conf = {}
-      console.debug('Defaulting to empty config')
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       conf = config
         .read(
           {

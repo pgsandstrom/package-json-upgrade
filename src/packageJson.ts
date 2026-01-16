@@ -1,5 +1,5 @@
+import { findNodeAtLocation, Node, parseTree } from 'jsonc-parser'
 import * as vscode from 'vscode'
-import { Node, findNodeAtLocation, parseTree } from 'jsonc-parser'
 
 export interface DependencyGroups {
   startLine: number

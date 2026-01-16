@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+
 import { Config, getConfig, setConfig } from './config'
 import { cleanNpmCache } from './npm'
 import { clearDecorations, handleFileDecoration } from './texteditor'
@@ -120,6 +121,9 @@ export function deactivate() {
 
 const fixConfig = () => {
   const workspaceConfig = vscode.workspace.getConfiguration('package-json-upgrade')
+
+  const decorationString = workspaceConfig.get<string>('decorationString')
+
   const config: Config = {
     showUpdatesAtStart: workspaceConfig.get<boolean>('showUpdatesAtStart') === true,
     showOverviewRulerColor: workspaceConfig.get<boolean>('showOverviewRulerColor') === true,
@@ -129,8 +133,8 @@ const fixConfig = () => {
     patchUpgradeColorOverwrite: workspaceConfig.get<string>('patchUpgradeColorOverwrite') ?? '',
     prereleaseUpgradeColorOverwrite:
       workspaceConfig.get<string>('prereleaseUpgradeColorOverwrite') ?? '',
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    decorationString: workspaceConfig.get<string>('decorationString') || '\t-> %s',
+    decorationString:
+      decorationString !== undefined && decorationString !== '' ? decorationString : '\t-> %s',
     ignorePatterns: workspaceConfig.get<string[]>('ignorePatterns') ?? [],
     ignoreVersions:
       workspaceConfig.get<Record<string, string | undefined | string[]>>('ignoreVersions') ?? {},

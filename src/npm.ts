@@ -1,17 +1,18 @@
 import fetch from 'node-fetch'
 import * as npmRegistryFetch from 'npm-registry-fetch'
 import {
-  ReleaseType,
-  SemVer,
   coerce,
   diff,
   eq,
   gt,
   lte,
+  ReleaseType,
   satisfies,
+  SemVer,
   valid,
   validRange,
 } from 'semver'
+
 import { getConfig } from './config'
 import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict, Loader, StrictDict } from './types'
@@ -229,7 +230,7 @@ const getRawPossibleUpgradeList = (
   }
 
   return Object.values(npmData.versions)
-    .filter((version) => valid(version.version))
+    .filter((version) => valid(version.version) != null)
     .filter((version) => gt(version.version, coercedVersion))
     .filter((version) => {
       if (ignoredVersions === undefined) {
@@ -302,7 +303,7 @@ export const refreshPackageJsonData = (
       .filter((p): p is Promise<void> => p !== undefined)
 
     return promises
-  } catch (e) {
+  } catch (_) {
     console.warn(`Failed to parse package.json: ${packageJsonFilePath}`)
     return [Promise.resolve()]
   }
@@ -342,15 +343,11 @@ const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
         },
       }
     })
-    .catch((e) => {
-      /* eslint-disable */
+    .catch((e: unknown) => {
       console.error(`failed to load dependency ${dependencyName}`)
-      console.error(`status code: ${e?.statusCode}`)
-      console.error(`uri: ${e?.uri}`)
-      console.error(`message: ${e?.message}`)
       console.error(`config used: ${JSON.stringify(conf, null, 2)}`)
       console.error(`Entire error: ${JSON.stringify(e, null, 2)}`)
-      /* eslint-enable */
+
       npmCache[dependencyName] = {
         asyncstate: AsyncState.Rejected,
         startTime,
@@ -422,7 +419,7 @@ const findGithubReleases = async (
         return `${baseGithubUrl}/releases`
       }
     }
-  } catch (e) {
+  } catch (_) {
     // Silently fail - we'll just not show a releases link
   }
   return undefined

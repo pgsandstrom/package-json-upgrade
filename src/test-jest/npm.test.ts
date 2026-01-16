@@ -1,14 +1,14 @@
 import * as assert from 'assert'
 
+import { Config, setConfig } from '../config'
 import {
   DependencyUpdateInfo,
-  NpmData,
-  VersionData,
   getLatestVersionWithIgnoredVersions,
   getPossibleUpgrades,
   getPossibleUpgradesWithIgnoredVersions,
+  NpmData,
+  VersionData,
 } from '../npm'
-import { Config, setConfig } from '../config'
 
 const testData: NpmData = {
   'dist-tags': {
