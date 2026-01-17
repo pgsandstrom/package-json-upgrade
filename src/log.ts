@@ -4,9 +4,10 @@ import * as vscode from 'vscode'
 let channel: vscode.LogOutputChannel | undefined
 
 export function initLogger(context: vscode.ExtensionContext) {
-  if (process.env.NODE_ENV !== 'development') {
+  if (context.extensionMode !== vscode.ExtensionMode.Development) {
     return
   }
+  logDebug('started logging')
   channel = vscode.window.createOutputChannel('package-json-upgrade', { log: true })
   context.subscriptions.push(channel)
 }
@@ -25,6 +26,7 @@ function log(type: 'debug' | 'error', message?: string, caughtError?: unknown) {
   if (!channel) {
     return
   }
+  //   console.log(`test log`, message)
   if (message !== undefined) {
     channel[type](message)
   }
@@ -35,5 +37,8 @@ function log(type: 'debug' | 'error', message?: string, caughtError?: unknown) {
     } else {
       channel[type](`caught non error: ${JSON.stringify(caughtError)}`)
     }
+  }
+  if (type === 'error') {
+    channel.show(true)
   }
 }

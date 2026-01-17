@@ -1,7 +1,8 @@
 import * as vscode from 'vscode'
 
+import { getChangelogUrl } from './changelog'
 import { OPEN_URL_COMMAND } from './extension'
-import { getCachedNpmData, getChangelogUrl, getExactVersion, getPossibleUpgrades } from './npm'
+import { getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
 import { getDependencyFromLine, isPackageJson } from './packageJson'
 import { replaceLastOccuranceOf } from './util/util'
 
