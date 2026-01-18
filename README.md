@@ -43,7 +43,3 @@ Several more configurations exists. Check out your vscode settings for the compl
 ## Links
 
 [Marketplace](https://marketplace.visualstudio.com/items?itemName=codeandstuff.package-json-upgrade)
-
-[How to install vscode extensions](https://code.visualstudio.com/docs/editor/extension-gallery)
-
-[ Logo Credit ](https://smashicons.com)
