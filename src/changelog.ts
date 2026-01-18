@@ -3,39 +3,38 @@ import { githubFetch } from './githubGateway'
 import { logDebug, logError } from './log'
 import { NpmData } from './npm'
 
-export const getChangelogUrl = (homepage: string | undefined): string | undefined => {
-  if (homepage === undefined) {
+export const getChangelogUrl = (npmData: NpmData): string | undefined => {
+  const githubUrl = getGithubUrl(npmData)
+  if (githubUrl === undefined) {
     return undefined
   }
-  const regexResult = /(https?:\/\/github\.com\/([-\w.]+)\/([-\w.]+))(#[-\w/.]*)?/.exec(homepage)
+  const regexResult = /https?:\/\/github\.com\/([-\w.]+)\/([-\w.]+)/.exec(githubUrl)
   if (regexResult === null) {
     return undefined
   }
-  const baseGithubUrl = regexResult[1]
-  const repoKey = `${regexResult[2]}/${regexResult[3]}`
+  const repoKey = `${regexResult[1]}/${regexResult[2]}`
 
   if (getCacheEntry('changelog', repoKey) === true) {
-    return `${baseGithubUrl}/blob/master/CHANGELOG.md`
+    return `${githubUrl}/blob/master/CHANGELOG.md`
   }
   if (getCacheEntry('releases', repoKey) === true) {
-    return `${baseGithubUrl}/releases`
+    return `${githubUrl}/releases`
   }
   return undefined
 }
 
 export const retrieveAndCacheChangelog = async (npmData: NpmData) => {
-  if (npmData.homepage === undefined) {
+  const githubUrl = getGithubUrl(npmData)
+  if (githubUrl === undefined) {
     return
   }
-  const regexResult = /(https?:\/\/github\.com\/([-\w.]+)\/([-\w.]+))(#[-\w/.]*)?/.exec(
-    npmData.homepage,
-  )
+  const regexResult = /https?:\/\/github\.com\/([-\w.]+)\/([-\w.]+)/.exec(githubUrl)
   if (regexResult == null) {
     return
   }
 
-  const baseGithubUrl = regexResult[1]
-  const repoKey = `${regexResult[2]}/${regexResult[3]}`
+  const baseGithubUrl = githubUrl
+  const repoKey = `${regexResult[1]}/${regexResult[2]}`
 
   const cachedChangelog = getCacheEntry('changelog', repoKey)
   // If we have CHANGELOG.md cached, return it
@@ -121,4 +120,47 @@ const retrieveReleasePage = async (repoKey: string, baseGithubUrl: string): Prom
     setCacheEntry('releases', repoKey, false)
   }
   return false
+}
+
+/**
+ * Extracts the GitHub URL from npm package data.
+ * Tries homepage first, then falls back to the repository field.
+ * Handles various repository URL formats:
+ * - git+https://github.com/owner/repo.git
+ * - git://github.com/owner/repo.git
+ * - https://github.com/owner/repo
+ * - github:owner/repo
+ * - git+ssh://git@github.com/owner/repo.git
+ */
+export const getGithubUrl = (npmData: NpmData): string | undefined => {
+  // Try homepage first
+  if (npmData.homepage !== undefined) {
+    const match = /https?:\/\/github\.com\/[\w.-]+\/[\w.-]+/.exec(npmData.homepage)
+    if (match) {
+      return match[0]
+    }
+  }
+
+  // Fall back to repository field
+  const repoUrl =
+    typeof npmData.repository === 'string' ? npmData.repository : npmData.repository?.url
+
+  if (repoUrl === undefined) {
+    return undefined
+  }
+
+  // Handle URLs containing github.com (various formats)
+  // Capture repo name including dots (e.g., next.js), then strip .git suffix if present
+  const githubMatch = /github\.com[/:]([^/]+)\/([^/]+?)(?:\.git)?(?:\/|$)/.exec(repoUrl)
+  if (githubMatch) {
+    return `https://github.com/${githubMatch[1]}/${githubMatch[2]}`
+  }
+
+  // Handle "github:owner/repo" shorthand
+  const shortMatch = /^github:([^/]+)\/(.+)$/.exec(repoUrl)
+  if (shortMatch) {
+    return `https://github.com/${shortMatch[1]}/${shortMatch[2]}`
+  }
+
+  return undefined
 }

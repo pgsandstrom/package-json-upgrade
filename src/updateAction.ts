@@ -89,7 +89,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
       actions.push(commandAction)
     }
 
-    const changelogUrl = getChangelogUrl(npmCache.item.npmData.homepage)
+    const changelogUrl = getChangelogUrl(npmCache.item.npmData)
     if (changelogUrl !== undefined) {
       const commandAction = this.createChangelogCommand(changelogUrl)
       actions.push(commandAction)
