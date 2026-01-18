@@ -4,6 +4,11 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+## 3.3.0
+
+- Improved performance when parsing package.json
+- Ability to find changelogs much improved. Now also finds release pages on github.
+
 ## 3.2.3
 
 - Fix parsing issue introduced in last patch
