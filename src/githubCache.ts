@@ -63,12 +63,12 @@ const cleanExpiredEntries = () => {
   }
 }
 
-export const initGithubCache = (state: vscode.Memento) => {
+export const initGithubCache = async (state: vscode.Memento) => {
   globalState = state
 
   if (TEST_CLEAR_CACHE_ON_STARTUP) {
     logError('CLEARING ENTIRE CACHE!!')
-    globalState.update(GITHUB_CACHE_KEY, { releases: {}, changelog: {} })
+    await globalState.update(GITHUB_CACHE_KEY, { releases: {}, changelog: {} })
   }
 
   cleanExpiredEntries()

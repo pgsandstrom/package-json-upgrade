@@ -10,9 +10,9 @@ import { updateAll } from './updateAll'
 
 export const OPEN_URL_COMMAND = 'package-json-upgrade.open-url-command'
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   try {
-    activateWrapped(context)
+    await activateWrapped(context)
   } catch (e) {
     console.error(`failed to start`)
     if (e instanceof Error) {
@@ -22,9 +22,9 @@ export function activate(context: vscode.ExtensionContext) {
   }
 }
 
-function activateWrapped(context: vscode.ExtensionContext) {
+async function activateWrapped(context: vscode.ExtensionContext) {
   initLogger(context)
-  initGithubCache(context.globalState)
+  await initGithubCache(context.globalState)
 
   fixConfig()
 
