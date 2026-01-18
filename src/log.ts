@@ -1,17 +1,17 @@
-// logger.ts
-import * as vscode from 'vscode'
-
-let channel: vscode.LogOutputChannel | undefined
+// NOTE: vscode is imported lazily in initLogger to allow this module to be imported in Node.js tests without failing on the vscode module resolution.
+let channel: import('vscode').LogOutputChannel | undefined
 
 // REMEMBER: If log is not showing, then run command 'Developer:Set LogLevel' in vscode, and set to show 'Debug'.
 
-export function initLogger(context: vscode.ExtensionContext) {
+export function initLogger(context: import('vscode').ExtensionContext) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const vscode = require('vscode') as typeof import('vscode')
   if (context.extensionMode !== vscode.ExtensionMode.Development) {
     return
   }
-  logDebug('started logging')
   channel = vscode.window.createOutputChannel('package-json-upgrade', { log: true })
   context.subscriptions.push(channel)
+  logDebug('started logging')
 }
 
 export function logDebug(message: string, caughtError?: unknown) {
