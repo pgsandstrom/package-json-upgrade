@@ -1,4 +1,5 @@
 import { getCacheEntry, setCacheEntry } from './githubCache'
+import { githubFetch } from './githubGateway'
 import { logDebug, logError } from './log'
 import { NpmData } from './npm'
 
@@ -65,43 +66,59 @@ export const retrieveAndCacheChangelog = async (npmData: NpmData) => {
 }
 
 const retrieveChangelog = async (repoKey: string, baseGithubUrl: string): Promise<boolean> => {
-  try {
-    const changelogUrl = `${baseGithubUrl}/blob/master/CHANGELOG.md`
-    const response = await fetch(changelogUrl)
-    logDebug(`fetched CHANGELOG.md for ${baseGithubUrl}, got ${response.status}`)
-    if (response.status >= 200 && response.status < 300) {
-      setCacheEntry('changelog', repoKey, true)
-      return true
-    } else if (response.status === 404) {
-      // No CHANGELOG.md found, cache that and check releases
-      setCacheEntry('changelog', repoKey, false)
-    }
-  } catch (e) {
-    logError(`fetch CHANGELOG.md for ${baseGithubUrl} threw error`, e)
+  const changelogUrl = `${baseGithubUrl}/blob/master/CHANGELOG.md`
+  const result = await githubFetch(changelogUrl)
+
+  if (result.status === 'rate-limited') {
+    logDebug(`skipping CHANGELOG.md fetch for ${baseGithubUrl} due to rate limit`)
+    return false
+  }
+
+  if (result.status === 'error') {
+    logError(`fetch CHANGELOG.md for ${baseGithubUrl} threw error`, result.error)
+    return false
+  }
+
+  const response = result.response
+  logDebug(`fetched CHANGELOG.md for ${baseGithubUrl}, got ${response.status}`)
+  if (response.status >= 200 && response.status < 300) {
+    setCacheEntry('changelog', repoKey, true)
+    return true
+  } else if (response.status === 404) {
+    // No CHANGELOG.md found, cache that and check releases
+    setCacheEntry('changelog', repoKey, false)
   }
   return false
 }
 
 const retrieveReleasePage = async (repoKey: string, baseGithubUrl: string): Promise<boolean> => {
-  try {
-    const apiUrl = `https://api.github.com/repos/${repoKey}/releases?per_page=1`
-    const response = await fetch(apiUrl, {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        'User-Agent': 'package-json-upgrade-vscode',
-      },
-    })
-    logDebug(`fetched release page for ${baseGithubUrl}, got ${response.status}`)
-    if (response.status >= 200 && response.status < 300) {
-      const releases = (await response.json()) as unknown[]
-      if (Array.isArray(releases) && releases.length > 0) {
-        setCacheEntry('releases', repoKey, true)
-        return true
-      }
-      setCacheEntry('releases', repoKey, false)
+  const apiUrl = `https://api.github.com/repos/${repoKey}/releases?per_page=1`
+  const result = await githubFetch(apiUrl, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'package-json-upgrade-vscode',
+    },
+  })
+
+  if (result.status === 'rate-limited') {
+    logDebug(`skipping release page fetch for ${baseGithubUrl} due to rate limit`)
+    return false
+  }
+
+  if (result.status === 'error') {
+    logError(`fetch release page for ${baseGithubUrl} threw error`, result.error)
+    return false
+  }
+
+  const response = result.response
+  logDebug(`fetched release page for ${baseGithubUrl}, got ${response.status}`)
+  if (response.status >= 200 && response.status < 300) {
+    const releases = (await response.json()) as unknown[]
+    if (Array.isArray(releases) && releases.length > 0) {
+      setCacheEntry('releases', repoKey, true)
+      return true
     }
-  } catch (e) {
-    logError(`fetch release page for ${baseGithubUrl} threw error`, e)
+    setCacheEntry('releases', repoKey, false)
   }
   return false
 }

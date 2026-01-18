@@ -3,6 +3,8 @@ import * as vscode from 'vscode'
 
 let channel: vscode.LogOutputChannel | undefined
 
+// REMEMBER: If log is not showing, then run command 'Developer:Set LogLevel' in vscode, and set to show 'Debug'.
+
 export function initLogger(context: vscode.ExtensionContext) {
   if (context.extensionMode !== vscode.ExtensionMode.Development) {
     return

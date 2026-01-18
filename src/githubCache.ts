@@ -1,6 +1,10 @@
 import * as vscode from 'vscode'
 
+import { logError } from './log'
+
 const GITHUB_CACHE_KEY = 'githubCache'
+
+const TEST_CLEAR_CACHE_ON_STARTUP = false as boolean
 
 const TTL_MIN_DAYS = 20
 const TTL_MAX_DAYS = 40
@@ -62,8 +66,10 @@ const cleanExpiredEntries = () => {
 export const initGithubCache = (state: vscode.Memento) => {
   globalState = state
 
-  // clear state for testing:
-  // globalState.update(GITHUB_CACHE_KEY, { releases: {}, changelog: {} })
+  if (TEST_CLEAR_CACHE_ON_STARTUP) {
+    logError('CLEARING ENTIRE CACHE!!')
+    globalState.update(GITHUB_CACHE_KEY, { releases: {}, changelog: {} })
+  }
 
   cleanExpiredEntries()
 }
