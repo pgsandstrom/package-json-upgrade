@@ -7,7 +7,7 @@ import { getDependencyInformation } from '../packageJson'
 
 describe('packageJson', () => {
   test('should be able to correctly parse a simple package.json', () => {
-    const packageJsonBuffer = readFileSync('./src/test-jest/testdata/package-test1.json')
+    const packageJsonBuffer = readFileSync('./src/test-node/testdata/package-test1.json')
     const packageJson = packageJsonBuffer.toString()
     const result = getDependencyInformation(packageJson)
     const dependencies = result.map((r) => r.deps).flat()
@@ -37,7 +37,7 @@ describe('packageJson', () => {
   })
 
   test('should be able to correctly parse another simple package.json', () => {
-    const packageJsonBuffer = readFileSync('./src/test-jest/testdata/package-test2.json')
+    const packageJsonBuffer = readFileSync('./src/test-node/testdata/package-test2.json')
     const packageJson = packageJsonBuffer.toString()
     const result = getDependencyInformation(packageJson)
     assert.deepStrictEqual(result, [

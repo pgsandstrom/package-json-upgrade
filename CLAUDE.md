@@ -11,11 +11,11 @@ npm run compile
 # Watch mode for development
 npm run watch
 
-# Run all tests (Jest unit tests + VS Code integration tests)
+# Run all tests (Node unit tests + VS Code integration tests)
 npm run test
 
-# Run only Jest unit tests
-npm run test-jest
+# Run only node unit tests
+npm run test-node
 
 # Run only VS Code integration tests (requires compile first)
 npm run pretest-vscode && npm run test-vscode
@@ -67,7 +67,7 @@ This is a VS Code extension that shows available npm package updates inline in `
 
 ### Test Structure
 
-- **Jest tests** (`src/test-jest/`): Unit tests for npm version parsing logic
+- **Node tests** (`src/test-node/`): Unit tests for npm version parsing logic
 - **VS Code tests** (`src/test-vscode/`): Integration tests requiring VS Code runtime
 
 ### Configuration

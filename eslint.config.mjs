@@ -119,7 +119,7 @@ export default tseslint.config(
   },
   // disable floating promises rule in test files since node:test's describe/test return promises
   {
-    files: ['src/test-jest/**/*.ts'],
+    files: ['src/test-node/**/*.ts'],
     rules: {
       '@typescript-eslint/no-floating-promises': 'off',
     },

@@ -7,7 +7,6 @@ src/**
 .env.local
 .gitignore
 .vscode-test.mjs
-jest.config.js
 prettier.config.js
 release-vsx-helper.js
 release-vsx.sh

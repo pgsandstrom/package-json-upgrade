@@ -108,7 +108,7 @@
     "watch": "tsc -watch -p ./",
     "pretest-vscode": "npm run compile",
     "test-vscode": "vscode-test",
-    "test-node": "node --import tsx --test src/test-jest/*.test.ts",
+    "test-node": "node --import tsx --test src/test-node/*.test.ts",
     "test": "npm run test-node && npm run test-vscode",
     "format": "prettier --write \"{,!(.vscode|.vscode-test|out|node_modules)/**/}!(package-lock).{json,md,js,jsx,ts,tsx,css,scss}\"",
     "lint": "eslint --ext .ts --ext .tsx --fix src",
