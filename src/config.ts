@@ -10,6 +10,7 @@ export interface Config {
   ignorePatterns: string[]
   ignoreVersions: Record<string, string | undefined | string[]>
   msUntilRowLoading: number
+  dependencyGroups: string[]
 }
 
 let currentConfig: Config | undefined

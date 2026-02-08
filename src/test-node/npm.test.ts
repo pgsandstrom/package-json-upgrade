@@ -78,6 +78,7 @@ describe('Npm Test Suite', () => {
       ignorePatterns: [],
       ignoreVersions: {},
       msUntilRowLoading: 6000,
+      dependencyGroups: ['dependencies', 'devDependencies'],
     }
     setConfig(config)
   })

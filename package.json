@@ -88,6 +88,11 @@
           "type": "number",
           "default": 10000,
           "description": "Number of milliseconds until 'Loading...' is displayed on each dependency row that has not yet been loaded. 0 to disable, 1 to show immediately."
+        },
+        "package-json-upgrade.dependencyGroups": {
+          "type": "string",
+          "default": "dependencies, devDependencies",
+          "description": "Comma-separated list of dependency groups to check for updates. Default is 'dependencies, devDependencies'. Add 'peerDependencies', 'optionalDependencies', etc. as needed."
         }
       }
     },

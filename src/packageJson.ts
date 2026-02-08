@@ -1,6 +1,8 @@
 import { findNodeAtLocation, Node, parseTree } from 'jsonc-parser'
 import * as vscode from 'vscode'
 
+import { getConfig } from './config'
+
 export interface DependencyGroups {
   startLine: number
   deps: Dependency[]
@@ -27,10 +29,10 @@ export const getDependencyInformation = (jsonAsString: string): DependencyGroups
     return []
   }
 
-  const dependenciesNode = findNodeAtLocation(tree, ['dependencies'])
-  const devDependenciesNode = findNodeAtLocation(tree, ['devDependencies'])
+  const groups = getConfig().dependencyGroups
 
-  return [dependenciesNode, devDependenciesNode]
+  return groups
+    .map((group) => findNodeAtLocation(tree, [group]))
     .filter((node): node is Node => node !== undefined)
     .map((node) => toDependencyGroup(jsonAsString, node))
 }

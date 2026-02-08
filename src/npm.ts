@@ -25,11 +25,6 @@ export interface NpmLoader<T> {
   item?: T
 }
 
-interface PackageJson {
-  dependencies: StrictDict<string, string>
-  devDependencies: StrictDict<string, string>
-}
-
 export interface NpmData {
   'dist-tags': {
     latest: string
@@ -267,10 +262,14 @@ export const refreshPackageJsonData = (
   const cacheCutoff = new Date(new Date().getTime() - 1000 * 60 * 120) // 120 minutes
 
   try {
-    const json = JSON.parse(packageJsonString) as PackageJson
-    const dependencies = {
-      ...json.dependencies,
-      ...json.devDependencies,
+    const json = JSON.parse(packageJsonString) as Record<string, unknown>
+    const groups = getConfig().dependencyGroups
+    const dependencies: StrictDict<string, string> = {}
+    for (const group of groups) {
+      const groupDeps = json[group]
+      if (groupDeps != null && typeof groupDeps === 'object') {
+        Object.assign(dependencies, groupDeps)
+      }
     }
 
     const promises = Object.entries(dependencies)
