@@ -4,6 +4,10 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+## 3.4.0
+
+- Added "dependencyGroups" config. Now you can get updates on "optionalDependencies", "peerDependencies" or whatever you want.
+
 ## 3.3.0
 
 - Improved performance when parsing package.json
