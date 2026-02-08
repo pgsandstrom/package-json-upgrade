@@ -133,8 +133,8 @@
     ]
   },
   "dependencies": {
+    "@pnpm/npm-conf": "3.0.2",
     "jsonc-parser": "3.3.1",
-    "libnpmconfig": "1.2.1",
     "npm-registry-fetch": "14.0.5",
     "semver": "7.7.3"
   },
@@ -143,9 +143,9 @@
     "@types/npm-registry-fetch": "8.0.9",
     "@types/semver": "7.7.1",
     "@types/vscode": "1.87.0",
-    "@vscode/vsce": "3.7.1",
     "@vscode/test-cli": "0.0.12",
     "@vscode/test-electron": "2.5.2",
+    "@vscode/vsce": "3.7.1",
     "eslint": "9.39.2",
     "eslint-plugin-no-only-tests": "3.3.0",
     "eslint-plugin-simple-import-sort": "12.1.1",
