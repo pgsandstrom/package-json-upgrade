@@ -54,9 +54,14 @@ function toDependencyGroup(jsonAsString: string, dependencyNode: Node): Dependen
       return null
     }
 
+    const version = valueNode.value as string
+    if (version.startsWith('catalog:')) {
+      return null
+    }
+
     return {
       dependencyName: keyNode.value as string,
-      currentVersion: valueNode.value as string,
+      currentVersion: version,
       line: offsetToLine(jsonAsString, property.offset),
     }
   })

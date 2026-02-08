@@ -119,6 +119,71 @@ describe('packageJson', () => {
     })
   })
 
+  test('should support catalog section and skip catalog: version references', () => {
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies', 'devDependencies', 'catalog'],
+    })
+
+    const packageJson = JSON.stringify({
+      name: 'test',
+      catalog: {
+        lodash: '4.17.21',
+        react: '18.2.0',
+      },
+      dependencies: {
+        lodash: 'catalog:',
+        react: 'catalog:',
+        express: '4.18.2',
+      },
+      devDependencies: {
+        typescript: '5.0.0',
+      },
+    })
+
+    const result = getDependencyInformation(packageJson)
+    const allDeps = result.map((r) => r.deps).flat()
+
+    // catalog entries with real versions should be included
+    assert.ok(allDeps.some((d) => d.dependencyName === 'lodash' && d.currentVersion === '4.17.21'))
+    assert.ok(allDeps.some((d) => d.dependencyName === 'react' && d.currentVersion === '18.2.0'))
+
+    // dependencies with "catalog:" references should be filtered out
+    assert.ok(
+      !allDeps.some((d) => d.dependencyName === 'lodash' && d.currentVersion === 'catalog:'),
+    )
+    assert.ok(!allDeps.some((d) => d.dependencyName === 'react' && d.currentVersion === 'catalog:'))
+
+    // regular dependencies should still work
+    assert.ok(allDeps.some((d) => d.dependencyName === 'express' && d.currentVersion === '4.18.2'))
+    assert.ok(
+      allDeps.some((d) => d.dependencyName === 'typescript' && d.currentVersion === '5.0.0'),
+    )
+
+    // named catalog references like "catalog:default" should also be filtered
+    const packageJsonNamed = JSON.stringify({
+      name: 'test',
+      dependencies: {
+        lodash: 'catalog:default',
+      },
+    })
+
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies'],
+    })
+
+    const namedResult = getDependencyInformation(packageJsonNamed)
+    const namedDeps = namedResult.map((r) => r.deps).flat()
+    assert.strictEqual(namedDeps.length, 0)
+
+    // Restore default config
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies', 'devDependencies'],
+    })
+  })
+
   test('should be able to correctly parse another simple package.json', () => {
     const packageJsonBuffer = readFileSync('./src/test-node/testdata/package-test2.json')
     const packageJson = packageJsonBuffer.toString()
