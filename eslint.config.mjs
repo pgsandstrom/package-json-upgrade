@@ -4,8 +4,9 @@ import eslint from '@eslint/js'
 import noOnlyTests from 'eslint-plugin-no-only-tests'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import tseslint from 'typescript-eslint'
+import { defineConfig } from 'eslint/config'
 
-export default tseslint.config(
+export default defineConfig(
   {
     ignores: ['.next', 'next-env.d.ts'],
   },
