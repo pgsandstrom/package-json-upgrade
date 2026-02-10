@@ -91,8 +91,8 @@
         },
         "package-json-upgrade.dependencyGroups": {
           "type": "string",
-          "default": "dependencies, devDependencies, catalog",
-          "description": "Comma-separated list of dependency groups to check for updates. Default is 'dependencies, devDependencies'. Add 'peerDependencies', 'optionalDependencies', etc. as needed."
+          "default": "dependencies, devDependencies, catalog, catalogs, workspaces.catalog, workspaces.catalogs",
+          "description": "Comma-separated list of dependency groups to check for updates. Default includes common dependency groups and catalog groups. Add 'peerDependencies', 'optionalDependencies', etc. as needed."
         }
       }
     },

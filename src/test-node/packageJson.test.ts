@@ -184,6 +184,84 @@ describe('packageJson', () => {
     })
   })
 
+  test('should support catalogs section with arbitrarily named catalogs', () => {
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies', 'catalogs'],
+    })
+
+    const packageJson = JSON.stringify({
+      name: 'test',
+      catalogs: {
+        default: {
+          lodash: '4.17.21',
+        },
+        react17: {
+          react: '^17.0.2',
+          'react-dom': '^17.0.2',
+        },
+      },
+      dependencies: {
+        lodash: 'catalog:',
+        react: 'catalog:react17',
+      },
+    })
+
+    const result = getDependencyInformation(packageJson)
+    const allDeps = result.map((r) => r.deps).flat()
+
+    assert.ok(allDeps.some((d) => d.dependencyName === 'lodash' && d.currentVersion === '4.17.21'))
+    assert.ok(allDeps.some((d) => d.dependencyName === 'react' && d.currentVersion === '^17.0.2'))
+    assert.ok(
+      allDeps.some((d) => d.dependencyName === 'react-dom' && d.currentVersion === '^17.0.2'),
+    )
+    assert.ok(!allDeps.some((d) => d.currentVersion === 'catalog:'))
+    assert.ok(!allDeps.some((d) => d.currentVersion === 'catalog:react17'))
+
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies', 'devDependencies'],
+    })
+  })
+
+  test('should support dot-path dependency groups for nested workspace catalogs', () => {
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies', 'workspaces.catalog', 'workspaces.catalogs'],
+    })
+
+    const packageJson = JSON.stringify({
+      name: 'test',
+      workspaces: {
+        catalog: {
+          axios: '^1.11.0',
+        },
+        catalogs: {
+          legacy: {
+            react: '^17.0.2',
+          },
+        },
+      },
+      dependencies: {
+        axios: 'catalog:',
+        react: 'catalog:legacy',
+      },
+    })
+
+    const result = getDependencyInformation(packageJson)
+    const allDeps = result.map((r) => r.deps).flat()
+
+    assert.ok(allDeps.some((d) => d.dependencyName === 'axios' && d.currentVersion === '^1.11.0'))
+    assert.ok(allDeps.some((d) => d.dependencyName === 'react' && d.currentVersion === '^17.0.2'))
+    assert.ok(!allDeps.some((d) => d.currentVersion === 'catalog:'))
+    assert.ok(!allDeps.some((d) => d.currentVersion === 'catalog:legacy'))
+
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies', 'devDependencies'],
+    })
+  })
+
   test('should be able to correctly parse another simple package.json', () => {
     const packageJsonBuffer = readFileSync('./src/test-node/testdata/package-test2.json')
     const packageJson = packageJsonBuffer.toString()

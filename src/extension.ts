@@ -157,7 +157,8 @@ const fixConfig = () => {
       workspaceConfig.get<Record<string, string | undefined | string[]>>('ignoreVersions') ?? {},
     msUntilRowLoading: workspaceConfig.get<number>('msUntilRowLoading') ?? 0,
     dependencyGroups: (
-      workspaceConfig.get<string>('dependencyGroups') ?? 'dependencies, devDependencies'
+      workspaceConfig.get<string>('dependencyGroups') ??
+      'dependencies, devDependencies, catalog, catalogs, workspaces.catalog, workspaces.catalogs'
     )
       .split(',')
       .map((s) => s.trim())
