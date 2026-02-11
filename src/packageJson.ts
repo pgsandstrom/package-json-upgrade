@@ -32,7 +32,7 @@ export const getDependencyInformation = (jsonAsString: string): DependencyGroups
   const groups = getConfig().dependencyGroups
 
   return groups
-    .map((group) => findNodeAtLocation(tree, [group]))
+    .map((group) => findNodeAtLocation(tree, toPath(group)))
     .filter((node): node is Node => node !== undefined)
     .map((node) => toDependencyGroup(jsonAsString, node))
 }
@@ -42,29 +42,70 @@ function toDependencyGroup(jsonAsString: string, dependencyNode: Node): Dependen
     return { startLine: 0, deps: [] }
   }
 
-  const deps = dependencyNode.children.map((property) => {
-    if (property.type !== 'property' || !property.children || property.children.length < 2) {
-      return null
-    }
-
-    const keyNode = property.children[0]
-    const valueNode = property.children[1]
-
-    if (keyNode.type !== 'string' || valueNode.type !== 'string') {
-      return null
-    }
-
-    return {
-      dependencyName: keyNode.value as string,
-      currentVersion: valueNode.value as string,
-      line: offsetToLine(jsonAsString, property.offset),
-    }
-  })
+  const deps = dependencyNode.children.flatMap((property) =>
+    getDependenciesFromProperty(jsonAsString, property),
+  )
 
   return {
     startLine: offsetToLine(jsonAsString, dependencyNode.offset),
-    deps: deps.filter((d): d is Dependency => d !== null),
+    deps,
   }
+}
+
+function getDependenciesFromProperty(jsonAsString: string, property: Node): Dependency[] {
+  if (property.type !== 'property' || !property.children || property.children.length < 2) {
+    return []
+  }
+
+  const keyNode = property.children[0]
+  const valueNode = property.children[1]
+
+  if (keyNode.type !== 'string') {
+    return []
+  }
+
+  if (valueNode.type === 'string') {
+    const dependency = toDependency(
+      jsonAsString,
+      keyNode.value as string,
+      valueNode.value as string,
+      property.offset,
+    )
+    return dependency === null ? [] : [dependency]
+  }
+
+  // catalogs is an object where each property is itself a dependency object.
+  if (valueNode.type === 'object' && valueNode.children) {
+    return valueNode.children.flatMap((nestedProperty) =>
+      getDependenciesFromProperty(jsonAsString, nestedProperty),
+    )
+  }
+
+  return []
+}
+
+function toDependency(
+  jsonAsString: string,
+  dependencyName: string,
+  version: string,
+  offset: number,
+): Dependency | null {
+  if (version.startsWith('catalog:')) {
+    return null
+  }
+
+  return {
+    dependencyName,
+    currentVersion: version,
+    line: offsetToLine(jsonAsString, offset),
+  }
+}
+
+function toPath(group: string): string[] {
+  return group
+    .split('.')
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0)
 }
 
 // jsonc-parser gives offset in characters, so we have to translate it to line numbers
