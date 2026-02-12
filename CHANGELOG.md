@@ -4,6 +4,10 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+## 3.5.1
+
+- Fix bug related to reading project specific npm config files introduced in 3.4.0
+
 ## 3.5.0
 
 - Added catalog support.
