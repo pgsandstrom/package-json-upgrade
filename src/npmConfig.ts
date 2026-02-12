@@ -1,5 +1,6 @@
 import npmConf from '@pnpm/npm-conf'
 import * as npmRegistryFetch from 'npm-registry-fetch'
+import * as path from 'path'
 
 import { getConfig } from './config'
 import { Dict } from './types'
@@ -22,7 +23,7 @@ export const getNpmConfig = (packageJsonPath: string): npmRegistryFetch.Options 
         // TODO: Investigate why the cache causes issues
         // Maybe we can use cache when we can finally update npm-registry-fetch (currently resting at v14 due to esm issues)
         cache: null,
-        prefix: packageJsonPath,
+        prefix: path.dirname(packageJsonPath),
       })
       conf = result.config.snapshot as npmRegistryFetch.Options
       packageJsonPathToConfMap[packageJsonPath] = conf
