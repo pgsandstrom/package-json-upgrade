@@ -17,6 +17,7 @@ import { getConfig } from './config'
 import { logError } from './log'
 import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict, StrictDict } from './types'
+import { resolveWorkspaceVersion } from './workspace'
 
 export interface NpmLoader<T> {
   asyncstate: AsyncState
@@ -270,6 +271,13 @@ export const refreshPackageJsonData = (
     }
 
     const promises = Object.entries(dependencies)
+      .map(([dependencyName, version]) => {
+        if (version.startsWith('workspace:')) {
+          const resolved = resolveWorkspaceVersion(version, dependencyName, packageJsonFilePath)
+          return [dependencyName, resolved?.version ?? version] as const
+        }
+        return [dependencyName, version] as const
+      })
       .filter(([_dependencyName, version]) => {
         // TODO I made a release without "coerce" here and test suite didnt detect it. Fix so this is properly tested
         if (valid(coerce(version)) == null) {

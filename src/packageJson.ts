@@ -2,6 +2,7 @@ import { findNodeAtLocation, Node, parseTree } from 'jsonc-parser'
 import * as vscode from 'vscode'
 
 import { getConfig } from './config'
+import { resolveWorkspaceVersion } from './workspace'
 
 export interface DependencyGroups {
   startLine: number
@@ -12,17 +13,25 @@ export interface Dependency {
   dependencyName: string
   currentVersion: string
   line: number
+  isWorkspace?: boolean
 }
 
-export const getDependencyFromLine = (jsonAsString: string, line: number) => {
-  const dependencies = getDependencyInformation(jsonAsString)
+export const getDependencyFromLine = (
+  jsonAsString: string,
+  line: number,
+  packageJsonPath?: string,
+) => {
+  const dependencies = getDependencyInformation(jsonAsString, packageJsonPath)
     .map((d) => d.deps)
     .flat()
 
   return dependencies.find((d) => d.line === line)
 }
 
-export const getDependencyInformation = (jsonAsString: string): DependencyGroups[] => {
+export const getDependencyInformation = (
+  jsonAsString: string,
+  packageJsonPath?: string,
+): DependencyGroups[] => {
   const tree = parseTree(jsonAsString)
 
   if (tree === undefined) {
@@ -34,16 +43,20 @@ export const getDependencyInformation = (jsonAsString: string): DependencyGroups
   return groups
     .map((group) => findNodeAtLocation(tree, toPath(group)))
     .filter((node): node is Node => node !== undefined)
-    .map((node) => toDependencyGroup(jsonAsString, node))
+    .map((node) => toDependencyGroup(jsonAsString, node, packageJsonPath))
 }
 
-function toDependencyGroup(jsonAsString: string, dependencyNode: Node): DependencyGroups {
+function toDependencyGroup(
+  jsonAsString: string,
+  dependencyNode: Node,
+  packageJsonPath?: string,
+): DependencyGroups {
   if (dependencyNode.type !== 'object' || !dependencyNode.children) {
     return { startLine: 0, deps: [] }
   }
 
   const deps = dependencyNode.children.flatMap((property) =>
-    getDependenciesFromProperty(jsonAsString, property),
+    getDependenciesFromProperty(jsonAsString, property, packageJsonPath),
   )
 
   return {
@@ -52,7 +65,11 @@ function toDependencyGroup(jsonAsString: string, dependencyNode: Node): Dependen
   }
 }
 
-function getDependenciesFromProperty(jsonAsString: string, property: Node): Dependency[] {
+function getDependenciesFromProperty(
+  jsonAsString: string,
+  property: Node,
+  packageJsonPath?: string,
+): Dependency[] {
   if (property.type !== 'property' || !property.children || property.children.length < 2) {
     return []
   }
@@ -70,6 +87,7 @@ function getDependenciesFromProperty(jsonAsString: string, property: Node): Depe
       keyNode.value as string,
       valueNode.value as string,
       property.offset,
+      packageJsonPath,
     )
     return dependency === null ? [] : [dependency]
   }
@@ -77,7 +95,7 @@ function getDependenciesFromProperty(jsonAsString: string, property: Node): Depe
   // catalogs is an object where each property is itself a dependency object.
   if (valueNode.type === 'object' && valueNode.children) {
     return valueNode.children.flatMap((nestedProperty) =>
-      getDependenciesFromProperty(jsonAsString, nestedProperty),
+      getDependenciesFromProperty(jsonAsString, nestedProperty, packageJsonPath),
     )
   }
 
@@ -89,9 +107,26 @@ function toDependency(
   dependencyName: string,
   version: string,
   offset: number,
+  packageJsonPath?: string,
 ): Dependency | null {
   if (version.startsWith('catalog:')) {
     return null
+  }
+
+  if (version.startsWith('workspace:')) {
+    if (packageJsonPath === undefined) {
+      return null
+    }
+    const resolved = resolveWorkspaceVersion(version, dependencyName, packageJsonPath)
+    if (resolved === undefined) {
+      return null
+    }
+    return {
+      dependencyName,
+      currentVersion: resolved.version,
+      line: offsetToLine(jsonAsString, offset),
+      isWorkspace: true,
+    }
   }
 
   return {

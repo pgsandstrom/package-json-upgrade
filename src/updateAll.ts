@@ -20,7 +20,7 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
   if (isPackageJson(document)) {
     const ignorePatterns = getIgnorePattern()
 
-    const dependencies = getDependencyInformation(document.getText())
+    const dependencies = getDependencyInformation(document.getText(), document.uri.fsPath)
       .map((d) => d.deps)
       .flat()
     const edits: UpdateEdit[] = dependencies
@@ -29,6 +29,11 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
         const wholeLineRange = new vscode.Range(dep.line, 0, dep.line, lineText.length)
 
         if (isDependencyIgnored(dep.dependencyName, ignorePatterns)) {
+          return
+        }
+
+        // Skip workspace dependencies — the version lives in the workspace package
+        if (dep.isWorkspace === true) {
           return
         }
 
