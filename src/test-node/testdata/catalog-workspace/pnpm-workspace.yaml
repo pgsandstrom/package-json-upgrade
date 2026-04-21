@@ -1,0 +1,13 @@
+packages:
+  - 'packages/*'
+
+catalog:
+  react: ^19.2.5
+  lodash: 4.17.21
+
+catalogs:
+  default:
+    axios: ^1.11.0
+  legacy:
+    react: ^17.0.2
+    'react-dom': ^17.0.2

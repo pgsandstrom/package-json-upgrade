@@ -7,6 +7,70 @@ interface WorkspaceCache {
 }
 
 const workspaceCache = new Map<string, WorkspaceCache>()
+const catalogCache = new Map<string, CatalogCache>()
+
+interface CatalogCache {
+  catalog: WorkspaceCatalog
+  mtime: number
+}
+
+interface WorkspaceCatalog {
+  default: Map<string, string>
+  named: Map<string, Map<string, string>>
+}
+
+export interface CatalogVersionResolution {
+  version: string
+  isCatalog: boolean
+}
+
+/**
+ * Resolves a catalog: protocol version using the root pnpm-workspace.yaml catalog sections.
+ * Returns undefined if not in a workspace, the version is not a catalog reference,
+ * or the referenced catalog entry cannot be found.
+ */
+export const resolveCatalogVersion = (
+  version: string,
+  dependencyName: string,
+  packageJsonPath: string,
+): CatalogVersionResolution | undefined => {
+  if (!version.startsWith('catalog:')) {
+    return undefined
+  }
+
+  const workspaceRoot = findPnpmWorkspaceRoot(packageJsonPath)
+  if (workspaceRoot === undefined) {
+    return undefined
+  }
+
+  const catalogName = version === 'catalog:' ? 'default' : version.slice('catalog:'.length)
+  const workspaceCatalog = getWorkspaceCatalog(workspaceRoot)
+
+  if (catalogName === 'default') {
+    // catalog: or catalog:default — check top-level catalog first, then catalogs.default
+    const resolved = workspaceCatalog.default.get(dependencyName)
+    if (resolved !== undefined) {
+      return { version: resolved, isCatalog: true }
+    }
+    const namedDefault = workspaceCatalog.named.get('default')
+    if (namedDefault !== undefined) {
+      const namedResolved = namedDefault.get(dependencyName)
+      if (namedResolved !== undefined) {
+        return { version: namedResolved, isCatalog: true }
+      }
+    }
+  } else {
+    const namedCatalog = workspaceCatalog.named.get(catalogName)
+    if (namedCatalog !== undefined) {
+      const resolved = namedCatalog.get(dependencyName)
+      if (resolved !== undefined) {
+        return { version: resolved, isCatalog: true }
+      }
+    }
+  }
+
+  return undefined
+}
 
 export interface WorkspaceVersionResolution {
   version: string
@@ -54,6 +118,7 @@ export const resolveWorkspaceVersion = (
  */
 export const clearWorkspaceCache = () => {
   workspaceCache.clear()
+  catalogCache.clear()
 }
 
 const findPnpmWorkspaceRoot = (packageJsonPath: string): string | undefined => {
@@ -187,4 +252,145 @@ const resolveGlobRecursive = (currentPath: string, parts: string[]): string[] =>
     return []
   }
   return resolveGlobRecursive(nextPath, tail)
+}
+
+const getWorkspaceCatalog = (workspaceRoot: string): WorkspaceCatalog => {
+  const pnpmWorkspacePath = path.join(workspaceRoot, 'pnpm-workspace.yaml')
+
+  if (!fs.existsSync(pnpmWorkspacePath)) {
+    return { default: new Map(), named: new Map() }
+  }
+
+  const mtime = fs.statSync(pnpmWorkspacePath).mtimeMs
+  const cache = catalogCache.get(workspaceRoot)
+
+  if (cache !== undefined && cache.mtime >= mtime) {
+    return cache.catalog
+  }
+
+  const content = fs.readFileSync(pnpmWorkspacePath, 'utf-8')
+  const catalog = parsePnpmWorkspaceCatalogs(content)
+
+  catalogCache.set(workspaceRoot, { catalog, mtime })
+  return catalog
+}
+
+const parsePnpmWorkspaceCatalogs = (content: string): WorkspaceCatalog => {
+  const lines = content.split('\n')
+  const catalog = new Map<string, string>()
+  const named = new Map<string, Map<string, string>>()
+
+  let i = 0
+  while (i < lines.length) {
+    const trimmed = lines[i].trim()
+
+    if (trimmed === 'catalog:') {
+      const result = extractBlock(lines, i + 1)
+      for (const [key, value] of result.entries) {
+        catalog.set(key, value)
+      }
+      i = result.nextIndex
+    } else if (trimmed === 'catalogs:') {
+      const result = extractNestedBlocks(lines, i + 1)
+      for (const [name, entries] of result.blocks) {
+        named.set(name, entries)
+      }
+      i = result.nextIndex
+    }
+
+    i++
+  }
+
+  return { default: catalog, named }
+}
+
+interface BlockResult {
+  entries: Array<[string, string]>
+  nextIndex: number
+}
+
+const extractBlock = (lines: string[], startIdx: number): BlockResult => {
+  const entries: Array<[string, string]> = []
+  let i = startIdx
+  let baseIndent = -1
+
+  while (i < lines.length) {
+    const line = lines[i]
+    const trimmed = line.trim()
+
+    if (trimmed === '' || trimmed.startsWith('#')) {
+      i++
+      continue
+    }
+
+    const indent = line.search(/\S/)
+    if (baseIndent === -1) {
+      baseIndent = indent
+    } else if (indent < baseIndent) {
+      break
+    }
+
+    const colonIdx = trimmed.indexOf(':')
+    if (colonIdx > 0) {
+      const key = trimmed
+        .slice(0, colonIdx)
+        .trim()
+        .replace(/^['"]|['"]$/g, '')
+      const value = trimmed
+        .slice(colonIdx + 1)
+        .trim()
+        .replace(/^['"]|['"]$/g, '')
+      if (value.length > 0) {
+        entries.push([key, value])
+      }
+    }
+    i++
+  }
+
+  return { entries, nextIndex: i - 1 }
+}
+
+interface NestedBlockResult {
+  blocks: Array<[string, Map<string, string>]>
+  nextIndex: number
+}
+
+const extractNestedBlocks = (lines: string[], startIdx: number): NestedBlockResult => {
+  const blocks: Array<[string, Map<string, string>]> = []
+  let i = startIdx
+  let baseIndent = -1
+
+  while (i < lines.length) {
+    const line = lines[i]
+    const trimmed = line.trim()
+
+    if (trimmed === '' || trimmed.startsWith('#')) {
+      i++
+      continue
+    }
+
+    const indent = line.search(/\S/)
+    if (baseIndent === -1) {
+      baseIndent = indent
+    } else if (indent < baseIndent) {
+      break
+    }
+
+    const colonIdx = trimmed.indexOf(':')
+    if (colonIdx > 0 && trimmed.slice(colonIdx + 1).trim() === '') {
+      const name = trimmed.slice(0, colonIdx).trim()
+      const result = extractBlock(lines, i + 1)
+      const entries = new Map<string, string>()
+      for (const [key, value] of result.entries) {
+        entries.set(key, value)
+      }
+      blocks.push([name, entries])
+      i = result.nextIndex + 1
+      continue
+    }
+
+    i++
+  }
+
+  return { blocks, nextIndex: i - 1 }
 }

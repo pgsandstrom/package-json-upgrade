@@ -31,6 +31,11 @@ export class UpdateAction implements vscode.CodeActionProvider {
       return
     }
 
+    // Skip quick-fix upgrades for catalog dependencies — the version lives in the workspace catalog
+    if (dep.isCatalog === true) {
+      return
+    }
+
     const npmCache = getCachedNpmData(dep.dependencyName)
     if (npmCache === undefined || npmCache.item === undefined) {
       return

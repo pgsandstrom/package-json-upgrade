@@ -37,6 +37,11 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
           return
         }
 
+        // Skip catalog dependencies — the version lives in the workspace catalog
+        if (dep.isCatalog === true) {
+          return
+        }
+
         const npmCache = getCachedNpmData(dep.dependencyName)
         if (npmCache?.item === undefined) {
           return

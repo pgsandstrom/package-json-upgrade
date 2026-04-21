@@ -4,9 +4,10 @@ import * as assert from 'assert'
 import * as fs from 'fs'
 import * as path from 'path'
 
-import { clearWorkspaceCache, resolveWorkspaceVersion } from '../workspace'
+import { clearWorkspaceCache, resolveCatalogVersion, resolveWorkspaceVersion } from '../workspace'
 
 const testdataDir = path.resolve('./src/test-node/testdata')
+const catalogWorkspaceDir = path.resolve('./src/test-node/testdata/catalog-workspace')
 
 const writeYaml = (content: string) => {
   fs.writeFileSync(path.join(testdataDir, 'pnpm-workspace.yaml'), content)
@@ -155,5 +156,73 @@ describe('workspace', () => {
       path.join(testdataDir, 'packages', 'consumer', 'package.json'),
     )
     assert.deepStrictEqual(second, { version: '2.5.0', isWorkspace: true })
+  })
+
+  test('should resolve catalog: to default catalog entry', () => {
+    const result = resolveCatalogVersion(
+      'catalog:',
+      'react',
+      path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
+    )
+    assert.deepStrictEqual(result, { version: '^19.2.5', isCatalog: true })
+  })
+
+  test('should resolve catalog:default to default catalog entry', () => {
+    const result = resolveCatalogVersion(
+      'catalog:default',
+      'lodash',
+      path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
+    )
+    assert.deepStrictEqual(result, { version: '4.17.21', isCatalog: true })
+  })
+
+  test('should resolve catalog:legacy to named catalog entry', () => {
+    const result = resolveCatalogVersion(
+      'catalog:legacy',
+      'react',
+      path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
+    )
+    assert.deepStrictEqual(result, { version: '^17.0.2', isCatalog: true })
+  })
+
+  test('should resolve catalog:legacy for scoped package', () => {
+    const result = resolveCatalogVersion(
+      'catalog:legacy',
+      'react-dom',
+      path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
+    )
+    assert.deepStrictEqual(result, { version: '^17.0.2', isCatalog: true })
+  })
+
+  test('should return undefined for missing catalog entry', () => {
+    const result = resolveCatalogVersion(
+      'catalog:',
+      'non-existent-pkg',
+      path.join(testdataDir, 'packages', 'consumer', 'package.json'),
+    )
+    assert.strictEqual(result, undefined)
+  })
+
+  test('should return undefined for missing named catalog', () => {
+    const result = resolveCatalogVersion(
+      'catalog:missing',
+      'react',
+      path.join(testdataDir, 'packages', 'consumer', 'package.json'),
+    )
+    assert.strictEqual(result, undefined)
+  })
+
+  test('should return undefined when no pnpm-workspace.yaml exists', () => {
+    const result = resolveCatalogVersion(
+      'catalog:',
+      'react',
+      path.join('/tmp', 'no-workspace', 'package.json'),
+    )
+    assert.strictEqual(result, undefined)
+  })
+
+  test('should return undefined for non-catalog versions', () => {
+    const result = resolveCatalogVersion('^1.2.3', 'react', path.join(testdataDir, 'dummy.json'))
+    assert.strictEqual(result, undefined)
   })
 })

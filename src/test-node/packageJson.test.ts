@@ -375,4 +375,120 @@ describe('packageJson', () => {
       dependencyGroups: ['dependencies', 'devDependencies'],
     })
   })
+
+  test('should resolve catalog dependencies from pnpm-workspace.yaml when packageJsonPath is provided', () => {
+    clearWorkspaceCache()
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies'],
+    })
+
+    const packageJson = JSON.stringify({
+      name: 'consumer',
+      dependencies: {
+        react: 'catalog:',
+        lodash: 'catalog:default',
+        axios: 'catalog:default',
+        express: '4.18.2',
+      },
+    })
+
+    const packageJsonPath = path.resolve(
+      './src/test-node/testdata/catalog-workspace/packages/consumer/package.json',
+    )
+    const result = getDependencyInformation(packageJson, packageJsonPath)
+    const deps = result.map((r) => r.deps).flat()
+
+    assert.strictEqual(deps.length, 4)
+
+    const react = deps.find((d) => d.dependencyName === 'react')
+    assert.ok(react)
+    assert.strictEqual(react.currentVersion, '^19.2.5')
+    assert.strictEqual(react.isCatalog, true)
+
+    const lodash = deps.find((d) => d.dependencyName === 'lodash')
+    assert.ok(lodash)
+    assert.strictEqual(lodash.currentVersion, '4.17.21')
+    assert.strictEqual(lodash.isCatalog, true)
+
+    const axios = deps.find((d) => d.dependencyName === 'axios')
+    assert.ok(axios)
+    assert.strictEqual(axios.currentVersion, '^1.11.0')
+    assert.strictEqual(axios.isCatalog, true)
+
+    const express = deps.find((d) => d.dependencyName === 'express')
+    assert.ok(express)
+    assert.strictEqual(express.currentVersion, '4.18.2')
+    assert.strictEqual(express.isCatalog, undefined)
+
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies', 'devDependencies'],
+    })
+  })
+
+  test('should resolve named catalog dependencies from pnpm-workspace.yaml', () => {
+    clearWorkspaceCache()
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies'],
+    })
+
+    const packageJson = JSON.stringify({
+      name: 'consumer',
+      dependencies: {
+        react: 'catalog:legacy',
+        'react-dom': 'catalog:legacy',
+      },
+    })
+
+    const packageJsonPath = path.resolve(
+      './src/test-node/testdata/catalog-workspace/packages/consumer/package.json',
+    )
+    const result = getDependencyInformation(packageJson, packageJsonPath)
+    const deps = result.map((r) => r.deps).flat()
+
+    assert.strictEqual(deps.length, 2)
+
+    const react = deps.find((d) => d.dependencyName === 'react')
+    assert.ok(react)
+    assert.strictEqual(react.currentVersion, '^17.0.2')
+    assert.strictEqual(react.isCatalog, true)
+
+    const reactDom = deps.find((d) => d.dependencyName === 'react-dom')
+    assert.ok(reactDom)
+    assert.strictEqual(reactDom.currentVersion, '^17.0.2')
+    assert.strictEqual(reactDom.isCatalog, true)
+
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies', 'devDependencies'],
+    })
+  })
+
+  test('should skip catalog dependencies when packageJsonPath is not provided', () => {
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies'],
+    })
+
+    const packageJson = JSON.stringify({
+      name: 'test',
+      dependencies: {
+        react: 'catalog:',
+        express: '4.18.2',
+      },
+    })
+
+    const result = getDependencyInformation(packageJson)
+    const deps = result.map((r) => r.deps).flat()
+
+    assert.strictEqual(deps.length, 1)
+    assert.strictEqual(deps[0].dependencyName, 'express')
+
+    setConfig({
+      ...getConfig(),
+      dependencyGroups: ['dependencies', 'devDependencies'],
+    })
+  })
 })
