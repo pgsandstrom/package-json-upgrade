@@ -169,6 +169,8 @@ const getWorkspacePackages = (workspaceRoot: string): Map<string, string> => {
   return packages
 }
 
+const EXCLUDED_DIRS = new Set(['node_modules', '.git'])
+
 const findWorkspaceFile = (workspaceRoot: string): string | undefined => {
   const yamlPath = path.join(workspaceRoot, 'pnpm-workspace.yaml')
   if (fs.existsSync(yamlPath)) {
@@ -216,7 +218,7 @@ const resolveGlobRecursive = (currentPath: string, parts: string[]): string[] =>
     try {
       const entries = fs.readdirSync(currentPath, { withFileTypes: true })
       for (const entry of entries) {
-        if (entry.isDirectory() && entry.name !== 'node_modules') {
+        if (entry.isDirectory() && !EXCLUDED_DIRS.has(entry.name)) {
           results.push(...resolveGlobRecursive(path.join(currentPath, entry.name), parts))
         }
       }
