@@ -11,6 +11,8 @@ export interface Config {
   ignoreVersions: Record<string, string | undefined | string[]>
   msUntilRowLoading: number
   dependencyGroups: string[]
+  minimumReleaseAge: number
+  minimumReleaseAgeExclude: string[]
 }
 
 let currentConfig: Config | undefined

@@ -163,6 +163,8 @@ const fixConfig = () => {
       .split(',')
       .map((s) => s.trim())
       .filter((s) => s.length > 0),
+    minimumReleaseAge: Math.max(0, workspaceConfig.get<number>('minimumReleaseAge') ?? 0),
+    minimumReleaseAgeExclude: workspaceConfig.get<string[]>('minimumReleaseAgeExclude') ?? [],
   }
   setConfig(config)
 }

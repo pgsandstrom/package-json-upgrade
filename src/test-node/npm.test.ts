@@ -79,6 +79,8 @@ describe('Npm Test Suite', () => {
       ignoreVersions: {},
       msUntilRowLoading: 6000,
       dependencyGroups: ['dependencies', 'devDependencies'],
+      minimumReleaseAge: 0,
+      minimumReleaseAgeExclude: [],
     }
     setConfig(config)
   })
@@ -413,5 +415,187 @@ describe('Npm Test Suite', () => {
       existingVersion: true,
     }
     assert.deepStrictEqual(result, expected)
+  })
+
+  // Age filter fixtures: "NOW" is 2026-04-23T12:00:00Z; versions are dated relative to that.
+  const NOW = new Date('2026-04-23T12:00:00Z').getTime()
+  const iso = (msAgo: number) => new Date(NOW - msAgo).toISOString()
+  const MINUTES = 60 * 1000
+  const DAYS = 24 * 60 * MINUTES
+
+  const ageTestData: NpmData = {
+    'dist-tags': { latest: '2.1.1' },
+    versions: {
+      '2.0.0': { name: 'dependencyName', version: '2.0.0' },
+      '2.1.0': { name: 'dependencyName', version: '2.1.0' },
+      '2.1.1': { name: 'dependencyName', version: '2.1.1' },
+    },
+    time: {
+      '2.0.0': iso(60 * DAYS),
+      '2.1.0': iso(30 * DAYS),
+      '2.1.1': iso(1 * DAYS), // published 1 day ago — younger than 7-day threshold
+    },
+  }
+
+  test('minimumReleaseAge holds back the freshest patch and surfaces the eligible one', () => {
+    const result = getPossibleUpgradesWithIgnoredVersions(
+      ageTestData,
+      '2.0.0',
+      'dependencyName',
+      undefined,
+      {
+        minimumReleaseAgeMinutes: 7 * 24 * 60,
+        excludedPackages: [],
+        now: NOW,
+      },
+    )
+    assert.deepStrictEqual(result.minor, { name: 'dependencyName', version: '2.1.0' })
+    assert.deepStrictEqual(result.minorLatest, { name: 'dependencyName', version: '2.1.1' })
+    // No patch bucket since current is 2.0.0 (2.1.x is a minor bump).
+    assert.strictEqual(result.patch, undefined)
+    assert.strictEqual(result.patchLatest, undefined)
+  })
+
+  test('minimumReleaseAge older than any version leaves eligible = latest and no held-back fields', () => {
+    const result = getPossibleUpgradesWithIgnoredVersions(
+      ageTestData,
+      '2.0.0',
+      'dependencyName',
+      undefined,
+      {
+        minimumReleaseAgeMinutes: 1, // 1 minute — every published version passes
+        excludedPackages: [],
+        now: NOW,
+      },
+    )
+    assert.deepStrictEqual(result.minor, { name: 'dependencyName', version: '2.1.1' })
+    assert.strictEqual(result.minorLatest, undefined)
+  })
+
+  test('minimumReleaseAgeExclude bypasses the age filter for a package', () => {
+    const result = getPossibleUpgradesWithIgnoredVersions(
+      ageTestData,
+      '2.0.0',
+      'dependencyName',
+      undefined,
+      {
+        minimumReleaseAgeMinutes: 7 * 24 * 60,
+        excludedPackages: ['dependencyName'],
+        now: NOW,
+      },
+    )
+    assert.deepStrictEqual(result.minor, { name: 'dependencyName', version: '2.1.1' })
+    assert.strictEqual(result.minorLatest, undefined)
+  })
+
+  test('minimumReleaseAge of 0 disables the filter', () => {
+    const result = getPossibleUpgradesWithIgnoredVersions(
+      ageTestData,
+      '2.0.0',
+      'dependencyName',
+      undefined,
+      {
+        minimumReleaseAgeMinutes: 0,
+        excludedPackages: [],
+        now: NOW,
+      },
+    )
+    assert.deepStrictEqual(result.minor, { name: 'dependencyName', version: '2.1.1' })
+    assert.strictEqual(result.minorLatest, undefined)
+  })
+
+  test('versions with missing publish time pass through the age filter', () => {
+    const partialTimeData: NpmData = {
+      'dist-tags': { latest: '2.1.1' },
+      versions: {
+        '2.0.0': { name: 'dependencyName', version: '2.0.0' },
+        '2.1.1': { name: 'dependencyName', version: '2.1.1' },
+      },
+      time: {
+        '2.0.0': iso(60 * DAYS),
+        // 2.1.1 has no publish time — should not be hidden.
+      },
+    }
+    const result = getPossibleUpgradesWithIgnoredVersions(
+      partialTimeData,
+      '2.0.0',
+      'dependencyName',
+      undefined,
+      {
+        minimumReleaseAgeMinutes: 7 * 24 * 60,
+        excludedPackages: [],
+        now: NOW,
+      },
+    )
+    assert.deepStrictEqual(result.minor, { name: 'dependencyName', version: '2.1.1' })
+    assert.strictEqual(result.minorLatest, undefined)
+  })
+
+  test('minimumReleaseAge held-back surfaces across major/minor/patch buckets independently', () => {
+    const multiBucket: NpmData = {
+      'dist-tags': { latest: '3.0.0' },
+      versions: {
+        '1.0.0': { name: 'dependencyName', version: '1.0.0' },
+        '1.0.1': { name: 'dependencyName', version: '1.0.1' },
+        '1.0.2': { name: 'dependencyName', version: '1.0.2' },
+        '1.1.0': { name: 'dependencyName', version: '1.1.0' },
+        '1.1.1': { name: 'dependencyName', version: '1.1.1' },
+        '2.0.0': { name: 'dependencyName', version: '2.0.0' },
+        '3.0.0': { name: 'dependencyName', version: '3.0.0' },
+      },
+      time: {
+        '1.0.0': iso(60 * DAYS),
+        '1.0.1': iso(30 * DAYS),
+        '1.0.2': iso(1 * DAYS), // held back
+        '1.1.0': iso(30 * DAYS),
+        '1.1.1': iso(2 * DAYS), // held back
+        '2.0.0': iso(30 * DAYS),
+        '3.0.0': iso(3 * DAYS), // held back
+      },
+    }
+    const result = getPossibleUpgradesWithIgnoredVersions(
+      multiBucket,
+      '1.0.0',
+      'dependencyName',
+      undefined,
+      {
+        minimumReleaseAgeMinutes: 7 * 24 * 60,
+        excludedPackages: [],
+        now: NOW,
+      },
+    )
+    assert.deepStrictEqual(result.major, { name: 'dependencyName', version: '2.0.0' })
+    assert.deepStrictEqual(result.majorLatest, { name: 'dependencyName', version: '3.0.0' })
+    assert.deepStrictEqual(result.minor, { name: 'dependencyName', version: '1.1.0' })
+    assert.deepStrictEqual(result.minorLatest, { name: 'dependencyName', version: '1.1.1' })
+    assert.deepStrictEqual(result.patch, { name: 'dependencyName', version: '1.0.1' })
+    assert.deepStrictEqual(result.patchLatest, { name: 'dependencyName', version: '1.0.2' })
+  })
+
+  test('minimumReleaseAge that filters out the whole bucket leaves eligible undefined but latest populated', () => {
+    const allFresh: NpmData = {
+      'dist-tags': { latest: '2.0.1' },
+      versions: {
+        '2.0.0': { name: 'dependencyName', version: '2.0.0' },
+        '2.0.1': { name: 'dependencyName', version: '2.0.1' },
+      },
+      time: {
+        '2.0.0': iso(2 * DAYS), // all patches are younger than threshold
+        '2.0.1': iso(1 * DAYS),
+      },
+    }
+    const result = getPossibleUpgradesWithIgnoredVersions(
+      allFresh,
+      '2.0.0',
+      'dependencyName',
+      undefined,
+      {
+        minimumReleaseAgeMinutes: 7 * 24 * 60,
+        excludedPackages: [],
+        now: NOW,
+      },
+    )
+    assert.strictEqual(result.patch, undefined)
+    assert.deepStrictEqual(result.patchLatest, { name: 'dependencyName', version: '2.0.1' })
   })
 })

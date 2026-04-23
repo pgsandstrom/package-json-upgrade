@@ -2,7 +2,7 @@
   "name": "package-json-upgrade",
   "displayName": "Package Json Upgrade",
   "description": "Shows available updates in package.json files. Offers quick fix command to update them and to show the changelog.",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "publisher": "codeandstuff",
   "license": "MIT",
   "icon": "logo/icon.webp",
@@ -93,6 +93,16 @@
           "type": "string",
           "default": "dependencies, devDependencies, catalog, catalogs, workspaces.catalog, workspaces.catalogs",
           "description": "Comma-separated list of dependency groups to check for updates. Default includes common dependency groups and catalog groups. Add 'peerDependencies', 'optionalDependencies', etc. as needed."
+        },
+        "package-json-upgrade.minimumReleaseAge": {
+          "type": "number",
+          "default": 0,
+          "description": "Mirrors npm's minimumReleaseAge. Hide upgrades to versions published less than this many minutes ago. When the newest version is held back, the decoration shows the highest eligible upgrade and the true latest (e.g. '5.1.0 (latest 5.2.0)'). 0 to disable."
+        },
+        "package-json-upgrade.minimumReleaseAgeExclude": {
+          "type": "array",
+          "default": [],
+          "description": "Package names to exclude from the minimumReleaseAge check. For example [\"@my-org/some-package\"] to always show the newest version regardless of release age."
         }
       }
     },
