@@ -9,8 +9,8 @@ import { clearWorkspaceCache, resolveCatalogVersion, resolveWorkspaceVersion } f
 const testdataDir = path.resolve('./src/test-node/testdata')
 const catalogWorkspaceDir = path.resolve('./src/test-node/testdata/catalog-workspace')
 
-const writeYaml = (content: string) => {
-  fs.writeFileSync(path.join(testdataDir, 'pnpm-workspace.yaml'), content)
+const writeYaml = (content: string, fileName = 'pnpm-workspace.yaml') => {
+  fs.writeFileSync(path.join(testdataDir, fileName), content)
   clearWorkspaceCache()
 }
 
@@ -19,6 +19,7 @@ const restoreYaml = () => {
     path.join(testdataDir, 'pnpm-workspace.yaml'),
     'packages:\n  - \'packages/*\'\n  - "apps/*"\n  - components/**\n',
   )
+  fs.rmSync(path.join(testdataDir, 'pnpm-workspace.yml'), { force: true })
   clearWorkspaceCache()
 }
 
@@ -117,27 +118,31 @@ describe('workspace', () => {
   - components/**
 `)
 
-    const result = resolveWorkspaceVersion(
-      'workspace:*',
-      'pkg-b',
-      path.join(testdataDir, 'packages', 'consumer', 'package.json'),
-    )
-    assert.deepStrictEqual(result, { version: '2.5.0', isWorkspace: true })
-
-    restoreYaml()
+    try {
+      const result = resolveWorkspaceVersion(
+        'workspace:*',
+        'pkg-b',
+        path.join(testdataDir, 'packages', 'consumer', 'package.json'),
+      )
+      assert.deepStrictEqual(result, { version: '2.5.0', isWorkspace: true })
+    } finally {
+      restoreYaml()
+    }
   })
 
   test('should handle empty packages array', () => {
     writeYaml('packages:\n')
 
-    const result = resolveWorkspaceVersion(
-      'workspace:*',
-      'pkg-a',
-      path.join(testdataDir, 'packages', 'consumer', 'package.json'),
-    )
-    assert.strictEqual(result, undefined)
-
-    restoreYaml()
+    try {
+      const result = resolveWorkspaceVersion(
+        'workspace:*',
+        'pkg-a',
+        path.join(testdataDir, 'packages', 'consumer', 'package.json'),
+      )
+      assert.strictEqual(result, undefined)
+    } finally {
+      restoreYaml()
+    }
   })
 
   test('should use cache on repeated lookups', () => {
@@ -224,5 +229,48 @@ describe('workspace', () => {
   test('should return undefined for non-catalog versions', () => {
     const result = resolveCatalogVersion('^1.2.3', 'react', path.join(testdataDir, 'dummy.json'))
     assert.strictEqual(result, undefined)
+  })
+
+  test('should support pnpm-workspace.yml extension', () => {
+    // Remove the .yaml file so only .yml is used
+    fs.rmSync(path.join(testdataDir, 'pnpm-workspace.yaml'), { force: true })
+    fs.writeFileSync(
+      path.join(testdataDir, 'pnpm-workspace.yml'),
+      'packages:\n  - \'packages/*\'\n  - "apps/*"\n  - components/**\n',
+    )
+    clearWorkspaceCache()
+
+    try {
+      const result = resolveWorkspaceVersion(
+        'workspace:*',
+        'app',
+        path.join(testdataDir, 'packages', 'consumer', 'package.json'),
+      )
+      assert.deepStrictEqual(result, { version: '0.1.0', isWorkspace: true })
+    } finally {
+      restoreYaml()
+    }
+  })
+
+  test('should gracefully handle invalid yaml', () => {
+    writeYaml('this is not { valid yaml ::::')
+
+    try {
+      const result = resolveWorkspaceVersion(
+        'workspace:*',
+        'pkg-a',
+        path.join(testdataDir, 'packages', 'consumer', 'package.json'),
+      )
+      assert.strictEqual(result, undefined)
+
+      const catalogResult = resolveCatalogVersion(
+        'catalog:',
+        'react',
+        path.join(testdataDir, 'packages', 'consumer', 'package.json'),
+      )
+      assert.strictEqual(catalogResult, undefined)
+    } finally {
+      restoreYaml()
+    }
   })
 })

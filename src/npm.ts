@@ -17,7 +17,7 @@ import { getConfig } from './config'
 import { logError } from './log'
 import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict, StrictDict } from './types'
-import { resolveWorkspaceVersion } from './workspace'
+import { resolveCatalogVersion, resolveWorkspaceVersion } from './workspace'
 
 export interface NpmLoader<T> {
   asyncstate: AsyncState
@@ -274,6 +274,10 @@ export const refreshPackageJsonData = (
       .map(([dependencyName, version]) => {
         if (version.startsWith('workspace:')) {
           const resolved = resolveWorkspaceVersion(version, dependencyName, packageJsonFilePath)
+          return [dependencyName, resolved?.version ?? version] as const
+        }
+        if (version.startsWith('catalog:')) {
+          const resolved = resolveCatalogVersion(version, dependencyName, packageJsonFilePath)
           return [dependencyName, resolved?.version ?? version] as const
         }
         return [dependencyName, version] as const

@@ -19,6 +19,7 @@ interface WorkspaceCatalog {
 
 const workspaceCache = new Map<string, WorkspaceCache>()
 const catalogCache = new Map<string, CatalogCache>()
+const workspaceRootCache = new Map<string, string | undefined>()
 
 export interface CatalogVersionResolution {
   version: string
@@ -104,19 +105,29 @@ export const resolveWorkspaceVersion = (
 export const clearWorkspaceCache = () => {
   workspaceCache.clear()
   catalogCache.clear()
+  workspaceRootCache.clear()
 }
 
 const findPnpmWorkspaceRoot = (packageJsonPath: string): string | undefined => {
+  const cached = workspaceRootCache.get(packageJsonPath)
+  if (cached !== undefined || workspaceRootCache.has(packageJsonPath)) {
+    return cached
+  }
+
   let dir = path.dirname(packageJsonPath)
   while (dir !== path.dirname(dir)) {
     if (fs.existsSync(path.join(dir, 'pnpm-workspace.yaml'))) {
+      workspaceRootCache.set(packageJsonPath, dir)
       return dir
     }
     if (fs.existsSync(path.join(dir, 'pnpm-workspace.yml'))) {
+      workspaceRootCache.set(packageJsonPath, dir)
       return dir
     }
     dir = path.dirname(dir)
   }
+
+  workspaceRootCache.set(packageJsonPath, undefined)
   return undefined
 }
 
