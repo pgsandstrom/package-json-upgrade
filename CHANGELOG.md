@@ -4,6 +4,10 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+## 3.6.0
+
+- Support for minimum release age gate. Added "minimumReleaseAge" and "minimumReleaseAgeExclude" configs.
+
 ## 3.5.0
 
 - Added catalog support.

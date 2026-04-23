@@ -177,18 +177,31 @@ const paintDecorations = (
     let text: string | undefined
     if (possibleUpgrades.major !== undefined) {
       // TODO add info about patch version?
-      text = getUpdateDescription(possibleUpgrades.major.version, possibleUpgrades.existingVersion)
+      text = getUpdateDescription(
+        possibleUpgrades.major.version,
+        possibleUpgrades.existingVersion,
+        possibleUpgrades.majorLatest?.version,
+      )
       decorator = getDecoratorForUpdate('major', text)
     } else if (possibleUpgrades.minor !== undefined) {
-      text = getUpdateDescription(possibleUpgrades.minor.version, possibleUpgrades.existingVersion)
+      text = getUpdateDescription(
+        possibleUpgrades.minor.version,
+        possibleUpgrades.existingVersion,
+        possibleUpgrades.minorLatest?.version,
+      )
       decorator = getDecoratorForUpdate('minor', text)
     } else if (possibleUpgrades.patch !== undefined) {
-      text = getUpdateDescription(possibleUpgrades.patch.version, possibleUpgrades.existingVersion)
+      text = getUpdateDescription(
+        possibleUpgrades.patch.version,
+        possibleUpgrades.existingVersion,
+        possibleUpgrades.patchLatest?.version,
+      )
       decorator = getDecoratorForUpdate('patch', text)
     } else if (possibleUpgrades.prerelease !== undefined) {
       text = getUpdateDescription(
         possibleUpgrades.prerelease.version,
         possibleUpgrades.existingVersion,
+        possibleUpgrades.prereleaseLatest?.version,
       )
       decorator = getDecoratorForUpdate('prerelease', text)
     } else if (possibleUpgrades.validVersion === false) {

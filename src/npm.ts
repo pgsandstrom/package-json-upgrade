@@ -42,6 +42,10 @@ export interface NpmData {
         directory?: string
       }
     | string
+  // ISO-8601 publish timestamps keyed by version (plus 'created' / 'modified' entries).
+  time?: {
+    [key in string]: string
+  }
 }
 
 export interface VersionData {
@@ -54,6 +58,11 @@ export interface DependencyUpdateInfo {
   minor?: VersionData
   patch?: VersionData
   prerelease?: VersionData
+  // Per-bucket "true latest" — only set when higher than the eligible upgrade, i.e. held back by minimumReleaseAge.
+  majorLatest?: VersionData
+  minorLatest?: VersionData
+  patchLatest?: VersionData
+  prereleaseLatest?: VersionData
   validVersion: boolean // if the current version is valid semver
   existingVersion: boolean // if the current version exists
 }
@@ -81,17 +90,28 @@ export const setCachedNpmData = (newNpmCache: Dict<string, NpmLoader<CacheItem>>
   npmCache = newNpmCache
 }
 
+export interface ReleaseAgeFilter {
+  minimumReleaseAgeMinutes: number
+  excludedPackages: string[]
+  now?: number // override for tests; defaults to Date.now()
+}
+
 export const getLatestVersion = (
   npmData: NpmData,
   rawCurrentVersion: string,
   dependencyName: string,
 ): VersionData | undefined => {
-  const ignoredVersions = getConfig().ignoreVersions[dependencyName]
+  const config = getConfig()
+  const ignoredVersions = config.ignoreVersions[dependencyName]
   return getLatestVersionWithIgnoredVersions(
     npmData,
     rawCurrentVersion,
     dependencyName,
     ignoredVersions,
+    {
+      minimumReleaseAgeMinutes: config.minimumReleaseAge,
+      excludedPackages: config.minimumReleaseAgeExclude,
+    },
   )
 }
 
@@ -100,12 +120,14 @@ export const getLatestVersionWithIgnoredVersions = (
   rawCurrentVersion: string,
   dependencyName: string,
   ignoredVersions: string | undefined | string[],
+  ageFilter?: ReleaseAgeFilter,
 ): VersionData | undefined => {
   const possibleUpgrades = getPossibleUpgradesWithIgnoredVersions(
     npmData,
     rawCurrentVersion,
     dependencyName,
     ignoredVersions,
+    ageFilter,
   )
   return (
     possibleUpgrades.major ??
@@ -140,12 +162,17 @@ export const getPossibleUpgrades = (
   rawCurrentVersion: string,
   dependencyName: string,
 ): DependencyUpdateInfo => {
-  const ignoredVersions = getConfig().ignoreVersions[dependencyName]
+  const config = getConfig()
+  const ignoredVersions = config.ignoreVersions[dependencyName]
   return getPossibleUpgradesWithIgnoredVersions(
     npmData,
     rawCurrentVersion,
     dependencyName,
     ignoredVersions,
+    {
+      minimumReleaseAgeMinutes: config.minimumReleaseAge,
+      excludedPackages: config.minimumReleaseAgeExclude,
+    },
   )
 }
 
@@ -154,6 +181,7 @@ export const getPossibleUpgradesWithIgnoredVersions = (
   rawCurrentVersion: string,
   dependencyName: string,
   ignoredVersions: string | undefined | string[],
+  ageFilter?: ReleaseAgeFilter,
 ): DependencyUpdateInfo => {
   if (rawCurrentVersion === '*' || rawCurrentVersion === 'x') {
     return { validVersion: true, existingVersion: true }
@@ -183,8 +211,10 @@ export const getPossibleUpgradesWithIgnoredVersions = (
     coercedVersion,
   )
 
-  const helper = (releaseTypeList: ReleaseType[]) => {
-    const matchingUpgradeTypes = possibleUpgrades.filter((version) => {
+  const eligibleUpgrades = filterByReleaseAge(possibleUpgrades, npmData, dependencyName, ageFilter)
+
+  const pickHighest = (source: VersionData[], releaseTypeList: ReleaseType[]) => {
+    const matchingUpgradeTypes = source.filter((version) => {
       const diffType = diff(version.version, coercedVersion)
       return diffType !== null && releaseTypeList.includes(diffType)
     })
@@ -195,18 +225,80 @@ export const getPossibleUpgradesWithIgnoredVersions = (
 
   // If we are at a prerelease, then show all pre-x.
   // This is partially done to account for when there are only pre-x versions.
-  const majorUpgrade = helper(currentVersionIsPrerelease ? ['major', 'premajor'] : ['major'])
-  const minorUpgrade = helper(currentVersionIsPrerelease ? ['minor', 'preminor'] : ['minor'])
-  const patchUpgrade = helper(currentVersionIsPrerelease ? ['patch', 'prepatch'] : ['patch'])
-  const prereleaseUpgrade = currentVersionIsPrerelease ? helper(['prerelease']) : undefined
+  const majorTypes: ReleaseType[] = currentVersionIsPrerelease ? ['major', 'premajor'] : ['major']
+  const minorTypes: ReleaseType[] = currentVersionIsPrerelease ? ['minor', 'preminor'] : ['minor']
+  const patchTypes: ReleaseType[] = currentVersionIsPrerelease ? ['patch', 'prepatch'] : ['patch']
+  const prereleaseTypes: ReleaseType[] = ['prerelease']
+
+  const majorUpgrade = pickHighest(eligibleUpgrades, majorTypes)
+  const minorUpgrade = pickHighest(eligibleUpgrades, minorTypes)
+  const patchUpgrade = pickHighest(eligibleUpgrades, patchTypes)
+  const prereleaseUpgrade = currentVersionIsPrerelease
+    ? pickHighest(eligibleUpgrades, prereleaseTypes)
+    : undefined
+
+  // Only compute per-bucket "latest" when the age filter could have held something back.
+  const ageFilterActive = eligibleUpgrades !== possibleUpgrades
+  const heldBack = (eligible: VersionData | undefined, trueLatest: VersionData | undefined) =>
+    trueLatest !== undefined && (eligible === undefined || gt(trueLatest.version, eligible.version))
+      ? trueLatest
+      : undefined
+
+  const majorLatest = ageFilterActive
+    ? heldBack(majorUpgrade, pickHighest(possibleUpgrades, majorTypes))
+    : undefined
+  const minorLatest = ageFilterActive
+    ? heldBack(minorUpgrade, pickHighest(possibleUpgrades, minorTypes))
+    : undefined
+  const patchLatest = ageFilterActive
+    ? heldBack(patchUpgrade, pickHighest(possibleUpgrades, patchTypes))
+    : undefined
+  const prereleaseLatest =
+    ageFilterActive && currentVersionIsPrerelease
+      ? heldBack(prereleaseUpgrade, pickHighest(possibleUpgrades, prereleaseTypes))
+      : undefined
+
   return {
     major: majorUpgrade,
     minor: minorUpgrade,
     patch: patchUpgrade,
     prerelease: prereleaseUpgrade,
+    ...(majorLatest !== undefined ? { majorLatest } : {}),
+    ...(minorLatest !== undefined ? { minorLatest } : {}),
+    ...(patchLatest !== undefined ? { patchLatest } : {}),
+    ...(prereleaseLatest !== undefined ? { prereleaseLatest } : {}),
     validVersion: true,
     existingVersion,
   }
+}
+
+const filterByReleaseAge = (
+  upgrades: VersionData[],
+  npmData: NpmData,
+  dependencyName: string,
+  ageFilter: ReleaseAgeFilter | undefined,
+): VersionData[] => {
+  if (ageFilter === undefined || ageFilter.minimumReleaseAgeMinutes <= 0) {
+    return upgrades
+  }
+  if (ageFilter.excludedPackages.includes(dependencyName)) {
+    return upgrades
+  }
+  const now = ageFilter.now ?? Date.now()
+  const minAgeMs = ageFilter.minimumReleaseAgeMinutes * 60 * 1000
+  const timeMap = npmData.time
+  return upgrades.filter((version) => {
+    const publishedAt = timeMap?.[version.version]
+    if (publishedAt === undefined) {
+      // Missing publish metadata — be permissive rather than hiding the upgrade.
+      return true
+    }
+    const publishedMs = new Date(publishedAt).getTime()
+    if (Number.isNaN(publishedMs)) {
+      return true
+    }
+    return now - publishedMs >= minAgeMs
+  })
 }
 
 const getRawPossibleUpgradeList = (

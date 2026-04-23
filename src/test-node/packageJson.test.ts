@@ -21,6 +21,8 @@ describe('packageJson', () => {
       ignoreVersions: {},
       msUntilRowLoading: 6000,
       dependencyGroups: ['dependencies', 'devDependencies'],
+      minimumReleaseAge: 0,
+      minimumReleaseAgeExclude: [],
     }
     setConfig(config)
   })
