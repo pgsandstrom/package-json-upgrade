@@ -26,13 +26,8 @@ export class UpdateAction implements vscode.CodeActionProvider {
       return
     }
 
-    // Skip quick-fix upgrades for workspace dependencies — the version lives in the workspace package
-    if (dep.isWorkspace === true) {
-      return
-    }
-
-    // Skip quick-fix upgrades for catalog dependencies — the version lives in the workspace catalog
-    if (dep.isCatalog === true) {
+    // Skip quick-fix upgrades for workspace/catalog dependencies — the version lives elsewhere
+    if (dep.isWorkspace === true || dep.isCatalog === true) {
       return
     }
 

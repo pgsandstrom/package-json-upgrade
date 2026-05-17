@@ -1,6 +1,7 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
+import { globSync } from 'tinyglobby'
 
 interface WorkspaceCache {
   packages: Map<string, string>
@@ -43,26 +44,14 @@ export const resolveCatalogVersion = (
   const catalogName = version === 'catalog:' ? 'default' : version.slice('catalog:'.length)
   const workspaceCatalog = getWorkspaceCatalog(workspaceRoot)
 
-  if (catalogName === 'default') {
-    const resolved = workspaceCatalog.default.get(dependencyName)
-    if (resolved !== undefined) {
-      return { version: resolved, isCatalog: true }
-    }
-    const namedDefault = workspaceCatalog.named.get('default')
-    if (namedDefault !== undefined) {
-      const namedResolved = namedDefault.get(dependencyName)
-      if (namedResolved !== undefined) {
-        return { version: namedResolved, isCatalog: true }
-      }
-    }
-  } else {
-    const namedCatalog = workspaceCatalog.named.get(catalogName)
-    if (namedCatalog !== undefined) {
-      const resolved = namedCatalog.get(dependencyName)
-      if (resolved !== undefined) {
-        return { version: resolved, isCatalog: true }
-      }
-    }
+  const resolved =
+    catalogName === 'default'
+      ? (workspaceCatalog.default.get(dependencyName) ??
+        workspaceCatalog.named.get('default')?.get(dependencyName))
+      : workspaceCatalog.named.get(catalogName)?.get(dependencyName)
+
+  if (resolved !== undefined) {
+    return { version: resolved, isCatalog: true }
   }
 
   return undefined
@@ -148,28 +137,33 @@ const getWorkspacePackages = (workspaceRoot: string): Map<string, string> => {
   const patterns = parseWorkspacePackages(content)
   const packages = new Map<string, string>()
 
-  for (const pattern of patterns) {
-    const pkgJsonPaths = resolveGlob(workspaceRoot, pattern)
-    for (const pkgJsonPath of pkgJsonPaths) {
-      try {
-        const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8')) as {
-          name?: string
-          version?: string
-        }
-        if (pkgJson.name !== undefined && pkgJson.version !== undefined) {
-          packages.set(pkgJson.name, pkgJson.version)
-        }
-      } catch {
-        // ignore invalid or unreadable package.json files
+  const pkgJsonPaths = globSync(
+    patterns
+      .filter((p) => p.length > 0)
+      .map((p) => {
+        const normalized = p.replace(/\/+$/, '')
+        return `${normalized}/package.json`
+      }),
+    { cwd: workspaceRoot, absolute: true, onlyFiles: true },
+  )
+
+  for (const pkgJsonPath of pkgJsonPaths) {
+    try {
+      const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8')) as {
+        name?: string
+        version?: string
       }
+      if (pkgJson.name !== undefined && pkgJson.version !== undefined) {
+        packages.set(pkgJson.name, pkgJson.version)
+      }
+    } catch {
+      // ignore invalid or unreadable package.json files
     }
   }
 
   workspaceCache.set(workspaceRoot, { packages, mtime })
   return packages
 }
-
-const EXCLUDED_DIRS = new Set(['node_modules', '.git'])
 
 const findWorkspaceFile = (workspaceRoot: string): string | undefined => {
   const yamlPath = path.join(workspaceRoot, 'pnpm-workspace.yaml')
@@ -197,57 +191,6 @@ const parseWorkspacePackages = (content: string): string[] => {
     // ignore invalid yaml
   }
   return []
-}
-
-const resolveGlob = (basePath: string, pattern: string): string[] => {
-  const parts = pattern.split('/').filter((p) => p !== '')
-  return resolveGlobRecursive(basePath, parts)
-}
-
-const resolveGlobRecursive = (currentPath: string, parts: string[]): string[] => {
-  if (parts.length === 0) {
-    const pkgJson = path.join(currentPath, 'package.json')
-    return fs.existsSync(pkgJson) ? [pkgJson] : []
-  }
-
-  const [head, ...tail] = parts
-
-  if (head === '**') {
-    const results: string[] = []
-    results.push(...resolveGlobRecursive(currentPath, tail))
-    try {
-      const entries = fs.readdirSync(currentPath, { withFileTypes: true })
-      for (const entry of entries) {
-        if (entry.isDirectory() && !EXCLUDED_DIRS.has(entry.name)) {
-          results.push(...resolveGlobRecursive(path.join(currentPath, entry.name), parts))
-        }
-      }
-    } catch {
-      // ignore directories we can't read
-    }
-    return results
-  }
-
-  if (head === '*') {
-    const results: string[] = []
-    try {
-      const entries = fs.readdirSync(currentPath, { withFileTypes: true })
-      for (const entry of entries) {
-        if (entry.isDirectory()) {
-          results.push(...resolveGlobRecursive(path.join(currentPath, entry.name), tail))
-        }
-      }
-    } catch {
-      // ignore directories we can't read
-    }
-    return results
-  }
-
-  const nextPath = path.join(currentPath, head)
-  if (!fs.existsSync(nextPath)) {
-    return []
-  }
-  return resolveGlobRecursive(nextPath, tail)
 }
 
 const getWorkspaceCatalog = (workspaceRoot: string): WorkspaceCatalog => {
