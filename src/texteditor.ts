@@ -42,7 +42,7 @@ export const handleFileDecoration = (document: vscode.TextDocument) => {
 
 const loadDecoration = async (document: vscode.TextDocument, startTime: number) => {
   const text = document.getText()
-  const dependencyGroups = getDependencyInformation(text)
+  const dependencyGroups = getDependencyInformation(text, document.uri.fsPath)
 
   const textEditor = getTextEditorFromDocument(document)
   if (textEditor === undefined) {
