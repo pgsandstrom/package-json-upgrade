@@ -127,11 +127,16 @@ export const getDecoratorForUpdate = (
 export function getUpdateDescription(
   latestVersion: string,
   currentVersionExisting: boolean,
+  heldBackLatest?: string,
 ): string {
   const versionString = getConfig().decorationString.replace('%s', latestVersion)
+  const withHeldBack =
+    heldBackLatest !== undefined && heldBackLatest !== latestVersion
+      ? `${versionString} (latest ${heldBackLatest})`
+      : versionString
   if (currentVersionExisting) {
-    return versionString
+    return withHeldBack
   } else {
-    return `${versionString} (current version not found)`
+    return `${withHeldBack} (current version not found)`
   }
 }
