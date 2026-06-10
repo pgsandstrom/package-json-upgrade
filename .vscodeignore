@@ -8,8 +8,8 @@ src/**
 .gitignore
 .vscode-test.mjs
 prettier.config.js
-release-vsx-helper.js
-release-vsx.sh
+release-helper.js
+release.sh
 
 **/tsconfig.json
 **/webpack.config.js
