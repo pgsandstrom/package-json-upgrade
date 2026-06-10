@@ -97,7 +97,7 @@
         "package-json-upgrade.minimumReleaseAge": {
           "type": "number",
           "default": 0,
-          "description": "Mirrors npm's minimumReleaseAge. Hide upgrades to versions published less than this many minutes ago. When the newest version is held back, the decoration shows the highest eligible upgrade and the true latest (e.g. '5.1.0 (latest 5.2.0)'). 0 to disable."
+          "description": "Mirrors pnpm's minimumReleaseAge. Hide upgrades to versions published less than this many minutes ago. 0 to disable."
         },
         "package-json-upgrade.minimumReleaseAgeExclude": {
           "type": "array",

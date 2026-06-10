@@ -132,7 +132,7 @@ export function getUpdateDescription(
   const versionString = getConfig().decorationString.replace('%s', latestVersion)
   const withHeldBack =
     heldBackLatest !== undefined && heldBackLatest !== latestVersion
-      ? `${versionString} (latest ${heldBackLatest})`
+      ? `${versionString} (held back ${heldBackLatest})`
       : versionString
   if (currentVersionExisting) {
     return withHeldBack
