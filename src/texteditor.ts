@@ -143,7 +143,7 @@ const paintDecorations = (
     }
 
     if (npmCache.asyncstate === AsyncState.Rejected) {
-      const text = 'Dependency not found'
+      const text = npmCache.error?.message ?? 'Dependency not found'
       const notFoundDecoration = decorateDiscreet(text)
       if (updateCache(notFoundDecoration, range.start.line, text)) {
         setDecorator(notFoundDecoration, textEditor, range)

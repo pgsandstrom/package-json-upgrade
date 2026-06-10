@@ -24,6 +24,23 @@ export interface NpmLoader<T> {
   startTime: number
   promise?: Promise<unknown>
   item?: T
+  // Only set when asyncstate is Rejected. Describes why the registry fetch failed.
+  error?: FetchError
+}
+
+export enum FetchErrorType {
+  NotFound = 'NOT_FOUND',
+  Unauthorized = 'UNAUTHORIZED',
+  RateLimited = 'RATE_LIMITED',
+  ServerError = 'SERVER_ERROR',
+  Network = 'NETWORK',
+  Unknown = 'UNKNOWN',
+}
+
+export interface FetchError {
+  type: FetchErrorType
+  // Short, user-facing text shown inline as a decoration.
+  message: string
 }
 
 export interface NpmData {
@@ -465,6 +482,16 @@ const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
+const getNumberProp = (e: unknown, prop: string): number | undefined => {
+  if (e !== null && typeof e === 'object' && prop in e) {
+    const value = (e as Record<string, unknown>)[prop]
+    if (typeof value === 'number') {
+      return value
+    }
+  }
+  return undefined
+}
+
 const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
   if (
     npmCache[dependencyName] !== undefined &&
@@ -498,13 +525,71 @@ const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
       }
     })
     .catch((e: unknown) => {
-      logError(`failed to load dependency ${dependencyName}`, e)
+      const fetchError = categorizeFetchError(e)
+      logError(`failed to load dependency ${dependencyName} (${fetchError.type})`, e)
 
       npmCache[dependencyName] = {
         asyncstate: AsyncState.Rejected,
         startTime,
+        error: fetchError,
       }
     })
 
   return promise
+}
+
+export const categorizeFetchError = (e: unknown): FetchError => {
+  const code = getStringProp(e, 'code')
+  const statusCode = getNumberProp(e, 'statusCode') ?? parseHttpStatusFromCode(code)
+
+  // We got an HTTP response, so the registry answered — categorize by status.
+  if (statusCode !== undefined) {
+    if (statusCode === 404) {
+      // The package genuinely isn't there.
+      return { type: FetchErrorType.NotFound, message: 'Dependency not found' }
+    }
+    if (statusCode === 401 || statusCode === 403) {
+      return { type: FetchErrorType.Unauthorized, message: 'Authorization failed' }
+    }
+    if (statusCode === 429) {
+      return { type: FetchErrorType.RateLimited, message: 'Registry rate limit reached' }
+    }
+    if (statusCode >= 500) {
+      return { type: FetchErrorType.ServerError, message: 'Registry server error' }
+    }
+    return { type: FetchErrorType.Unknown, message: 'Could not fetch dependency' }
+  }
+
+  // No HTTP response came back at all. Node attaches a `code` to transport-level
+  // failures (DNS, TLS, connection refused, proxy errors, timeouts), so a code
+  // without a status means we couldn't reach the registry. This deliberately
+  // avoids enumerating specific codes — any of them implies a connectivity issue.
+  if (code !== undefined) {
+    return { type: FetchErrorType.Network, message: 'Could not reach registry' }
+  }
+
+  return { type: FetchErrorType.Unknown, message: 'Could not fetch dependency' }
+}
+
+const getStringProp = (e: unknown, prop: string): string | undefined => {
+  if (e !== null && typeof e === 'object' && prop in e) {
+    const value = (e as Record<string, unknown>)[prop]
+    if (typeof value === 'string') {
+      return value
+    }
+  }
+  return undefined
+}
+
+// npm-registry-fetch sometimes exposes the HTTP status only via a code like
+// "E404" rather than a numeric statusCode, so we parse it out as a fallback.
+const parseHttpStatusFromCode = (code: string | undefined): number | undefined => {
+  if (code === undefined) {
+    return undefined
+  }
+  const match = /^E(\d{3})$/.exec(code)
+  if (match === null) {
+    return undefined
+  }
+  return Number(match[1])
 }

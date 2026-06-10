@@ -4,7 +4,9 @@ import * as assert from 'assert'
 
 import { Config, setConfig } from '../config'
 import {
+  categorizeFetchError,
   DependencyUpdateInfo,
+  FetchErrorType,
   getLatestVersionWithIgnoredVersions,
   getPossibleUpgrades,
   getPossibleUpgradesWithIgnoredVersions,
@@ -686,5 +688,51 @@ describe('isRegistryVersion', () => {
     assert.strictEqual(isRegistryVersion('X'), false)
     assert.strictEqual(isRegistryVersion(''), false)
     assert.strictEqual(isRegistryVersion('latest'), false)
+  })
+})
+
+describe('categorizeFetchError', () => {
+  test('404 means the package genuinely does not exist', () => {
+    assert.strictEqual(categorizeFetchError({ statusCode: 404 }).type, FetchErrorType.NotFound)
+    // Some errors only carry the status as an "E404"-style code.
+    assert.strictEqual(categorizeFetchError({ code: 'E404' }).type, FetchErrorType.NotFound)
+  })
+
+  test('401 and 403 are auth failures', () => {
+    assert.strictEqual(categorizeFetchError({ statusCode: 401 }).type, FetchErrorType.Unauthorized)
+    assert.strictEqual(categorizeFetchError({ statusCode: 403 }).type, FetchErrorType.Unauthorized)
+    assert.strictEqual(categorizeFetchError({ code: 'E401' }).type, FetchErrorType.Unauthorized)
+  })
+
+  test('429 is rate limiting', () => {
+    assert.strictEqual(categorizeFetchError({ statusCode: 429 }).type, FetchErrorType.RateLimited)
+  })
+
+  test('5xx is a registry server error', () => {
+    assert.strictEqual(categorizeFetchError({ statusCode: 500 }).type, FetchErrorType.ServerError)
+    assert.strictEqual(categorizeFetchError({ statusCode: 503 }).type, FetchErrorType.ServerError)
+  })
+
+  // Any transport-level code (no HTTP status) is a connectivity problem. We don't
+  // enumerate codes, so even unlisted/future ones must be caught — that's the whole
+  // point: a proxy/DNS/TLS failure must never look like a missing package.
+  test('a code without an HTTP status is reported as a connectivity error', () => {
+    assert.strictEqual(categorizeFetchError({ code: 'ENOTFOUND' }).type, FetchErrorType.Network)
+    assert.strictEqual(categorizeFetchError({ code: 'ECONNREFUSED' }).type, FetchErrorType.Network)
+    assert.strictEqual(categorizeFetchError({ code: 'ETIMEDOUT' }).type, FetchErrorType.Network)
+    assert.strictEqual(
+      categorizeFetchError({ code: 'SELF_SIGNED_CERT_IN_CHAIN' }).type,
+      FetchErrorType.Network,
+    )
+    // A code we never hard-coded still resolves to Network rather than the generic bucket.
+    assert.strictEqual(categorizeFetchError({ code: 'ESOMETHINGNEW' }).type, FetchErrorType.Network)
+  })
+
+  test('unknown errors fall back to a generic message', () => {
+    // No code and no status — most likely an internal error, not a connectivity issue.
+    assert.strictEqual(categorizeFetchError(new Error('boom')).type, FetchErrorType.Unknown)
+    assert.strictEqual(categorizeFetchError(undefined).type, FetchErrorType.Unknown)
+    // An HTTP status we don't special-case stays generic (it's not a network failure).
+    assert.strictEqual(categorizeFetchError({ statusCode: 418 }).type, FetchErrorType.Unknown)
   })
 })

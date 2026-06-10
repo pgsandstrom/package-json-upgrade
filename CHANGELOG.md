@@ -4,6 +4,8 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+- Display better error messages when failing to find dependency/version
+
 ## 3.6.1
 
 - Fix so "~5.0.0" is not displayed as "version not found" if some version matching the range exists, such as "5.0.1"
