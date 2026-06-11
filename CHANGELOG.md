@@ -4,6 +4,8 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+## 3.7.0
+
 - Add config for minimumReleaseAge/minimumReleaseAgeExclude, mirroring the pnpm setting
 - Display better error messages when failing to find dependency/version
 
