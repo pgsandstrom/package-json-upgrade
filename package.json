@@ -102,7 +102,7 @@
         "package-json-upgrade.minimumReleaseAgeExclude": {
           "type": "array",
           "default": [],
-          "description": "Package names to exclude from the minimumReleaseAge check. For example [\"@my-org/some-package\"] to always show the newest version regardless of release age."
+          "description": "Package names to exclude from the minimumReleaseAge check. Supports pnpm-style `*` wildcards, for example [\"@my-org/*\", \"eslint\"] to always show the newest version regardless of release age."
         }
       }
     },

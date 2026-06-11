@@ -298,6 +298,19 @@ export const getPossibleUpgradesWithIgnoredVersions = (
   }
 }
 
+// Matches pnpm's minimumReleaseAge exclude patterns, which support `*` wildcards
+// (e.g. "@my-org/*" or "eslint*"). Patterns without a wildcard match the package
+// name exactly.
+const isPackageExcluded = (dependencyName: string, excludedPackages: string[]): boolean => {
+  return excludedPackages.some((pattern) => {
+    if (!pattern.includes('*')) {
+      return pattern === dependencyName
+    }
+    const escaped = pattern.replace(/[.+^${}()|[\]\\?]/g, '\\$&').replace(/\*/g, '.*')
+    return new RegExp(`^${escaped}$`).test(dependencyName)
+  })
+}
+
 const filterByReleaseAge = (
   upgrades: VersionData[],
   npmData: NpmData,
@@ -307,7 +320,7 @@ const filterByReleaseAge = (
   if (ageFilter === undefined || ageFilter.minimumReleaseAgeMinutes <= 0) {
     return upgrades
   }
-  if (ageFilter.excludedPackages.includes(dependencyName)) {
+  if (isPackageExcluded(dependencyName, ageFilter.excludedPackages)) {
     return upgrades
   }
   const now = ageFilter.now ?? Date.now()

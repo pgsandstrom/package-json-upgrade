@@ -522,6 +522,38 @@ describe('Npm Test Suite', () => {
     assert.strictEqual(result.minorLatest, undefined)
   })
 
+  test('minimumReleaseAgeExclude supports wildcard patterns', () => {
+    const result = getPossibleUpgradesWithIgnoredVersions(
+      ageTestData,
+      '2.0.0',
+      'dependencyName',
+      undefined,
+      {
+        minimumReleaseAgeMinutes: 7 * 24 * 60,
+        excludedPackages: ['dependency*'],
+        now: NOW,
+      },
+    )
+    assert.deepStrictEqual(result.minor, { name: 'dependencyName', version: '2.1.1' })
+    assert.strictEqual(result.minorLatest, undefined)
+  })
+
+  test('minimumReleaseAgeExclude wildcard that does not match still filters', () => {
+    const result = getPossibleUpgradesWithIgnoredVersions(
+      ageTestData,
+      '2.0.0',
+      'dependencyName',
+      undefined,
+      {
+        minimumReleaseAgeMinutes: 7 * 24 * 60,
+        excludedPackages: ['@other-org/*'],
+        now: NOW,
+      },
+    )
+    assert.deepStrictEqual(result.minor, { name: 'dependencyName', version: '2.1.0' })
+    assert.deepStrictEqual(result.minorLatest, { name: 'dependencyName', version: '2.1.1' })
+  })
+
   test('minimumReleaseAge of 0 disables the filter', () => {
     const result = getPossibleUpgradesWithIgnoredVersions(
       ageTestData,
