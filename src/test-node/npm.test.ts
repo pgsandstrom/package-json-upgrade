@@ -760,6 +760,14 @@ describe('categorizeFetchError', () => {
     assert.strictEqual(categorizeFetchError({ code: 'ESOMETHINGNEW' }).type, FetchErrorType.Network)
   })
 
+  test('request-timeout and body-timeout types are reported as a timeout', () => {
+    assert.strictEqual(
+      categorizeFetchError({ type: 'request-timeout' }).type,
+      FetchErrorType.Timeout,
+    )
+    assert.strictEqual(categorizeFetchError({ type: 'body-timeout' }).type, FetchErrorType.Timeout)
+  })
+
   test('unknown errors fall back to a generic message', () => {
     // No code and no status — most likely an internal error, not a connectivity issue.
     assert.strictEqual(categorizeFetchError(new Error('boom')).type, FetchErrorType.Unknown)

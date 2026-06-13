@@ -33,6 +33,7 @@ export enum FetchErrorType {
   Unauthorized = 'UNAUTHORIZED',
   RateLimited = 'RATE_LIMITED',
   ServerError = 'SERVER_ERROR',
+  Timeout = 'TIMEOUT',
   Network = 'NETWORK',
   Unknown = 'UNKNOWN',
 }
@@ -554,6 +555,14 @@ const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
 export const categorizeFetchError = (e: unknown): FetchError => {
   const code = getStringProp(e, 'code')
   const statusCode = getNumberProp(e, 'statusCode') ?? parseHttpStatusFromCode(code)
+
+  // npm-registry-fetch (via minipass-fetch) marks timeouts with a type rather
+  // than a status or transport code, so check it first — a timeout is more
+  // specific than the generic network failure below.
+  const errorType = getStringProp(e, 'type')
+  if (errorType === 'request-timeout' || errorType === 'body-timeout') {
+    return { type: FetchErrorType.Timeout, message: 'Registry request timed out' }
+  }
 
   // We got an HTTP response, so the registry answered — categorize by status.
   if (statusCode !== undefined) {
