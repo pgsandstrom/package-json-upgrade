@@ -515,7 +515,13 @@ const fetchNpmData = (dependencyName: string, packageJsonPath: string) => {
     return npmCache[dependencyName].promise
   }
 
-  const conf = { ...getNpmConfig(packageJsonPath), spec: dependencyName }
+  const conf = {
+    ...getNpmConfig(packageJsonPath),
+    spec: dependencyName,
+    // TODO could it be worth it to have a random timeout if there are many timeouts?
+    timeout: 10_000,
+    fetchRetries: 1,
+  }
   const promise = npmRegistryFetch.json(dependencyName, conf) as unknown as Promise<NpmData>
 
   const startTime = new Date().getTime()
