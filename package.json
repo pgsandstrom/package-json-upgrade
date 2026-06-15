@@ -174,5 +174,9 @@
     "typescript-eslint": "8.60.0",
     "webpack": "5.107.2",
     "webpack-cli": "7.0.3"
+  },
+  "//": "override needed due to this: https://github.com/pgsandstrom/package-json-upgrade/issues/59",
+  "overrides": {
+    "@npmcli/agent": "2.0.0"
   }
 }
