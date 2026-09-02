@@ -4,6 +4,8 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 
 ## Unreleased changes
 
+- Show updates directly in the "catalog" and "catalogs" sections of pnpm-workspace.yaml, including quick fixes and the update all command
+
 ## 3.7.0
 
 - Add config for minimumReleaseAge/minimumReleaseAgeExclude, mirroring the pnpm setting

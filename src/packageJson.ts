@@ -16,18 +16,6 @@ export interface Dependency {
   isCatalog?: boolean
 }
 
-export const getDependencyFromLine = (
-  jsonAsString: string,
-  line: number,
-  packageJsonPath?: string,
-) => {
-  const dependencies = getDependencyInformation(jsonAsString, packageJsonPath)
-    .map((d) => d.deps)
-    .flat()
-
-  return dependencies.find((d) => d.line === line)
-}
-
 export const getDependencyInformation = (
   jsonAsString: string,
   packageJsonPath?: string,

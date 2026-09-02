@@ -1,7 +1,7 @@
 {
   "name": "package-json-upgrade",
   "displayName": "Package Json Upgrade",
-  "description": "Shows available updates in package.json files. Offers quick fix command to update them and to show the changelog.",
+  "description": "Shows available updates in package.json and pnpm-workspace.yaml files. Offers quick fix command to update them and to show the changelog.",
   "version": "3.7.0",
   "publisher": "codeandstuff",
   "license": "MIT",
@@ -15,7 +15,10 @@
   ],
   "keywords": [
     "npm",
+    "pnpm",
     "package.json",
+    "pnpm-workspace.yaml",
+    "catalog",
     "dependencies",
     "upgrade",
     "update"
@@ -26,7 +29,8 @@
   },
   "activationEvents": [
     "onLanguage:json",
-    "onLanguage:jsonc"
+    "onLanguage:jsonc",
+    "onLanguage:yaml"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -37,7 +41,7 @@
         "package-json-upgrade.showUpdatesAtStart": {
           "type": "boolean",
           "default": true,
-          "description": "Available updates will be shown directly when a package.json is opened. Otherwise, this must be toggled with a command."
+          "description": "Available updates will be shown directly when a package.json or pnpm-workspace.yaml is opened. Otherwise, this must be toggled with a command."
         },
         "package-json-upgrade.showOverviewRulerColor": {
           "type": "boolean",
@@ -92,7 +96,7 @@
         "package-json-upgrade.dependencyGroups": {
           "type": "string",
           "default": "dependencies, devDependencies, catalog, catalogs, workspaces.catalog, workspaces.catalogs",
-          "description": "Comma-separated list of dependency groups to check for updates. Default includes common dependency groups and catalog groups. Add 'peerDependencies', 'optionalDependencies', etc. as needed."
+          "description": "Comma-separated list of dependency groups to check for updates. Default includes common dependency groups and catalog groups. Add 'peerDependencies', 'optionalDependencies', etc. as needed. The same groups are used for pnpm-workspace.yaml, where 'catalog' and 'catalogs' are the relevant ones."
         },
         "package-json-upgrade.minimumReleaseAge": {
           "type": "number",
@@ -109,11 +113,11 @@
     "commands": [
       {
         "command": "package-json-upgrade.toggle-show",
-        "title": "Toggle showing package.json available updates"
+        "title": "Toggle showing available updates in package.json and pnpm-workspace.yaml"
       },
       {
         "command": "package-json-upgrade.update-all",
-        "title": "Update all dependencies in the current package.json file"
+        "title": "Update all dependencies in the current package.json or pnpm-workspace.yaml file"
       }
     ]
   },

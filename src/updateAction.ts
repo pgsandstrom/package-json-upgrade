@@ -1,9 +1,9 @@
 import * as vscode from 'vscode'
 
 import { getChangelogUrl } from './changelog'
+import { getDependencyFromDocumentLine, isDependencyFile } from './dependencyFile'
 import { OPEN_URL_COMMAND } from './extension'
 import { getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
-import { getDependencyFromLine, isPackageJson } from './packageJson'
 import { replaceLastOccuranceOf } from './util/util'
 
 export class UpdateAction implements vscode.CodeActionProvider {
@@ -13,7 +13,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
     document: vscode.TextDocument,
     range: vscode.Range,
   ): vscode.CodeAction[] | undefined {
-    if (isPackageJson(document) === false) {
+    if (isDependencyFile(document) === false) {
       return
     }
 
@@ -21,7 +21,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
       return
     }
 
-    const dep = getDependencyFromLine(document.getText(), range.start.line, document.uri.fsPath)
+    const dep = getDependencyFromDocumentLine(document, range.start.line)
     // Skip quick-fix upgrades for missing/catalog dependencies
     if (dep === undefined || dep.isCatalog === true) {
       return

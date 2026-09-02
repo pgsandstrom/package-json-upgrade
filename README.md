@@ -1,6 +1,6 @@
 # package-json-upgrade
 
-Shows available updates in package.json. Offers quick actions to guide you in your updating.
+Shows available updates in package.json and pnpm-workspace.yaml. Offers quick actions to guide you in your updating.
 
 ## Preview
 
@@ -34,9 +34,9 @@ It is also possible to add ranges for versions that you wish to ignore. Lets say
 },
 ```
 
-A config is available to control if the updates should always be shown when a package.json is opened, or if they should only be shown after triggering a command called "Toggle showing package.json available updates". This can be useful if you find that this extension is in the way when you are doing other work in your package.json file.
+A config is available to control if the updates should always be shown when a package.json is opened, or if they should only be shown after triggering a command called "Toggle showing available updates in package.json and pnpm-workspace.yaml". This can be useful if you find that this extension is in the way when you are doing other work in your package.json file.
 
-As a default only "dependencies" and "devDependencies" is checked, but this is fully configurable.
+As a default "dependencies", "devDependencies" and the catalog groups are checked, but this is fully configurable.
 
 Several more configurations exists. Check out your vscode settings for the complete list. Here is an example with customized colors and text:
 

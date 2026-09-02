@@ -3,9 +3,10 @@ import { TextEditorDecorationType } from 'vscode'
 
 import { getConfig } from './config'
 import { decorateDiscreet, getDecoratorForUpdate, getUpdateDescription } from './decorations'
+import { getDependencyGroups, isDependencyFile, refreshDependencyFileData } from './dependencyFile'
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
-import { getCachedNpmData, getPossibleUpgrades, refreshPackageJsonData } from './npm'
-import { DependencyGroups, getDependencyInformation, isPackageJson } from './packageJson'
+import { getCachedNpmData, getPossibleUpgrades } from './npm'
+import { DependencyGroups } from './packageJson'
 import { AsyncState } from './types'
 
 interface DecorationWrapper {
@@ -30,7 +31,7 @@ export const handleFileDecoration = (document: vscode.TextDocument) => {
     return
   }
 
-  if (!isPackageJson(document)) {
+  if (!isDependencyFile(document)) {
     return
   }
 
@@ -41,15 +42,14 @@ export const handleFileDecoration = (document: vscode.TextDocument) => {
 }
 
 const loadDecoration = async (document: vscode.TextDocument, startTime: number) => {
-  const text = document.getText()
-  const dependencyGroups = getDependencyInformation(text, document.uri.fsPath)
+  const dependencyGroups = getDependencyGroups(document)
 
   const textEditor = getTextEditorFromDocument(document)
   if (textEditor === undefined) {
     return
   }
 
-  const promises = refreshPackageJsonData(document.getText(), document.uri.fsPath)
+  const promises = refreshDependencyFileData(document)
 
   try {
     await Promise.race([...promises, Promise.resolve()])

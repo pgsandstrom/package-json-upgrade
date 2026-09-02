@@ -16,7 +16,9 @@ import { retrieveAndCacheChangelog } from './changelog'
 import { getConfig } from './config'
 import { logError } from './log'
 import { getNpmConfig } from './npmConfig'
+import { getWorkspaceFileDependencyInformation } from './pnpmWorkspaceFile'
 import { AsyncState, Dict, StrictDict } from './types'
+import { isRecord } from './util/util'
 import { resolveCatalogVersion } from './workspace'
 
 export interface NpmLoader<T> {
@@ -408,8 +410,6 @@ export const refreshPackageJsonData = (
   packageJsonString: string,
   packageJsonFilePath: string,
 ): Promise<void>[] => {
-  const cacheCutoff = new Date(new Date().getTime() - 1000 * 60 * 120) // 120 minutes
-
   try {
     const json = JSON.parse(packageJsonString) as Record<string, unknown>
     const groups = getConfig().dependencyGroups
@@ -418,34 +418,64 @@ export const refreshPackageJsonData = (
       Object.assign(dependencies, collectGroupDependencies(getValueAtPath(json, group)))
     }
 
-    const promises = Object.entries(dependencies)
-      .map(([dependencyName, version]) => {
-        if (version.startsWith('catalog:')) {
-          const resolved = resolveCatalogVersion(version, dependencyName, packageJsonFilePath)
-          return [dependencyName, resolved?.version ?? version] as const
-        }
-        return [dependencyName, version] as const
-      })
-      .filter(([_dependencyName, version]) => isRegistryVersion(version))
-      .map(([dependencyName, _version]) => {
-        const cache = npmCache[dependencyName]
-        if (
-          cache === undefined ||
-          cache.asyncstate === AsyncState.NotStarted ||
-          (cache.item !== undefined && cache.item.date.getTime() < cacheCutoff.getTime())
-        ) {
-          return fetchNpmData(dependencyName, packageJsonFilePath)
-        } else {
-          return npmCache[dependencyName]?.promise
-        }
-      })
-      .filter((p): p is Promise<void> => p !== undefined)
-
-    return promises
+    return refreshDependencies(Object.entries(dependencies), packageJsonFilePath)
   } catch (_) {
     console.warn(`Failed to parse package.json: ${packageJsonFilePath}`)
     return [Promise.resolve()]
   }
+}
+
+export const refreshWorkspaceFileData = (
+  workspaceFileString: string,
+  workspaceFilePath: string,
+): Promise<void>[] => {
+  // We deliberately fetch exactly the dependencies we are able to decorate, so
+  // that the two can never drift apart.
+  const dependencies = getWorkspaceFileDependencyInformation(workspaceFileString)
+    .map((group) => group.deps)
+    .flat()
+    .map((dep) => [dep.dependencyName, dep.currentVersion] as const)
+
+  return refreshDependencies(dependencies, workspaceFilePath)
+}
+
+const refreshDependencies = (
+  dependencies: readonly (readonly [string, string])[],
+  filePath: string,
+): Promise<void>[] => {
+  const cacheCutoff = new Date(new Date().getTime() - 1000 * 60 * 120) // 120 minutes
+  const fetchedDependencies = new Set<string>()
+
+  return dependencies
+    .map(([dependencyName, version]) => {
+      if (version.startsWith('catalog:')) {
+        const resolved = resolveCatalogVersion(version, dependencyName, filePath)
+        return [dependencyName, resolved?.version ?? version] as const
+      }
+      return [dependencyName, version] as const
+    })
+    .filter(([_dependencyName, version]) => isRegistryVersion(version))
+    .filter(([dependencyName, _version]) => {
+      // The cache is keyed by name only, so one fetch covers every occurrence.
+      if (fetchedDependencies.has(dependencyName)) {
+        return false
+      }
+      fetchedDependencies.add(dependencyName)
+      return true
+    })
+    .map(([dependencyName, _version]) => {
+      const cache = npmCache[dependencyName]
+      if (
+        cache === undefined ||
+        cache.asyncstate === AsyncState.NotStarted ||
+        (cache.item !== undefined && cache.item.date.getTime() < cacheCutoff.getTime())
+      ) {
+        return fetchNpmData(dependencyName, filePath)
+      } else {
+        return npmCache[dependencyName]?.promise
+      }
+    })
+    .filter((p): p is Promise<void> => p !== undefined)
 }
 
 const getValueAtPath = (json: Record<string, unknown>, path: string): unknown => {
@@ -456,7 +486,7 @@ const getValueAtPath = (json: Record<string, unknown>, path: string): unknown =>
 
   let current: unknown = json
   for (const segment of segments) {
-    if (!isObjectRecord(current)) {
+    if (!isRecord(current)) {
       return undefined
     }
     current = current[segment]
@@ -467,7 +497,7 @@ const getValueAtPath = (json: Record<string, unknown>, path: string): unknown =>
 
 const collectGroupDependencies = (groupValue: unknown): StrictDict<string, string> => {
   const dependencies: StrictDict<string, string> = {}
-  if (!isObjectRecord(groupValue)) {
+  if (!isRecord(groupValue)) {
     return dependencies
   }
 
@@ -478,7 +508,7 @@ const collectGroupDependencies = (groupValue: unknown): StrictDict<string, strin
     }
 
     // catalogs are objects containing named dependency maps.
-    if (!isObjectRecord(versionOrCatalog)) {
+    if (!isRecord(versionOrCatalog)) {
       continue
     }
 
@@ -490,10 +520,6 @@ const collectGroupDependencies = (groupValue: unknown): StrictDict<string, strin
   }
 
   return dependencies
-}
-
-const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
-  return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
 const getNumberProp = (e: unknown, prop: string): number | undefined => {

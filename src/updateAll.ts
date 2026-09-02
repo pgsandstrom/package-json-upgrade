@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
 
+import { getDependencyGroups, isDependencyFile } from './dependencyFile'
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getExactVersion, getLatestVersion } from './npm'
-import { getDependencyInformation, isPackageJson } from './packageJson'
 import { replaceLastOccuranceOf } from './util/util'
 
 export interface UpdateEdit {
@@ -17,10 +17,10 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
 
   const document = textEditor.document
 
-  if (isPackageJson(document)) {
+  if (isDependencyFile(document)) {
     const ignorePatterns = getIgnorePattern()
 
-    const dependencies = getDependencyInformation(document.getText(), document.uri.fsPath)
+    const dependencies = getDependencyGroups(document)
       .map((d) => d.deps)
       .flat()
     const edits: UpdateEdit[] = dependencies
@@ -72,7 +72,7 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
     return edits
   } else {
     void vscode.window.showWarningMessage(
-      'Update failed: File not recognized as valid package.json',
+      'Update failed: File not recognized as valid package.json or pnpm-workspace.yaml',
     )
     return []
   }

@@ -16,6 +16,13 @@ export function objectEntries<K extends string | number | symbol, V>(
   return entries as Array<[K, V]>
 }
 
+/**
+ * True for plain objects/maps.
+ */
+export const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
 export const replaceLastOccuranceOf = (s: string, replace: string, replaceWith: string) => {
   const indexOfReplace = s.lastIndexOf(replace)
   if (indexOfReplace !== -1) {

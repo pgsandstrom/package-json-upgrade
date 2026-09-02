@@ -2,6 +2,8 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 
+import { isRecord } from './util/util'
+
 interface CatalogCache {
   catalog: WorkspaceCatalog
   mtime: number
@@ -140,8 +142,4 @@ const parseWorkspaceCatalogs = (content: string): WorkspaceCatalog => {
   }
 
   return { default: catalog, named }
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return value != null && typeof value === 'object' && !Array.isArray(value)
 }
