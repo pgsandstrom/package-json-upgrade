@@ -81,14 +81,15 @@ describe('workspace', () => {
     assert.strictEqual(result, undefined)
   })
 
-  test('should support pnpm-workspace.yml extension', () => {
-    // ws-yml only contains a pnpm-workspace.yml (no .yaml) so this exercises the .yml fallback
+  test('should ignore a pnpm-workspace.yml, which pnpm does not read', () => {
+    // ws-yml only contains a pnpm-workspace.yml, and its catalog does have react. Ignoring that
+    // file means the search walks on up to testdata/pnpm-workspace.yaml, which has no catalog.
     const result = resolveCatalogVersion(
       'catalog:',
       'react',
       path.join(testdataDir, 'ws-yml', 'packages', 'consumer', 'package.json'),
     )
-    assert.deepStrictEqual(result, { version: '^19.2.5', isCatalog: true })
+    assert.strictEqual(result, undefined)
   })
 
   test('should gracefully handle invalid yaml', () => {

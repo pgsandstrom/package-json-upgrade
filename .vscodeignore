@@ -6,6 +6,7 @@ src/**
 
 .env.local
 .gitignore
+ACTIONS.md
 .vscode-test.mjs
 prettier.config.js
 release-helper.js

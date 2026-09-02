@@ -302,9 +302,12 @@ overrides:
 
     test('should recognize pnpm workspace files', () => {
       assert.strictEqual(check('/home/user/project/pnpm-workspace.yaml'), true)
-      assert.strictEqual(check('/home/user/project/pnpm-workspace.yml'), true)
       assert.strictEqual(check('C:\\work\\project\\pnpm-workspace.yaml'), true)
-      assert.strictEqual(check('C:\\work\\project\\pnpm-workspace.yml'), true)
+    })
+
+    test('should not recognize pnpm-workspace.yml, which pnpm does not read', () => {
+      assert.strictEqual(check('/home/user/project/pnpm-workspace.yml'), false)
+      assert.strictEqual(check('C:\\work\\project\\pnpm-workspace.yml'), false)
     })
 
     test('should not recognize other files', () => {

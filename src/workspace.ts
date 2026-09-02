@@ -77,11 +77,9 @@ const findPnpmWorkspaceRoot = (packageJsonPath: string): string | undefined => {
 }
 
 const findWorkspaceFile = (workspaceRoot: string): string | undefined => {
-  for (const ext of ['.yaml', '.yml']) {
-    const filePath = path.join(workspaceRoot, `pnpm-workspace${ext}`)
-    if (fs.existsSync(filePath)) {
-      return filePath
-    }
+  const filePath = path.join(workspaceRoot, 'pnpm-workspace.yaml')
+  if (fs.existsSync(filePath)) {
+    return filePath
   }
   return undefined
 }

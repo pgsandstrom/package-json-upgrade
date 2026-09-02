@@ -7,9 +7,9 @@ import { isRecord } from './util/util'
 
 export const isPnpmWorkspaceFile = (document: vscode.TextDocument) => {
   // Is checking both slashes necessary? Test on linux and mac.
-  return ['pnpm-workspace.yaml', 'pnpm-workspace.yml'].some(
-    (fileName) =>
-      document.fileName.endsWith(`\\${fileName}`) || document.fileName.endsWith(`/${fileName}`),
+  return (
+    document.fileName.endsWith('\\pnpm-workspace.yaml') ||
+    document.fileName.endsWith('/pnpm-workspace.yaml')
   )
 }
 
