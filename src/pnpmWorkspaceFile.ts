@@ -84,6 +84,42 @@ const addDependency = (
   deps.push({ dependencyName, currentVersion, line })
 }
 
+/**
+ * Replaces the version of a `key: value` line with a new version.
+ *
+ * In package.json the value is the last thing on the line, so replacing the last
+ * occurrence is safe. Yaml lines may end in a comment, and that comment may well
+ * repeat the version:
+ *
+ *     react: ^19.2.5 # see https://github.com/facebook/react/releases/tag/v19.2.5
+ *
+ * so we anchor on the first occurrence after the `key:` separator instead.
+ */
+export const replaceVersionInWorkspaceLine = (
+  lineText: string,
+  currentVersion: string,
+  newVersion: string,
+): string => {
+  const match = KEY_REGEX.exec(lineText)
+  if (match === null) {
+    // Not a `key: value` line, so we have no idea where the value is. Leave it alone.
+    return lineText
+  }
+
+  // Everything the regex matched is the indentation, the key and the colon.
+  const valueStart = match[0].length
+  const indexOfVersion = lineText.indexOf(currentVersion, valueStart)
+  if (indexOfVersion === -1) {
+    return lineText
+  }
+
+  return (
+    lineText.substring(0, indexOfVersion) +
+    newVersion +
+    lineText.substring(indexOfVersion + currentVersion.length)
+  )
+}
+
 const toPath = (group: string): string[] => {
   return group
     .split('.')

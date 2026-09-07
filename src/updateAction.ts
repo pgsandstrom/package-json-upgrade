@@ -1,10 +1,13 @@
 import * as vscode from 'vscode'
 
 import { getChangelogUrl } from './changelog'
-import { getDependencyFromDocumentLine, isDependencyFile } from './dependencyFile'
+import {
+  getDependencyFromDocumentLine,
+  getUpdatedLineText,
+  isDependencyFile,
+} from './dependencyFile'
 import { OPEN_URL_COMMAND } from './extension'
 import { getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
-import { replaceLastOccuranceOf } from './util/util'
 
 export class UpdateAction implements vscode.CodeActionProvider {
   public static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix]
@@ -109,7 +112,7 @@ export class UpdateAction implements vscode.CodeActionProvider {
   ): vscode.CodeAction {
     const lineText = document.lineAt(range.start.line).text
     const currentVersion = getExactVersion(rawCurrentVersion)
-    const newLineText = replaceLastOccuranceOf(lineText, currentVersion, newVersion)
+    const newLineText = getUpdatedLineText(document, lineText, currentVersion, newVersion)
 
     const fix = new vscode.CodeAction(
       `Do ${type} upgrade to ${newVersion}`,

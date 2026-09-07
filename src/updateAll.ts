@@ -1,9 +1,8 @@
 import * as vscode from 'vscode'
 
-import { getDependencyGroups, isDependencyFile } from './dependencyFile'
+import { getDependencyGroups, getUpdatedLineText, isDependencyFile } from './dependencyFile'
 import { getIgnorePattern, isDependencyIgnored } from './ignorePattern'
 import { getCachedNpmData, getExactVersion, getLatestVersion } from './npm'
-import { replaceLastOccuranceOf } from './util/util'
 
 export interface UpdateEdit {
   range: vscode.Range
@@ -52,7 +51,8 @@ export const updateAll = (textEditor?: vscode.TextEditor): UpdateEdit[] => {
         }
 
         const currentExactVersion = getExactVersion(dep.currentVersion)
-        const newLineText = replaceLastOccuranceOf(
+        const newLineText = getUpdatedLineText(
+          document,
           lineText,
           currentExactVersion,
           latestVersion.version,

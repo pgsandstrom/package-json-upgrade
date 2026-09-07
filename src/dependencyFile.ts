@@ -7,7 +7,12 @@ import {
   getDependencyInformation,
   isPackageJson,
 } from './packageJson'
-import { getWorkspaceFileDependencyInformation, isPnpmWorkspaceFile } from './pnpmWorkspaceFile'
+import {
+  getWorkspaceFileDependencyInformation,
+  isPnpmWorkspaceFile,
+  replaceVersionInWorkspaceLine,
+} from './pnpmWorkspaceFile'
+import { replaceLastOccuranceOf } from './util/util'
 
 /**
  * The file types we show updates in: package.json and pnpm-workspace.yaml.
@@ -34,6 +39,25 @@ export const getDependencyFromDocumentLine = (
     .map((group) => group.deps)
     .flat()
     .find((dep) => dep.line === line)
+}
+
+/**
+ * Rewrites a dependency line so that it holds the new version. Where the version
+ * sits on the line differs between the file types, so each has its own replace.
+ */
+export const getUpdatedLineText = (
+  document: vscode.TextDocument,
+  lineText: string,
+  currentVersion: string,
+  newVersion: string,
+): string => {
+  if (isPackageJson(document)) {
+    return replaceLastOccuranceOf(lineText, currentVersion, newVersion)
+  } else if (isPnpmWorkspaceFile(document)) {
+    return replaceVersionInWorkspaceLine(lineText, currentVersion, newVersion)
+  } else {
+    return lineText
+  }
 }
 
 export const refreshDependencyFileData = (document: vscode.TextDocument): Promise<void>[] => {

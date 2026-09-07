@@ -26,6 +26,14 @@ catalog:
 ${workspaceFileDependencyLine}
 `
 
+// The comment repeats the current version, so replacing the last occurrence on the
+// line would mangle the comment and leave the version alone.
+const commentedWorkspaceFileDependencyLine = `  '@emotion/babel-plugin': ^11.0.0-next.12 # pinned to 11.0.0-next.12`
+
+const commentedWorkspaceFileTestContent = `catalog:
+${commentedWorkspaceFileDependencyLine}
+`
+
 const createConfig = (dependencyGroups: string[]): Config => {
   return {
     showUpdatesAtStart: true,
@@ -134,6 +142,31 @@ suite('UpdateAll Test Suite', () => {
           { line: 4, character: workspaceFileDependencyLine.length },
         ],
         text: `  '@emotion/babel-plugin': ^11.0.0-next.17`,
+      },
+    ]
+
+    setCachedNpmData(createNpmCache())
+
+    const result = updateAll(textDocument)
+
+    assert.deepStrictEqual(JSON.stringify(result), JSON.stringify(expected))
+  })
+
+  test('When the pnpm-workspace.yaml line ends in a comment repeating the version', async function () {
+    setConfig(createConfig(['dependencies', 'devDependencies', 'catalog', 'catalogs']))
+
+    const uri = vscode.Uri.parse(`./tmp/commented/pnpm-workspace.yaml`)
+    await vscode.workspace.fs.writeFile(uri, Buffer.from(commentedWorkspaceFileTestContent))
+    const workspaceFileTest = await vscode.workspace.openTextDocument(uri)
+    const textDocument = await vscode.window.showTextDocument(workspaceFileTest)
+
+    const expected = [
+      {
+        range: [
+          { line: 1, character: 0 },
+          { line: 1, character: commentedWorkspaceFileDependencyLine.length },
+        ],
+        text: `  '@emotion/babel-plugin': ^11.0.0-next.17 # pinned to 11.0.0-next.12`,
       },
     ]
 

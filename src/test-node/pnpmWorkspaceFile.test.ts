@@ -5,7 +5,11 @@ import { readFileSync } from 'fs'
 
 import { Config, getConfig, setConfig } from '../config'
 import { Dependency } from '../packageJson'
-import { getWorkspaceFileDependencyInformation, isPnpmWorkspaceFile } from '../pnpmWorkspaceFile'
+import {
+  getWorkspaceFileDependencyInformation,
+  isPnpmWorkspaceFile,
+  replaceVersionInWorkspaceLine,
+} from '../pnpmWorkspaceFile'
 
 const setDependencyGroups = (dependencyGroups: string[]) => {
   const config: Config = {
@@ -161,7 +165,7 @@ catalogs:
     const yamlAsString = `# our dependencies
 catalog:
   # the ui stuff
-  react: ^19.2.5 # pinned on purpose
+  react: ^19.2.5 # pinned to 19.2.5 on purpose
 
   lodash: 4.17.21
 `
@@ -293,6 +297,62 @@ overrides:
     const groupsBefore = [...getConfig().dependencyGroups]
     getWorkspaceFileDependencyInformation(fullWorkspaceFile)
     assert.deepStrictEqual(getConfig().dependencyGroups, groupsBefore)
+  })
+
+  describe('replaceVersionInWorkspaceLine', () => {
+    test('should replace the version of a plain line', () => {
+      assert.strictEqual(
+        replaceVersionInWorkspaceLine('  react: ^19.2.5', '19.2.5', '19.3.0'),
+        '  react: ^19.3.0',
+      )
+    })
+
+    test('should replace the version and not a trailing comment repeating it', () => {
+      assert.strictEqual(
+        replaceVersionInWorkspaceLine(
+          '  react: ^19.2.5 # see https://github.com/facebook/react/releases/tag/v19.2.5',
+          '19.2.5',
+          '19.3.0',
+        ),
+        '  react: ^19.3.0 # see https://github.com/facebook/react/releases/tag/v19.2.5',
+      )
+      assert.strictEqual(
+        replaceVersionInWorkspaceLine(
+          '  lodash: 4.17.21 # pinned to 4.17.21 until we drop node 14',
+          '4.17.21',
+          '4.18.0',
+        ),
+        '  lodash: 4.18.0 # pinned to 4.17.21 until we drop node 14',
+      )
+    })
+
+    test('should replace the version of a quoted key and a quoted version', () => {
+      assert.strictEqual(
+        replaceVersionInWorkspaceLine(`  '@types/node': "^22.0.0" # 22.0.0`, '22.0.0', '23.1.0'),
+        `  '@types/node': "^23.1.0" # 22.0.0`,
+      )
+    })
+
+    test('should not be confused by a key that contains the version', () => {
+      assert.strictEqual(
+        replaceVersionInWorkspaceLine('  react-19.2.5: ^19.2.5', '19.2.5', '19.3.0'),
+        '  react-19.2.5: ^19.3.0',
+      )
+    })
+
+    test('should leave the line alone when the version is not in the value', () => {
+      assert.strictEqual(
+        replaceVersionInWorkspaceLine('  react: ^19.2.5', '1.0.0', '2.0.0'),
+        '  react: ^19.2.5',
+      )
+    })
+
+    test('should leave a line that is not a key line alone', () => {
+      assert.strictEqual(
+        replaceVersionInWorkspaceLine('  - react@19.2.5', '19.2.5', '19.3.0'),
+        '  - react@19.2.5',
+      )
+    })
   })
 
   describe('isPnpmWorkspaceFile', () => {

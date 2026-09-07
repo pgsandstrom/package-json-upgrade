@@ -8,11 +8,11 @@ Line references are as of `cba152b`.
 
 ---
 
-## 1. Trailing YAML comments can be corrupted instead of the version
+## 1. Trailing YAML comments can be corrupted instead of the version — DONE
 
 **Where:** `src/updateAll.ts:55`, `src/updateAction.ts:112`, helper in `src/util/util.ts:26`
 
-Both the update-all command and the quick fix rewrite the whole line with
+Both the update-all command and the quick fix rewrote the whole line with
 `replaceLastOccuranceOf(lineText, currentExactVersion, newVersion)`. "Last occurrence" was safe for
 JSON, where the value is the last thing on the line. In YAML, comments come after the value:
 
@@ -21,19 +21,28 @@ catalog:
   react: ^19.2.5 # see https://github.com/facebook/react/releases/tag/v19.2.5
 ```
 
-`lastIndexOf('19.2.5')` matches inside the URL, so the version is left untouched and the comment is
+`lastIndexOf('19.2.5')` matched inside the URL, so the version was left untouched and the comment
 silently mangled. Same shape for `lodash: 4.17.21 # pinned to 4.17.21 until X`.
 
-**Fix:** we already know the key path and the line, so anchor the replacement to the first occurrence
-_after_ the `key:` separator rather than to the last occurrence in the line. Keep
-`replaceLastOccuranceOf` for the package.json path, or give the YAML path its own replace helper.
+Resolved by giving the YAML path its own replace helper, anchored on the first occurrence _after_ the
+`key:` separator. It reuses `KEY_REGEX` — the same regex `getKeyLines` uses to find the dependency
+lines in the first place — so the two can only agree on where the key ends. A line the regex does not
+match, or a version that is not in the value, is returned untouched: doing nothing is the right
+failure mode when the alternative is corrupting the line.
 
-**Test gap:** the fixture at `src/test-node/pnpmWorkspaceFile.test.ts` already has a trailing comment
-(`react: ^19.2.5 # pinned on purpose`) but it does not repeat the version, so nothing catches this.
-Add a case where the comment contains the current version.
+Changed:
 
-- [ ] Fix the replacement anchor
-- [ ] Add a regression test with a version-repeating trailing comment
+- `replaceVersionInWorkspaceLine` added to `pnpmWorkspaceFile.ts`
+- `getUpdatedLineText(document, ...)` in `dependencyFile.ts` picks the replace for the file type,
+  alongside the other per-file-type dispatches; `updateAll.ts` and `updateAction.ts` call it and no
+  longer import `replaceLastOccuranceOf`
+- `replaceLastOccuranceOf` stays in `util.ts`, now used only for package.json
+- unit tests for the helper in `pnpmWorkspaceFile.test.ts`, plus an end-to-end `updateAll` case in
+  `test-vscode/updateAll.test.ts` whose comment repeats the version
+- the trailing comment in the existing parse fixture now repeats the version too
+
+- [x] Fix the replacement anchor
+- [x] Add a regression test with a version-repeating trailing comment
 
 ---
 
