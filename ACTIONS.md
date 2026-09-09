@@ -5,8 +5,8 @@ Follow-ups from a read-through of the pnpm-workspace.yaml support as it stands o
 manual verification in its item 5 — that check is item 1 here, and reading the code says it would
 have failed.
 
-Item 1 is the only one a user would notice. The rest are comments that no longer describe the code,
-and a cache that is never cleared.
+Item 1 is the only one a user would notice, and the only one that should block a release. Item 3 is
+done. The rest are comments that no longer describe the code.
 
 Line references are as of `efa5b3b`.
 
@@ -80,28 +80,46 @@ declines to act, or drop the sentence — but do not leave it claiming a consist
 
 ---
 
-## 3. `clearWorkspaceCache` is never called outside tests
+## 3. `clearWorkspaceCache` is never called outside tests — DONE
 
 **Where:** `src/workspace.ts:56`, `workspaceRootCache` at `:19`
 
 `catalogCache` is keyed on the workspace file's mtime, so edits to a `pnpm-workspace.yaml` are picked
-up on their own. `workspaceRootCache` has no such check, and it caches negatives: `:76` stores
-`undefined` for a package.json that had no workspace root above it, and `:63` deliberately treats a
-stored `undefined` as a hit.
+up on their own. `workspaceRootCache` had no such check, and it cached negatives: it stored
+`undefined` for a package.json that had no workspace root above it, and deliberately treated a stored
+`undefined` as a hit.
 
 So a package.json opened before its `pnpm-workspace.yaml` exists — a fresh `pnpm init -w`, a branch
-switch that adds one, a newly cloned sibling — keeps resolving `catalog:` to nothing for the rest of
-the session. Nothing short of a window reload clears it.
+switch that adds one, a newly cloned sibling — kept resolving `catalog:` to nothing for the rest of
+the session. Nothing short of a window reload cleared it.
 
-Two options, and the second is probably enough:
+**Resolved by not caching the miss.** The alternative was to call `clearWorkspaceCache()` from the
+`onConfigChange` handler, but that only helps a user who thinks to change a setting in response to
+decorations that are silently absent — it is a way out, not a fix.
 
-- Call `clearWorkspaceCache()` from the `onConfigChange` handler next to `cleanNpmCache()`
-  (`src/extension.ts:36`). Gives the user a way out, but only if they think to change a setting.
-- Stop caching the negative. The walk up the tree is a handful of `existsSync` calls, and it only
-  runs for versions that actually start with `catalog:`. Caching the misses buys very little and is
-  the entire cause of the staleness.
+Dropping the negative costs very little. We only reach `findPnpmWorkspaceRoot` for a version that
+starts with `catalog:`, and a file using catalogs almost always does have a workspace root above it,
+so the hit path still caches on first lookup. The miss is the rare case, and it is a handful of
+`existsSync` calls up the directory tree.
 
-- [ ] Decide which, and stop a missing workspace file from being cached forever
+That also lets `workspaceRootCache` drop to `Map<string, string>`, which removes the `undefined`
+that was doing double duty as both "no root here" and "not looked up yet" — the reason the old lookup
+needed a `.get()` and a `.has()` to tell them apart.
+
+Changed:
+
+- `findPnpmWorkspaceRoot` caches only found roots; the doc comment says why misses are not cached
+- `workspaceRootCache` is `Map<string, string>`
+- `should pick up a pnpm-workspace.yaml created after the first lookup` in `workspace.test.ts`, which
+  resolves in a temp dir before and after writing the workspace file. It asserts on a dependency
+  rather than on the root, so it holds even if an ancestor of the temp dir happens to have a
+  `pnpm-workspace.yaml`. Verified to fail against the old negative-caching version.
+
+`clearWorkspaceCache` still exists and is still test-only. That is fine now: with misses uncached,
+the only stale state left is a root that was found and later deleted, and `getWorkspaceCatalog`
+re-checks the file on every call and returns an empty catalog when it is gone.
+
+- [x] Decide which, and stop a missing workspace file from being cached forever
 
 ---
 

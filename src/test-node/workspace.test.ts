@@ -1,6 +1,8 @@
 import { before, describe, test } from 'node:test'
 
 import * as assert from 'assert'
+import * as fs from 'fs'
+import * as os from 'os'
 import * as path from 'path'
 
 import { clearWorkspaceCache, resolveCatalogVersion } from '../workspace'
@@ -100,6 +102,30 @@ describe('workspace', () => {
       path.join(testdataDir, 'ws-yml', 'packages', 'consumer', 'package.json'),
     )
     assert.strictEqual(result, undefined)
+  })
+
+  test('should pick up a pnpm-workspace.yaml created after the first lookup', () => {
+    // We cache the workspace roots we find, but never the ones we do not. Caching a
+    // miss would mean a package.json opened before its workspace file exists keeps
+    // resolving catalog: to nothing until the window is reloaded.
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'package-json-upgrade-'))
+    const packageJsonPath = path.join(dir, 'packages', 'consumer', 'package.json')
+
+    try {
+      // No workspace file yet. Asserting on a dependency rather than on the root
+      // itself keeps this true even if some ancestor of the temp dir has one.
+      assert.strictEqual(resolveCatalogVersion('catalog:', 'react', packageJsonPath), undefined)
+
+      fs.writeFileSync(path.join(dir, 'pnpm-workspace.yaml'), 'catalog:\n  react: ^19.2.5\n')
+
+      assert.deepStrictEqual(resolveCatalogVersion('catalog:', 'react', packageJsonPath), {
+        version: '^19.2.5',
+        isCatalog: true,
+      })
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+      clearWorkspaceCache()
+    }
   })
 
   test('should gracefully handle invalid yaml', () => {

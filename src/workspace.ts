@@ -16,7 +16,7 @@ interface WorkspaceCatalog {
 }
 
 const catalogCache = new Map<string, CatalogCache>()
-const workspaceRootCache = new Map<string, string | undefined>()
+const workspaceRootCache = new Map<string, string>()
 
 export interface CatalogVersionResolution {
   version: string
@@ -58,9 +58,12 @@ export const clearWorkspaceCache = () => {
   workspaceRootCache.clear()
 }
 
+/**
+ * Walks up from a package.json looking for the pnpm workspace root above it. Hits are cached, misses are not.
+ */
 const findPnpmWorkspaceRoot = (packageJsonPath: string): string | undefined => {
   const cached = workspaceRootCache.get(packageJsonPath)
-  if (cached !== undefined || workspaceRootCache.has(packageJsonPath)) {
+  if (cached !== undefined) {
     return cached
   }
 
@@ -73,7 +76,6 @@ const findPnpmWorkspaceRoot = (packageJsonPath: string): string | undefined => {
     dir = path.dirname(dir)
   }
 
-  workspaceRootCache.set(packageJsonPath, undefined)
   return undefined
 }
 
