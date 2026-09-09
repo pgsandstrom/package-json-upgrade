@@ -363,6 +363,7 @@ overrides:
     test('should recognize pnpm workspace files', () => {
       assert.strictEqual(check('/home/user/project/pnpm-workspace.yaml'), true)
       assert.strictEqual(check('C:\\work\\project\\pnpm-workspace.yaml'), true)
+      assert.strictEqual(check('pnpm-workspace.yaml'), true)
     })
 
     test('should not recognize pnpm-workspace.yml, which pnpm does not read', () => {

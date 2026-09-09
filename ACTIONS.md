@@ -133,18 +133,35 @@ path through `paintDecorations`.
 
 ---
 
-## 6. Duplicated file-name matching
+## 6. Duplicated file-name matching — DONE
 
 **Where:** `src/pnpmWorkspaceFile.ts:8-14` and `src/packageJson.ts:141-144`
 
-`isPnpmWorkspaceFile` duplicates `isPackageJson`'s slash logic, including the verbatim comment
+`isPnpmWorkspaceFile` duplicated `isPackageJson`'s slash logic, including the verbatim comment
 "Is checking both slashes necessary? Test on linux and mac."
 
-**Fix:** one `endsWithFileName(document, names)` helper retires both copies — and the open question
-along with them, since it only needs answering once.
+Resolved with one `endsWithFileName(document, fileName)` helper in `util/util.ts`, which both
+predicates now call. A single name is enough now that `.yml` is gone (item 8), so the helper takes
+one rather than a list.
 
-- [ ] Extract the helper
-- [ ] Answer the slash question (test on linux and mac) and delete the comment
+The slash question does not need a linux or mac run to answer: `document.fileName` is the platform
+path (`Uri.fsPath`), so it is backslash separated on Windows and slash separated everywhere else —
+both checks were needed, one per platform family. The helper compares the last segment after
+splitting on either separator instead, which is correct on all three platforms (Windows accepts
+forward slashes too) and drops the question with it.
+
+One behaviour change: a document whose `fileName` has no directory at all — plain `package.json` —
+now matches where the old `endsWith('/package.json')` pair did not. That is the more correct answer,
+and it is covered by a new case in the `isPnpmWorkspaceFile` test.
+
+Changed:
+
+- `endsWithFileName` added to `src/util/util.ts`
+- `isPackageJson` and `isPnpmWorkspaceFile` reduced to one call each, comments deleted
+- bare-filename case added to `isPnpmWorkspaceFile` in `test-node/pnpmWorkspaceFile.test.ts`
+
+- [x] Extract the helper
+- [x] Answer the slash question and delete the comment
 
 ---
 

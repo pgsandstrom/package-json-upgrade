@@ -1,3 +1,19 @@
+import * as vscode from 'vscode'
+
+/**
+ * True if the document is the named file, whatever directory it lives in.
+ *
+ * `document.fileName` is the platform path, so it is backslash separated on
+ * Windows and slash separated everywhere else. Rather than checking for each
+ * separator in turn we just take the last segment, which is correct on every
+ * platform - Windows accepts both separators, the others only ever produce
+ * slashes.
+ */
+export const endsWithFileName = (document: vscode.TextDocument, fileName: string): boolean => {
+  const segments = document.fileName.split(/[\\/]/)
+  return segments[segments.length - 1] === fileName
+}
+
 /**
  * Object.keys but keeps type safety
  */

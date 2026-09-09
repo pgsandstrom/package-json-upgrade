@@ -3,14 +3,10 @@ import * as vscode from 'vscode'
 
 import { getConfig } from './config'
 import { Dependency, DependencyGroups } from './packageJson'
-import { isRecord } from './util/util'
+import { endsWithFileName, isRecord } from './util/util'
 
 export const isPnpmWorkspaceFile = (document: vscode.TextDocument) => {
-  // Is checking both slashes necessary? Test on linux and mac.
-  return (
-    document.fileName.endsWith('\\pnpm-workspace.yaml') ||
-    document.fileName.endsWith('/pnpm-workspace.yaml')
-  )
+  return endsWithFileName(document, 'pnpm-workspace.yaml')
 }
 
 export const getWorkspaceFileDependencyInformation = (yamlAsString: string): DependencyGroups[] => {

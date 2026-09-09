@@ -2,6 +2,7 @@ import { findNodeAtLocation, Node, parseTree } from 'jsonc-parser'
 import * as vscode from 'vscode'
 
 import { getConfig } from './config'
+import { endsWithFileName } from './util/util'
 import { resolveCatalogVersion } from './workspace'
 
 export interface DependencyGroups {
@@ -139,6 +140,5 @@ function offsetToLine(text: string, offset: number): number {
 }
 
 export const isPackageJson = (document: vscode.TextDocument) => {
-  // Is checking both slashes necessary? Test on linux and mac.
-  return document.fileName.endsWith('\\package.json') || document.fileName.endsWith('/package.json')
+  return endsWithFileName(document, 'package.json')
 }
