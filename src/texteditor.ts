@@ -15,6 +15,13 @@ interface DecorationWrapper {
   decoration: TextEditorDecorationType
 }
 
+// Two dependency files can be visible at the same time (a package.json and a pnpm-workspace.yaml
+// side by side, for example), and they share line numbers. So the cache key has to include the
+// document, or the second document's decorations are seen as already painted and dropped.
+const getDecorationKey = (document: vscode.TextDocument, line: number) => {
+  return `${document.fileName}:${line}`
+}
+
 function isDiffView() {
   const schemes = vscode.window.visibleTextEditors.map((editor) => editor.document.uri.scheme)
   return schemes.length === 2 && schemes.includes('git') && schemes.includes('file')
@@ -24,7 +31,7 @@ function isDiffView() {
 // be ongoing at the same time. So here we keep track of the latest start time and only use that.
 const decorationStart: Record<string, number> = {}
 
-let rowToDecoration: Record<number, DecorationWrapper | undefined> = {}
+let rowToDecoration: Record<string, DecorationWrapper | undefined> = {}
 
 export const handleFileDecoration = (document: vscode.TextDocument) => {
   if (isDiffView()) {
@@ -120,7 +127,7 @@ const paintDecorations = (
   if (stillLoading) {
     paintLoadingOnDependencyGroups(dependencyGroups, document, textEditor)
   } else {
-    clearLoadingOnDependencyGroups(dependencyGroups)
+    clearLoadingOnDependencyGroups(dependencyGroups, document)
   }
 
   const dependencies = dependencyGroups.map((d) => d.deps).flat()
@@ -145,7 +152,7 @@ const paintDecorations = (
     if (npmCache.asyncstate === AsyncState.Rejected) {
       const text = npmCache.error?.message ?? 'Dependency not found'
       const notFoundDecoration = decorateDiscreet(text)
-      if (updateCache(notFoundDecoration, range.start.line, text)) {
+      if (updateCache(notFoundDecoration, document, range.start.line, text)) {
         setDecorator(notFoundDecoration, textEditor, range)
       }
       return
@@ -160,7 +167,7 @@ const paintDecorations = (
       ) {
         const text = 'Loading...'
         const decorator = decorateDiscreet(text)
-        if (updateCache(decorator, range.start.line, text)) {
+        if (updateCache(decorator, document, range.start.line, text)) {
           setDecorator(decorator, textEditor, range)
         }
       }
@@ -216,7 +223,7 @@ const paintDecorations = (
       return
     }
 
-    if (updateCache(decorator, range.start.line, text)) {
+    if (updateCache(decorator, document, range.start.line, text)) {
       setDecorator(decorator, textEditor, range)
     }
   })
@@ -235,18 +242,22 @@ const paintLoadingOnDependencyGroups = (
     )
     const text = 'Loading updates...'
     const loadingUpdatesDecoration = decorateDiscreet(text)
-    if (updateCache(loadingUpdatesDecoration, range.start.line, text)) {
+    if (updateCache(loadingUpdatesDecoration, document, range.start.line, text)) {
       setDecorator(loadingUpdatesDecoration, textEditor, range)
     }
   })
 }
 
-const clearLoadingOnDependencyGroups = (dependencyGroups: DependencyGroups[]) => {
+const clearLoadingOnDependencyGroups = (
+  dependencyGroups: DependencyGroups[],
+  document: vscode.TextDocument,
+) => {
   dependencyGroups.forEach((lineLimit) => {
-    const current = rowToDecoration[lineLimit.startLine]
+    const key = getDecorationKey(document, lineLimit.startLine)
+    const current = rowToDecoration[key]
     if (current) {
       current.decoration.dispose()
-      rowToDecoration[lineLimit.startLine] = undefined
+      rowToDecoration[key] = undefined
     }
   })
 }
@@ -276,13 +287,20 @@ export const clearDecorations = () => {
   rowToDecoration = {}
 }
 
-const updateCache = (decoration: TextEditorDecorationType, line: number, text: string) => {
-  const current = rowToDecoration[line]
+// exported for tests
+export const updateCache = (
+  decoration: TextEditorDecorationType,
+  document: vscode.TextDocument,
+  line: number,
+  text: string,
+) => {
+  const key = getDecorationKey(document, line)
+  const current = rowToDecoration[key]
   if (current === undefined || current.text !== text) {
     if (current) {
       current.decoration.dispose()
     }
-    rowToDecoration[line] = {
+    rowToDecoration[key] = {
       decoration,
       line,
       text,

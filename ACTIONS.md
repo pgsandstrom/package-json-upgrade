@@ -100,7 +100,7 @@ deliberate decision.
 
 ---
 
-## 5. `rowToDecoration` is keyed by line number alone (pre-existing, now much more likely)
+## 5. `rowToDecoration` is keyed by line number alone (pre-existing, now much more likely) — DONE
 
 **Where:** `src/texteditor.ts:27`, consumed by `updateCache` at `:279`
 
@@ -112,11 +112,24 @@ This predates the commit — it previously needed two open package.json files �
 pnpm-workspace.yaml side by side in a split view is a far more common pairing, so the bug goes from
 rare to routine.
 
-**Fix:** key by `document.fileName` + line instead of line alone. Note `decorationStart` at
-`src/texteditor.ts:25` is already keyed by `document.fileName`, so the pattern is right there.
+Resolved by keying on `document.fileName` + line, the same way `decorationStart` right above it is
+already keyed by `document.fileName`.
 
-- [ ] Key the decoration cache per document
+Changed:
+
+- `getDecorationKey(document, line)` in `texteditor.ts`; `rowToDecoration` is now
+  `Record<string, ...>`
+- `updateCache` and `clearLoadingOnDependencyGroups` take the document; the four `updateCache` call
+  sites pass it
+- `updateCache` is exported for tests, the way `setCachedNpmData` in `npm.ts` already is
+- `test-vscode/decorationCache.test.ts` covers the collision (two documents, same line, same text —
+  both must paint) plus the same-document dedupe that the cache exists for in the first place
+
+- [x] Key the decoration cache per document
 - [ ] Manually verify with package.json and pnpm-workspace.yaml open side by side
+
+Note the manual check is still open: the regression test pins `updateCache` directly, not the paint
+path through `paintDecorations`.
 
 ---
 
