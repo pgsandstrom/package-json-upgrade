@@ -10,6 +10,7 @@ import { DependencyGroups } from './packageJson'
 import { AsyncState } from './types'
 
 interface DecorationWrapper {
+  fileName: string
   line: number
   text: string
   decoration: TextEditorDecorationType
@@ -302,6 +303,7 @@ export const updateCache = (
     }
     rowToDecoration[key] = {
       decoration,
+      fileName: document.fileName,
       line,
       text,
     }
@@ -309,4 +311,12 @@ export const updateCache = (
   } else {
     return false
   }
+}
+
+// exported for tests
+export const getDecoratedLines = (document: vscode.TextDocument): number[] => {
+  return Object.values(rowToDecoration)
+    .filter((wrapper): wrapper is DecorationWrapper => wrapper?.fileName === document.fileName)
+    .map((wrapper) => wrapper.line)
+    .sort((a, b) => a - b)
 }

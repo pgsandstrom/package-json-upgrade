@@ -34,7 +34,6 @@ async function activateWrapped(context: vscode.ExtensionContext) {
     if (e.affectsConfiguration('package-json-upgrade')) {
       fixConfig()
       cleanNpmCache()
-      clearDecorations()
       checkCurrentFiles(showDecorations)
     }
   })
@@ -42,11 +41,7 @@ async function activateWrapped(context: vscode.ExtensionContext) {
   const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor(
     (texteditor: vscode.TextEditor | undefined) => {
       if (texteditor !== undefined) {
-        // TODO is this really necessary? To clean everything.
-        clearDecorations()
-        if (showDecorations) {
-          handleFileDecoration(texteditor.document)
-        }
+        checkCurrentFiles(showDecorations)
       }
     },
   )
@@ -64,10 +59,7 @@ async function activateWrapped(context: vscode.ExtensionContext) {
 
       clearTimeout(timeout)
       timeout = setTimeout(() => {
-        clearDecorations()
-        if (showDecorations) {
-          handleFileDecoration(e.document)
-        }
+        checkCurrentFiles(showDecorations)
       }, 500)
     },
   )
@@ -104,13 +96,29 @@ async function activateWrapped(context: vscode.ExtensionContext) {
   activateCodeActionStuff(context)
 }
 
+/**
+ * Throws away every decoration and paints the visible files again.
+ *
+ * Every visible file, not just the one that changed: several dependency files can be
+ * visible at once - a package.json next to the pnpm-workspace.yaml holding its
+ * catalog is the common one - and since clearing is global, repainting only the
+ * changed file would leave the others blank until something else triggered a full
+ * pass.
+ *
+ * Clearing everything first is what guarantees the repaint. The decoration cache
+ * skips lines whose text has not changed, and a document reopened in a new editor
+ * has lost its decorations while keeping its cache entries, so a cache we did not
+ * clear could talk us out of painting a file that is showing nothing.
+ */
 const checkCurrentFiles = (showDecorations: boolean) => {
+  clearDecorations()
+
+  if (!showDecorations) {
+    return
+  }
+
   vscode.window.visibleTextEditors.forEach((textEditor) => {
-    if (showDecorations) {
-      handleFileDecoration(textEditor.document)
-    } else {
-      clearDecorations()
-    }
+    handleFileDecoration(textEditor.document)
   })
 }
 

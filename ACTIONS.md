@@ -5,14 +5,14 @@ Follow-ups from a read-through of the pnpm-workspace.yaml support as it stands o
 manual verification in its item 5 — that check is item 1 here, and reading the code says it would
 have failed.
 
-Item 1 is the only one a user would notice, and the only one that should block a release. Item 3 is
-done. The rest are comments that no longer describe the code.
+Items 1 and 3 are done. Nothing left here blocks a release: items 2, 4 and 5 are comments that no
+longer describe the code, plus one knowingly accepted gap.
 
 Line references are as of `efa5b3b`.
 
 ---
 
-## 1. Only one dependency file is decorated at a time
+## 1. Only one dependency file is decorated at a time — DONE
 
 **Where:** `src/extension.ts:46-48` and `:67-69`, against `checkCurrentFiles` at `:107`
 
@@ -34,24 +34,46 @@ package.json files before, and the package.json plus pnpm-workspace.yaml pairing
 The TODO already sitting at `src/extension.ts:45` — "is this really necessary? To clean everything."
 — is asking exactly this question, and the answer is no.
 
-Two ways out:
+**Resolved by repainting every visible file.** Both handlers now call `checkCurrentFiles`, and
+`checkCurrentFiles` owns the clear rather than leaving it to each caller. So every path that repaints
+goes through one function, and that function always considers every visible editor.
 
-- Call `checkCurrentFiles(showDecorations)` in both handlers instead of `handleFileDecoration` on the
-  one document. Smallest change; repaints every visible file on every edit, which is cheap because
-  the npm cache is already warm.
-- Scope `clearDecorations` to a document, which is now possible since the cache key carries
-  `document.fileName`. Does less work, but has to get the "clear everything" callers right too.
+The alternative was to scope `clearDecorations` to a document, which the per-document cache key now
+allows. It does less work per keystroke, but the blunt clear is load-bearing in a way that is easy to
+miss: a document closed and reopened comes back in a new editor with no decorations on it while its
+cache entries survive, and `updateCache` would then decline to repaint a file that is showing
+nothing. Making the clear narrower means answering that, probably with an
+`onDidChangeVisibleTextEditors` listener. Not worth it for a repaint whose data is already cached —
+the parse is the only real cost, and it is per visible dependency file, not per dependency.
 
-Prefer the second if the repaint cost of the first shows up, but the first is the honest fix for the
-bug and can land on its own.
+Folding the clear into `checkCurrentFiles` also fixes a smaller bug in passing. The old version had
+`clearDecorations()` in the `else` of a loop over visible editors, so it ran once per editor when
+toggling off, and not at all when there were none.
 
-Whichever lands, the regression test has to go through the paint path rather than `updateCache`
-directly — `decorationCache.test.ts` pins the cache, and the cache was never the half that was
-broken.
+Changed:
 
-- [ ] Repaint every visible dependency file, not just the changed one
-- [ ] Cover it with a test that goes through `paintDecorations`, not `updateCache`
-- [ ] Answer the TODO at `src/extension.ts:45` and delete it
+- `checkCurrentFiles` clears first, then returns early when decorations are off, then paints every
+  visible editor. The doc comment says why it is every visible editor and why the clear stays global
+- `onDidChangeActiveTextEditor` and `onDidChangeTextDocument` call it instead of clearing and then
+  painting one document; the config-change handler no longer needs its own `clearDecorations()`
+- the TODO at `src/extension.ts:45` is answered and gone: the clear is necessary, the single-document
+  repaint after it was not
+- `DecorationWrapper` carries the `fileName` it was already keyed by, and `texteditor.ts` exports
+  `getDecoratedLines(document)` for tests
+- `test-vscode/decorationRepaint.test.ts` opens a package.json and a pnpm-workspace.yaml side by
+  side, waits for both to paint, clears, then focuses the package.json and asserts both come back
+
+The test goes through the real paint path and the real event handler, which is what the previous
+round's manual check was standing in for. Two things it has to do to be meaningful, both learned the
+hard way: wait for the initial paints to settle before clearing, or an in-flight pass repaints the
+second file after the clear and the test passes against the broken code; and raise the mocha timeout
+past its own polling budget, or a failure reads as a generic timeout instead of naming the file that
+went blank. Verified to fail against the old handler, with the message
+`still undecorated: \tmp\repaint\pnpm-workspace.yaml`.
+
+- [x] Repaint every visible dependency file, not just the changed one
+- [x] Cover it with a test that goes through `paintDecorations`, not `updateCache`
+- [x] Answer the TODO at `src/extension.ts:45` and delete it
 
 ---
 
