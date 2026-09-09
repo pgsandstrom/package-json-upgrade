@@ -318,6 +318,54 @@ someFlag: !!bool true
     )
   })
 
+  describe('duplicate keys', () => {
+    // Invalid yaml, and js-yaml would throw over it without the json option. That
+    // would cost the whole file its decorations, so we keep the last one instead -
+    // the entry pnpm would install.
+    const duplicateKeyFile = `catalog:
+  react: ^19.0.0
+  lodash: 4.17.21
+  react: ^19.2.5
+`
+
+    test('should still decorate the rest of a file with a duplicate key', () => {
+      assert.deepStrictEqual(getDependency(duplicateKeyFile, 'lodash'), {
+        dependencyName: 'lodash',
+        currentVersion: '4.17.21',
+        line: 2,
+      })
+    })
+
+    test('should keep the last of two duplicate keys, on its own line', () => {
+      const dependencies = getDependencies(duplicateKeyFile).filter(
+        (dep) => dep.dependencyName === 'react',
+      )
+      assert.deepStrictEqual(dependencies, [
+        { dependencyName: 'react', currentVersion: '^19.2.5', line: 3 },
+      ])
+    })
+
+    test('should report a version the upgrade can find on the line it points at', () => {
+      const dependency = getDependency(duplicateKeyFile, 'react')
+      const lineText = duplicateKeyFile.split('\n')[dependency.line]
+      assert.strictEqual(
+        replaceVersionInWorkspaceLine(lineText, dependency.currentVersion, '^19.3.0'),
+        '  react: ^19.3.0',
+      )
+    })
+
+    test('should keep the last duplicate in a named catalog', () => {
+      const yamlAsString = `catalogs:
+  legacy:
+    react: ^17.0.0
+    react: ^17.0.2
+`
+      assert.deepStrictEqual(getDependencies(yamlAsString), [
+        { dependencyName: 'react', currentVersion: '^17.0.2', line: 3 },
+      ])
+    })
+  })
+
   test('should return nothing for an empty file', () => {
     assert.deepStrictEqual(getWorkspaceFileDependencyInformation(''), [])
   })

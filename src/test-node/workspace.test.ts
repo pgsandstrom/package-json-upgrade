@@ -128,6 +128,33 @@ describe('workspace', () => {
     }
   })
 
+  test('should resolve a catalog with a duplicate key to the last of them', () => {
+    // Without the json option js-yaml throws over the duplicate, and a package.json
+    // next to this file would resolve none of its catalog: refs. Last wins, which is
+    // the entry pnpm installs, and matches what we decorate in the workspace file.
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'package-json-upgrade-'))
+    const packageJsonPath = path.join(dir, 'packages', 'consumer', 'package.json')
+
+    try {
+      fs.writeFileSync(
+        path.join(dir, 'pnpm-workspace.yaml'),
+        'catalog:\n  react: ^19.0.0\n  lodash: 4.17.21\n  react: ^19.2.5\n',
+      )
+
+      assert.deepStrictEqual(resolveCatalogVersion('catalog:', 'react', packageJsonPath), {
+        version: '^19.2.5',
+        isCatalog: true,
+      })
+      assert.deepStrictEqual(resolveCatalogVersion('catalog:', 'lodash', packageJsonPath), {
+        version: '4.17.21',
+        isCatalog: true,
+      })
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+      clearWorkspaceCache()
+    }
+  })
+
   test('should gracefully handle invalid yaml', () => {
     const catalogResult = resolveCatalogVersion(
       'catalog:',

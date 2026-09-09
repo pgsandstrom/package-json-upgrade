@@ -4,7 +4,7 @@ import * as vscode from 'vscode'
 import { getConfig } from './config'
 import { Dependency, DependencyGroups } from './packageJson'
 import { endsWithFileName, getValueAtPath, isRecord, toPath } from './util/util'
-import { WORKSPACE_YAML_SCHEMA } from './util/yaml'
+import { WORKSPACE_YAML_OPTIONS } from './util/yaml'
 
 export const isPnpmWorkspaceFile = (document: vscode.TextDocument) => {
   return endsWithFileName(document, 'pnpm-workspace.yaml')
@@ -13,7 +13,7 @@ export const isPnpmWorkspaceFile = (document: vscode.TextDocument) => {
 export const getWorkspaceFileDependencyInformation = (yamlAsString: string): DependencyGroups[] => {
   let parsed: unknown
   try {
-    parsed = yaml.load(yamlAsString, { schema: WORKSPACE_YAML_SCHEMA })
+    parsed = yaml.load(yamlAsString, WORKSPACE_YAML_OPTIONS)
   } catch (_) {
     // Broken yaml. The user is probably in the middle of an edit, so just show nothing.
     return []
@@ -164,11 +164,13 @@ const getKeyLines = (yamlAsString: string): Map<string, number> => {
     const path = [...parents.map((parent) => parent.key), key]
     parents.push({ key, indent })
 
-    // Duplicate keys are invalid yaml, but if we ever see one we let the first win.
-    const keyLineKey = toKeyLineKey(path)
-    if (!keyLines.has(keyLineKey)) {
-      keyLines.set(keyLineKey, line)
-    }
+    // Duplicate keys are a mistake (not supported by yaml) rather than something we support, but they have
+    // to land somewhere. The last one wins, matching both WORKSPACE_YAML_OPTIONS -
+    // where js-yaml keeps the last value - and pnpm, which installs the last one.
+    // Line and version therefore describe the same entry, so the upgrade quick fix
+    // finds the version it is replacing and the decoration sits on the line that
+    // actually takes effect.
+    keyLines.set(toKeyLineKey(path), line)
   })
 
   return keyLines

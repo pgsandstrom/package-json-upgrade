@@ -5,8 +5,8 @@ Follow-ups from a read-through of the pnpm-workspace.yaml support as it stands o
 manual verification in its item 5 — that check is item 1 here, and reading the code says it would
 have failed.
 
-Items 1, 3 and 5 are done. Nothing left here blocks a release: items 2 and 4 are comments that no
-longer describe the code.
+Items 1, 2, 3 and 5 are done. Nothing left here blocks a release: item 4 is a comment that no longer
+describes the code.
 
 Line references are as of `efa5b3b`.
 
@@ -77,12 +77,13 @@ went blank. Verified to fail against the old handler, with the message
 
 ---
 
-## 2. The duplicate-key comment describes behaviour we do not have
+## 2. Duplicate keys: the comment was wrong, and so was the behaviour — DONE
 
 **Where:** `src/pnpmWorkspaceFile.ts:167`
 
-The comment reads "Duplicate keys are invalid yaml, but if we ever see one we let the first win."
-`getKeyLines` does let the first win. js-yaml does not — it lets the last win. So for
+The comment read "Duplicate keys are invalid yaml, but if we ever see one we let the first win."
+`getKeyLines` does let the first win. The claim about what we would otherwise disagree with was
+wrong in both directions: js-yaml does not let the last win, it refuses the document. For
 
 ```yaml
 catalog:
@@ -90,15 +91,56 @@ catalog:
   react: ^19.2.0
 ```
 
-we decorate the first line with the second line's version, and an upgrade from that line then hands
-`replaceVersionInWorkspaceLine` a version that is not on it, so `indexOf` fails and the line is left
-untouched.
+`yaml.load` threw `duplicated mapping key (3:3)` on the options we passed then — `storeMappingPair` in
+`node_modules/js-yaml/lib/loader.js:368` throws on a repeated key unless it is an overridable merge
+key, and `merge` is not in `WORKSPACE_YAML_SCHEMA` (see item 5). Verified against the real schema.
 
-Nothing is corrupted and the file is invalid yaml either way, so this is a comment fix rather than a
-behaviour fix. Say that the two disagree and that the mismatch is harmless because the replace
-declines to act, or drop the sentence — but do not leave it claiming a consistency that is not there.
+`getWorkspaceFileDependencyInformation` catches that at `src/pnpmWorkspaceFile.ts:17` and returns
+`[]`, and it is the only caller of `getKeyLines`. So a document with a genuine duplicate key is never
+scanned at all — it decorates nothing, which is the same thing any other broken yaml does mid-edit.
+There is no first-vs-last mismatch to be harmless, and no path to the `indexOf` failure the item
+described.
 
-- [ ] Correct or remove the comment
+That is a worse outcome than the comment described, and worse than what package.json does with the
+same mistake: `getDependenciesFromProperty` walks the jsonc AST's `children`
+(`src/packageJson.ts:46`), where each duplicate is its own node with its own offset, so both lines
+decorate. The yaml path parses to a plain object first and reads lines from a separate `path → line`
+map, so both structures are keyed by unique path and duplicates are collapsed before line numbers
+enter the picture.
+
+**Resolved by letting the last duplicate win, consistently.** Two changes, no new dependency:
+
+- `WORKSPACE_YAML_OPTIONS` in `src/util/yaml.ts` replaces the bare schema export and adds
+  `json: true`. In js-yaml that flag does exactly one thing — `state.json` appears twice in
+  `loader.js`, once to read the option and once at the duplicate-key throw. So a repeated key no
+  longer costs the whole file its decorations, and the last value wins, which is what pnpm installs.
+  Both load sites (`pnpmWorkspaceFile.ts:16`, `workspace.ts:115`) go through it
+- `getKeyLines` sets its map entry unconditionally instead of guarding on `has`, so the line follows
+  the same last-wins rule as the value. The two now describe the same entry, which is what makes the
+  quick fix work: `replaceVersionInWorkspaceLine` finds the version it was handed on the line it was
+  pointed at, rather than silently returning it unchanged
+
+The result is one decoration on the entry that actually takes effect, not the two package.json
+shows. That is arguably the better behaviour rather than a shortfall — npm and pnpm both resolve a
+duplicate to the last entry, so package.json's second decoration offers an upgrade for a line that
+has no effect on what gets installed.
+
+Full parity would mean decorating every occurrence, and that is not reachable from here: it needs a
+value _and_ a position per occurrence, which neither the parsed object nor the line map can carry.
+The way there is a positional parser — eemeli's `yaml` returns both pairs with character ranges under
+`uniqueKeys: false`, and would also retire the indentation heuristic and its blind spots, and close
+item 5. Not worth a dependency swap for duplicate keys alone; worth revisiting if item 5 or the
+block-scalar gap ever bites.
+
+Covered by a `duplicate keys` block in `pnpmWorkspaceFile.test.ts` — the rest of the file still
+decorates, the last duplicate wins on its own line, the reported version is one
+`replaceVersionInWorkspaceLine` can act on, and the same for a named catalog — plus a
+`workspace.test.ts` case for `catalog:` resolution from a package.json next door. Verified against
+both old behaviours: all five fail without `json: true`, and the three line-agreement ones fail with
+the old first-wins guard.
+
+- [x] Correct or remove the comment
+- [x] Stop a duplicate key from blanking the whole file
 
 ---
 

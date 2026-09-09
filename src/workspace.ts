@@ -3,7 +3,7 @@ import * as yaml from 'js-yaml'
 import * as path from 'path'
 
 import { isRecord } from './util/util'
-import { WORKSPACE_YAML_SCHEMA } from './util/yaml'
+import { WORKSPACE_YAML_OPTIONS } from './util/yaml'
 
 interface CatalogCache {
   catalog: WorkspaceCatalog
@@ -112,7 +112,7 @@ const parseWorkspaceCatalogs = (content: string): WorkspaceCatalog => {
   const named = new Map<string, Map<string, string>>()
 
   try {
-    const parsed = yaml.load(content, { schema: WORKSPACE_YAML_SCHEMA })
+    const parsed = yaml.load(content, WORKSPACE_YAML_OPTIONS)
     if (!isRecord(parsed)) {
       return { default: catalog, named }
     }

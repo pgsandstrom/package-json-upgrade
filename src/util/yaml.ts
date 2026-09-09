@@ -30,7 +30,22 @@ import * as yaml from 'js-yaml'
 // js-yaml exports its built in types, but @types/js-yaml does not declare them.
 const builtinTypes = (yaml as unknown as { types: Record<string, yaml.Type> }).types
 
-export const WORKSPACE_YAML_SCHEMA = yaml.FAILSAFE_SCHEMA.extend([
-  builtinTypes.null,
-  builtinTypes.bool,
-])
+const WORKSPACE_YAML_SCHEMA = yaml.FAILSAFE_SCHEMA.extend([builtinTypes.null, builtinTypes.bool])
+
+/**
+ * The options every read of a pnpm-workspace.yaml goes through.
+ *
+ * `json` sounds like it is about json, but in js-yaml it does exactly one thing:
+ * it turns off the duplicate key check (`state.json` appears twice in
+ * `node_modules/js-yaml/lib/loader.js`, once to read the option and once at the
+ * throw). Without it a repeated key throws and costs us the entire file - every
+ * other dependency in it loses its decoration too, over a mistake in one entry.
+ * With it the last of the duplicates wins, which is what pnpm itself installs.
+ *
+ * `getKeyLines` in pnpmWorkspaceFile.ts also lets the last win, so the version we
+ * show and the line we show it on stay in agreement.
+ */
+export const WORKSPACE_YAML_OPTIONS: yaml.LoadOptions = {
+  schema: WORKSPACE_YAML_SCHEMA,
+  json: true,
+}
