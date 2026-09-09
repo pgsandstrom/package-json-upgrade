@@ -72,6 +72,14 @@ const addDependency = (
   dependencyName: string,
   currentVersion: string,
 ) => {
+  // A key written without a value, such as an `express:` with nothing after it,
+  // reads as an empty string rather than as null. There is no version to look up,
+  // and an empty string matches at the start of every line, so an upgrade would
+  // write the new version straight after the colon.
+  if (currentVersion === '') {
+    return
+  }
+
   const line = keyLines.get(toKeyLineKey(path))
   // Without a line of its own there is nothing to decorate or upgrade. That
   // happens for flow style mappings such as `catalog: { react: ^19.0.0 }`.

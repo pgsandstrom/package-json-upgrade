@@ -148,9 +148,8 @@
     ]
   },
   "dependencies": {
-    "@pnpm/npm-conf": "3.0.2",
-    "@types/js-yaml": "4.0.9",
-    "js-yaml": "4.1.1",
+    "@pnpm/npm-conf": "3.0.3",
+    "js-yaml": "5.4.1",
     "jsonc-parser": "3.3.1",
     "npm-registry-fetch": "20.0.1",
     "semver": "7.8.1"
