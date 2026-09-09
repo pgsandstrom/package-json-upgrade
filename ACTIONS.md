@@ -165,7 +165,7 @@ Changed:
 
 ---
 
-## 7. Duplicated path splitting and lookup
+## 7. Duplicated path splitting and lookup — DONE
 
 **Where:** path splitting in `src/packageJson.ts:122`, `src/npm.ts:482`, `src/pnpmWorkspaceFile.ts:87`;
 `getValueAtPath` in `src/npm.ts:481` and `src/pnpmWorkspaceFile.ts:94`
@@ -173,7 +173,18 @@ Changed:
 Three copies of the split-trim-filter logic and two of `getValueAtPath`, differing only in whether they
 take a `string` or a `string[]`. Same spirit as the `isRecord` consolidation this commit already did.
 
-- [ ] Consolidate into `src/util/`
+Resolved by moving both to `src/util/util.ts`, next to `isRecord`, which `getValueAtPath` needs anyway.
+The `string` overload is gone: `getValueAtPath` now only takes a `string[]`, so the one caller that had
+a dot path (`refreshPackageJsonData`) composes it as `getValueAtPath(json, toPath(group))`. That keeps
+one signature, and it makes the split explicit at the call site rather than hidden inside the lookup —
+which matters because `pnpmWorkspaceFile.ts` needs the segment array for its own key-line lookup too.
+
+Changed:
+
+- `toPath` and `getValueAtPath` added to `src/util/util.ts`
+- the local copies in `packageJson.ts`, `npm.ts` and `pnpmWorkspaceFile.ts` deleted in favour of imports
+
+- [x] Consolidate into `src/util/`
 
 ---
 

@@ -2,7 +2,7 @@ import { findNodeAtLocation, Node, parseTree } from 'jsonc-parser'
 import * as vscode from 'vscode'
 
 import { getConfig } from './config'
-import { endsWithFileName } from './util/util'
+import { endsWithFileName, toPath } from './util/util'
 import { resolveCatalogVersion } from './workspace'
 
 export interface DependencyGroups {
@@ -118,13 +118,6 @@ function toDependency(
     currentVersion: version,
     line: offsetToLine(jsonAsString, offset),
   }
-}
-
-function toPath(group: string): string[] {
-  return group
-    .split('.')
-    .map((segment) => segment.trim())
-    .filter((segment) => segment.length > 0)
 }
 
 // jsonc-parser gives offset in characters, so we have to translate it to line numbers

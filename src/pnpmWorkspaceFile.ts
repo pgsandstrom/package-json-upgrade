@@ -3,7 +3,7 @@ import * as vscode from 'vscode'
 
 import { getConfig } from './config'
 import { Dependency, DependencyGroups } from './packageJson'
-import { endsWithFileName, isRecord } from './util/util'
+import { endsWithFileName, getValueAtPath, isRecord, toPath } from './util/util'
 
 export const isPnpmWorkspaceFile = (document: vscode.TextDocument) => {
   return endsWithFileName(document, 'pnpm-workspace.yaml')
@@ -114,24 +114,6 @@ export const replaceVersionInWorkspaceLine = (
     newVersion +
     lineText.substring(indexOfVersion + currentVersion.length)
   )
-}
-
-const toPath = (group: string): string[] => {
-  return group
-    .split('.')
-    .map((segment) => segment.trim())
-    .filter((segment) => segment.length > 0)
-}
-
-const getValueAtPath = (parsed: Record<string, unknown>, path: string[]): unknown => {
-  let current: unknown = parsed
-  for (const segment of path) {
-    if (!isRecord(current)) {
-      return undefined
-    }
-    current = current[segment]
-  }
-  return current
 }
 
 // Yaml keys may contain almost anything, so we flatten a key path with JSON to

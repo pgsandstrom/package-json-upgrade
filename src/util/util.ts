@@ -39,6 +39,33 @@ export const isRecord = (value: unknown): value is Record<string, unknown> => {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
+/**
+ * Splits a dot separated config path such as `pnpm.overrides` into its segments.
+ * Blank segments are dropped, so a stray dot or trailing whitespace in the user's
+ * settings does not turn into a lookup for the empty key.
+ */
+export const toPath = (path: string): string[] => {
+  return path
+    .split('.')
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0)
+}
+
+/**
+ * Walks a parsed document along the given path, as produced by {@link toPath}.
+ * Returns undefined as soon as the path leaves the object graph.
+ */
+export const getValueAtPath = (value: Record<string, unknown>, path: string[]): unknown => {
+  let current: unknown = value
+  for (const segment of path) {
+    if (!isRecord(current)) {
+      return undefined
+    }
+    current = current[segment]
+  }
+  return current
+}
+
 export const replaceLastOccuranceOf = (s: string, replace: string, replaceWith: string) => {
   const indexOfReplace = s.lastIndexOf(replace)
   if (indexOfReplace !== -1) {

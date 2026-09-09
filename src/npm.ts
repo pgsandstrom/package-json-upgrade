@@ -18,7 +18,7 @@ import { logError } from './log'
 import { getNpmConfig } from './npmConfig'
 import { getWorkspaceFileDependencyInformation } from './pnpmWorkspaceFile'
 import { AsyncState, Dict, StrictDict } from './types'
-import { isRecord } from './util/util'
+import { getValueAtPath, isRecord, toPath } from './util/util'
 import { resolveCatalogVersion } from './workspace'
 
 export interface NpmLoader<T> {
@@ -415,7 +415,7 @@ export const refreshPackageJsonData = (
     const groups = getConfig().dependencyGroups
     const dependencies: StrictDict<string, string> = {}
     for (const group of groups) {
-      Object.assign(dependencies, collectGroupDependencies(getValueAtPath(json, group)))
+      Object.assign(dependencies, collectGroupDependencies(getValueAtPath(json, toPath(group))))
     }
 
     return refreshDependencies(Object.entries(dependencies), packageJsonFilePath)
@@ -476,23 +476,6 @@ const refreshDependencies = (
       }
     })
     .filter((p): p is Promise<void> => p !== undefined)
-}
-
-const getValueAtPath = (json: Record<string, unknown>, path: string): unknown => {
-  const segments = path
-    .split('.')
-    .map((segment) => segment.trim())
-    .filter((segment) => segment.length > 0)
-
-  let current: unknown = json
-  for (const segment of segments) {
-    if (!isRecord(current)) {
-      return undefined
-    }
-    current = current[segment]
-  }
-
-  return current
 }
 
 const collectGroupDependencies = (groupValue: unknown): StrictDict<string, string> => {
