@@ -7,8 +7,10 @@ import { cleanNpmCache } from './npm'
 import { clearDecorations, handleFileDecoration } from './texteditor'
 import { UpdateAction } from './updateAction'
 import { updateAll } from './updateAll'
+import { CatalogDefinition } from './workspace'
 
 export const OPEN_URL_COMMAND = 'package-json-upgrade.open-url-command'
+export const GO_TO_CATALOG_ENTRY_COMMAND = 'package-json-upgrade.go-to-catalog-entry-command'
 
 export async function activate(context: vscode.ExtensionContext) {
   try {
@@ -137,6 +139,21 @@ const activateCodeActionStuff = (context: vscode.ExtensionContext) => {
     vscode.commands.registerCommand(OPEN_URL_COMMAND, (url: string) => {
       void vscode.env.openExternal(vscode.Uri.parse(url))
     }),
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      GO_TO_CATALOG_ENTRY_COMMAND,
+      (definition: CatalogDefinition) => {
+        // An empty range is enough: showTextDocument puts the cursor there and
+        // scrolls the line into view, without selecting anything the user would
+        // then have to click away.
+        const selection = new vscode.Range(definition.line, 0, definition.line, 0)
+        void vscode.commands.executeCommand('vscode.open', vscode.Uri.file(definition.filePath), {
+          selection,
+        } satisfies vscode.TextDocumentShowOptions)
+      },
+    ),
   )
 }
 

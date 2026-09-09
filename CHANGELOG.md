@@ -5,6 +5,7 @@ All notable changes to the "package-json-upgrade" extension will be documented i
 ## Unreleased changes
 
 - Show updates directly in the "catalog" and "catalogs" sections of pnpm-workspace.yaml, including quick fixes and the update all command
+- Add a "Go to catalog entry" quick fix on "catalog:" dependencies in package.json, which opens pnpm-workspace.yaml at the line the version is defined on
 
 ## 3.7.0
 

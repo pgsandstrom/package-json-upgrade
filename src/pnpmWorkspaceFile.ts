@@ -4,7 +4,7 @@ import * as vscode from 'vscode'
 import { getConfig } from './config'
 import { Dependency, DependencyGroups } from './packageJson'
 import { endsWithFileName, getValueAtPath, isRecord, toPath } from './util/util'
-import { WORKSPACE_YAML_OPTIONS } from './util/yaml'
+import { getKeyLines, KEY_REGEX, toKeyLineKey, WORKSPACE_YAML_OPTIONS } from './util/yaml'
 
 export const isPnpmWorkspaceFile = (document: vscode.TextDocument) => {
   return endsWithFileName(document, 'pnpm-workspace.yaml')
@@ -123,74 +123,4 @@ export const replaceVersionInWorkspaceLine = (
     newVersion +
     lineText.substring(indexOfVersion + currentVersion.length)
   )
-}
-
-// Yaml keys may contain almost anything, so we flatten a key path with JSON to
-// make sure two different paths never collide.
-const toKeyLineKey = (path: string[]): string => {
-  return JSON.stringify(path)
-}
-
-// Matches the indentation and the raw key of a `key: value` or `key:` line. The
-// three key alternatives are double quoted, single quoted and plain keys.
-const KEY_REGEX = /^(\s*)("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^\s#][^:]*?)\s*:(?=\s|$)/
-
-/**
- * Maps the path of every mapping key in the document to the line it is written on.
- * The path is the list of ancestor keys, so `react` inside `catalogs: legacy:` ends
- * up as `catalogs`, `legacy`, `react`.
- *
- * This goes by indentation rather than using a real yaml parser, so it does not
- * understand flow style mappings or block scalars. Neither is used for pnpm
- * catalogs, and any dependency we fail to find a line for is simply skipped.
- *
- * This currently does not respect CR-only line breaks... but no one uses that, right?
- */
-const getKeyLines = (yamlAsString: string): Map<string, number> => {
-  const keyLines = new Map<string, number>()
-  const parents: { key: string; indent: number }[] = []
-
-  yamlAsString.split('\n').forEach((lineText, line) => {
-    // Sequence entries are never dependencies, and letting them through would
-    // corrupt the parent stack.
-    if (/^\s*-(\s|$)/.test(lineText)) {
-      return
-    }
-
-    const match = KEY_REGEX.exec(lineText)
-    if (match === null) {
-      return
-    }
-
-    const indent = match[1].length
-    const key = getKey(match[2])
-
-    while (parents.length > 0 && parents[parents.length - 1].indent >= indent) {
-      parents.pop()
-    }
-
-    const path = [...parents.map((parent) => parent.key), key]
-    parents.push({ key, indent })
-
-    // Duplicate keys are a mistake (not supported by yaml) rather than something we support, but they have
-    // to land somewhere. The last one wins, matching both WORKSPACE_YAML_OPTIONS -
-    // where js-yaml keeps the last value - and pnpm, which installs the last one.
-    // Line and version therefore describe the same entry, so the upgrade quick fix
-    // finds the version it is replacing and the decoration sits on the line that
-    // actually takes effect.
-    keyLines.set(toKeyLineKey(path), line)
-  })
-
-  return keyLines
-}
-
-const getKey = (rawKey: string): string => {
-  if (rawKey.startsWith('"') && rawKey.endsWith('"')) {
-    // Package names never contain anything fancier than a backslash escape.
-    return rawKey.slice(1, -1).replace(/\\(.)/g, '$1')
-  }
-  if (rawKey.startsWith("'") && rawKey.endsWith("'")) {
-    return rawKey.slice(1, -1).replace(/''/g, "'")
-  }
-  return rawKey
 }

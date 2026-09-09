@@ -9,6 +9,7 @@ import { clearWorkspaceCache, resolveCatalogVersion } from '../workspace'
 
 const testdataDir = path.resolve('./src/test-node/testdata')
 const catalogWorkspaceDir = path.resolve('./src/test-node/testdata/catalog-workspace')
+const catalogWorkspaceFile = path.join(catalogWorkspaceDir, 'pnpm-workspace.yaml')
 
 describe('workspace', () => {
   before(() => {
@@ -21,7 +22,11 @@ describe('workspace', () => {
       'react',
       path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
     )
-    assert.deepStrictEqual(result, { version: '^19.2.5', isCatalog: true })
+    assert.deepStrictEqual(result, {
+      version: '^19.2.5',
+      isCatalog: true,
+      definition: { filePath: catalogWorkspaceFile, line: 4 },
+    })
   })
 
   test('should resolve catalog:default to default catalog entry', () => {
@@ -30,7 +35,11 @@ describe('workspace', () => {
       'lodash',
       path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
     )
-    assert.deepStrictEqual(result, { version: '4.17.21', isCatalog: true })
+    assert.deepStrictEqual(result, {
+      version: '4.17.21',
+      isCatalog: true,
+      definition: { filePath: catalogWorkspaceFile, line: 5 },
+    })
   })
 
   test('should resolve catalog:legacy to named catalog entry', () => {
@@ -39,7 +48,11 @@ describe('workspace', () => {
       'react',
       path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
     )
-    assert.deepStrictEqual(result, { version: '^17.0.2', isCatalog: true })
+    assert.deepStrictEqual(result, {
+      version: '^17.0.2',
+      isCatalog: true,
+      definition: { filePath: catalogWorkspaceFile, line: 12 },
+    })
   })
 
   test('should resolve catalog:legacy for scoped package', () => {
@@ -48,7 +61,13 @@ describe('workspace', () => {
       'react-dom',
       path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
     )
-    assert.deepStrictEqual(result, { version: '^17.0.2', isCatalog: true })
+    // The key is quoted in the file, so the line scan has to unquote it to match
+    // the name js-yaml gives us.
+    assert.deepStrictEqual(result, {
+      version: '^17.0.2',
+      isCatalog: true,
+      definition: { filePath: catalogWorkspaceFile, line: 13 },
+    })
   })
 
   test('should resolve a catalog entry that yaml would otherwise read as a number', () => {
@@ -58,7 +77,45 @@ describe('workspace', () => {
       path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
     )
     // 5.10, not the 5.1 that reading it as a number would give
-    assert.deepStrictEqual(result, { version: '5.10', isCatalog: true })
+    assert.deepStrictEqual(result, {
+      version: '5.10',
+      isCatalog: true,
+      definition: { filePath: catalogWorkspaceFile, line: 6 },
+    })
+  })
+
+  test('should point at the entry under catalogs.default', () => {
+    const result = resolveCatalogVersion(
+      'catalog:',
+      'axios',
+      path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
+    )
+    assert.deepStrictEqual(result, {
+      version: '^1.11.0',
+      isCatalog: true,
+      definition: { filePath: catalogWorkspaceFile, line: 10 },
+    })
+  })
+
+  test('should resolve a flow style catalog entry but offer no line to go to', () => {
+    // The line scan goes by indentation, so it finds no line of its own for an entry
+    // written inside a flow mapping. The version still resolves - we just have
+    // nowhere to send anyone who wants to look at it.
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'package-json-upgrade-'))
+    const packageJsonPath = path.join(dir, 'packages', 'consumer', 'package.json')
+
+    try {
+      fs.writeFileSync(path.join(dir, 'pnpm-workspace.yaml'), 'catalog: { react: ^19.2.5 }\n')
+
+      assert.deepStrictEqual(resolveCatalogVersion('catalog:', 'react', packageJsonPath), {
+        version: '^19.2.5',
+        isCatalog: true,
+        definition: undefined,
+      })
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+      clearWorkspaceCache()
+    }
   })
 
   test('should return undefined for missing catalog entry', () => {
@@ -121,6 +178,7 @@ describe('workspace', () => {
       assert.deepStrictEqual(resolveCatalogVersion('catalog:', 'react', packageJsonPath), {
         version: '^19.2.5',
         isCatalog: true,
+        definition: { filePath: path.join(dir, 'pnpm-workspace.yaml'), line: 1 },
       })
     } finally {
       fs.rmSync(dir, { recursive: true, force: true })
@@ -141,13 +199,17 @@ describe('workspace', () => {
         'catalog:\n  react: ^19.0.0\n  lodash: 4.17.21\n  react: ^19.2.5\n',
       )
 
+      // Line 3 is the last of the two react entries, so the version we resolved and
+      // the line we would send someone to describe the same entry.
       assert.deepStrictEqual(resolveCatalogVersion('catalog:', 'react', packageJsonPath), {
         version: '^19.2.5',
         isCatalog: true,
+        definition: { filePath: path.join(dir, 'pnpm-workspace.yaml'), line: 3 },
       })
       assert.deepStrictEqual(resolveCatalogVersion('catalog:', 'lodash', packageJsonPath), {
         version: '4.17.21',
         isCatalog: true,
+        definition: { filePath: path.join(dir, 'pnpm-workspace.yaml'), line: 2 },
       })
     } finally {
       fs.rmSync(dir, { recursive: true, force: true })

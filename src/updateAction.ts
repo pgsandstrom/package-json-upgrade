@@ -1,3 +1,4 @@
+import * as path from 'path'
 import * as vscode from 'vscode'
 
 import { getChangelogUrl } from './changelog'
@@ -6,8 +7,9 @@ import {
   getUpdatedLineText,
   isDependencyFile,
 } from './dependencyFile'
-import { OPEN_URL_COMMAND } from './extension'
+import { GO_TO_CATALOG_ENTRY_COMMAND, OPEN_URL_COMMAND } from './extension'
 import { getCachedNpmData, getExactVersion, getPossibleUpgrades } from './npm'
+import { CatalogDefinition } from './workspace'
 
 export class UpdateAction implements vscode.CodeActionProvider {
   public static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix]
@@ -25,9 +27,17 @@ export class UpdateAction implements vscode.CodeActionProvider {
     }
 
     const dep = getDependencyFromDocumentLine(document, range.start.line)
-    // Skip quick-fix upgrades for missing/catalog dependencies
-    if (dep === undefined || dep.isCatalog === true) {
+    if (dep === undefined) {
       return
+    }
+
+    // A catalog dependency gets its version from another file entirely, so there is
+    // nothing on this line to upgrade. Offer to go look at the entry instead.
+    if (dep.isCatalog === true) {
+      if (dep.catalogDefinition === undefined) {
+        return
+      }
+      return [this.createGoToCatalogEntryCommand(dep.catalogDefinition)]
     }
 
     const npmCache = getCachedNpmData(dep.dependencyName)
@@ -130,6 +140,21 @@ export class UpdateAction implements vscode.CodeActionProvider {
       title: 'Open homepage',
       tooltip: 'This will open the dependency homepage.',
       arguments: [url],
+    }
+    return action
+  }
+
+  private createGoToCatalogEntryCommand(definition: CatalogDefinition): vscode.CodeAction {
+    const fileName = path.basename(definition.filePath)
+    const action = new vscode.CodeAction(
+      `Go to catalog entry in ${fileName}`,
+      vscode.CodeActionKind.Empty,
+    )
+    action.command = {
+      command: GO_TO_CATALOG_ENTRY_COMMAND,
+      title: 'Go to catalog entry',
+      tooltip: 'This will open the workspace file at the line the version is defined on.',
+      arguments: [definition],
     }
     return action
   }

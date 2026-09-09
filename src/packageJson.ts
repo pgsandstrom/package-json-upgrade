@@ -3,7 +3,7 @@ import * as vscode from 'vscode'
 
 import { getConfig } from './config'
 import { endsWithFileName, toPath } from './util/util'
-import { resolveCatalogVersion } from './workspace'
+import { CatalogDefinition, resolveCatalogVersion } from './workspace'
 
 export interface DependencyGroups {
   startLine: number
@@ -15,6 +15,11 @@ export interface Dependency {
   currentVersion: string
   line: number
   isCatalog?: boolean
+  /**
+   * Where the catalog entry this dependency resolved to is written. Only set for
+   * catalog dependencies, and only when we found a line for the entry.
+   */
+  catalogDefinition?: CatalogDefinition
 }
 
 export const getDependencyInformation = (
@@ -107,6 +112,7 @@ function toDependency(
           currentVersion: resolved.version,
           line: offsetToLine(jsonAsString, offset),
           isCatalog: true,
+          catalogDefinition: resolved.definition,
         }
       }
     }
