@@ -16,9 +16,7 @@ import { retrieveAndCacheChangelog } from './changelog'
 import { getConfig } from './config'
 import { logError } from './log'
 import { getNpmConfig } from './npmConfig'
-import { getWorkspaceFileDependencyInformation } from './pnpmWorkspaceFile'
-import { AsyncState, Dict, StrictDict } from './types'
-import { getValueAtPath, isRecord, toPath } from './util/util'
+import { AsyncState, Dict } from './types'
 import { resolveCatalogVersion } from './workspace'
 
 export interface NpmLoader<T> {
@@ -406,40 +404,12 @@ export const isRegistryVersion = (version: string): boolean => {
   return validRange(version) != null && valid(coerce(version)) != null
 }
 
-export const refreshPackageJsonData = (
-  packageJsonString: string,
-  packageJsonFilePath: string,
-): Promise<void>[] => {
-  try {
-    const json = JSON.parse(packageJsonString) as Record<string, unknown>
-    const groups = getConfig().dependencyGroups
-    const dependencies: StrictDict<string, string> = {}
-    for (const group of groups) {
-      Object.assign(dependencies, collectGroupDependencies(getValueAtPath(json, toPath(group))))
-    }
-
-    return refreshDependencies(Object.entries(dependencies), packageJsonFilePath)
-  } catch (_) {
-    console.warn(`Failed to parse package.json: ${packageJsonFilePath}`)
-    return [Promise.resolve()]
-  }
-}
-
-export const refreshWorkspaceFileData = (
-  workspaceFileString: string,
-  workspaceFilePath: string,
-): Promise<void>[] => {
-  // We deliberately fetch exactly the dependencies we are able to decorate, so
-  // that the two can never drift apart.
-  const dependencies = getWorkspaceFileDependencyInformation(workspaceFileString)
-    .map((group) => group.deps)
-    .flat()
-    .map((dep) => [dep.dependencyName, dep.currentVersion] as const)
-
-  return refreshDependencies(dependencies, workspaceFilePath)
-}
-
-const refreshDependencies = (
+/**
+ * Starts (or reuses) a registry fetch for every dependency given, and returns the
+ * fetches still in flight. The dependencies are the ones we are about to decorate,
+ * so what we fetch and what we show can never drift apart.
+ */
+export const refreshDependencies = (
   dependencies: readonly (readonly [string, string])[],
   filePath: string,
 ): Promise<void>[] => {
@@ -476,33 +446,6 @@ const refreshDependencies = (
       }
     })
     .filter((p): p is Promise<void> => p !== undefined)
-}
-
-const collectGroupDependencies = (groupValue: unknown): StrictDict<string, string> => {
-  const dependencies: StrictDict<string, string> = {}
-  if (!isRecord(groupValue)) {
-    return dependencies
-  }
-
-  for (const [dependencyName, versionOrCatalog] of Object.entries(groupValue)) {
-    if (typeof versionOrCatalog === 'string') {
-      dependencies[dependencyName] = versionOrCatalog
-      continue
-    }
-
-    // catalogs are objects containing named dependency maps.
-    if (!isRecord(versionOrCatalog)) {
-      continue
-    }
-
-    for (const [catalogDependencyName, catalogVersion] of Object.entries(versionOrCatalog)) {
-      if (typeof catalogVersion === 'string') {
-        dependencies[catalogDependencyName] = catalogVersion
-      }
-    }
-  }
-
-  return dependencies
 }
 
 const getNumberProp = (e: unknown, prop: string): number | undefined => {

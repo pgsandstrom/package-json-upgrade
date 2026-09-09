@@ -56,7 +56,7 @@ const loadDecoration = async (document: vscode.TextDocument, startTime: number) 
     return
   }
 
-  const promises = refreshDependencyFileData(document)
+  const promises = refreshDependencyFileData(document, dependencyGroups)
 
   try {
     await Promise.race([...promises, Promise.resolve()])

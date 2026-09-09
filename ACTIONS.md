@@ -46,25 +46,52 @@ Changed:
 
 ---
 
-## 2. The workspace file is parsed twice per decoration pass
+## 2. The workspace file is parsed twice per decoration pass — DONE
 
 **Where:** `src/npm.ts:428-440` (`refreshWorkspaceFileData`), `src/texteditor.ts:45-52` (`loadDecoration`)
 
-`loadDecoration` calls `getDependencyGroups(document)`, then `refreshDependencyFileData(document)` →
+`loadDecoration` called `getDependencyGroups(document)`, then `refreshDependencyFileData(document)` →
 `refreshWorkspaceFileData` → `getWorkspaceFileDependencyInformation(...)` on the same text, running
 js-yaml plus the full `getKeyLines` scan a second time. This runs on every keystroke (500ms debounce,
 `src/extension.ts:56`).
 
-It also forces `npm.ts` to import `pnpmWorkspaceFile.ts`, which is the coupling `dependencyFile.ts`
+It also forced `npm.ts` to import `pnpmWorkspaceFile.ts`, which is the coupling `dependencyFile.ts`
 was introduced to avoid.
 
-**Fix:** export the generic `refreshDependencies` from `npm.ts` and have `refreshDependencyFileData`
-pass in the already-computed groups. That removes the double parse _and_ the import, and it actually
-enforces the "the two can never drift apart" invariant that the comment at `src/npm.ts:432` currently
-only asserts by re-deriving the same data.
+Resolved by threading the groups `loadDecoration` already computed into
+`refreshDependencyFileData(document, dependencyGroups)`, which flattens them to name/version pairs and
+hands them to the now-exported `refreshDependencies`. The "the two can never drift apart" comment at
+the old `src/npm.ts:432` is no longer an assertion re-derived from a second parse: what we fetch is
+literally the list we are about to decorate.
 
-- [ ] Thread the computed dependency groups through instead of re-parsing
-- [ ] Drop the `pnpmWorkspaceFile` import from `npm.ts`
+The package.json half was the same duplication one step further apart, so it goes the same way.
+`refreshPackageJsonData` re-parsed the file with `JSON.parse` and re-walked `dependencyGroups` to
+build a name → version map that `getDependencyInformation` had already built. Dropping it also drops
+the second parser: `getDependencyInformation` uses jsonc-parser, so a package.json with comments or a
+trailing comma now still gets decorations where `JSON.parse` used to throw and log a warning.
+
+Catalog resolution moves rather than disappears. `getDependencyInformation` already resolves a
+`catalog:` ref to its real version and drops the ref it cannot resolve, so the branch in
+`refreshDependencies` no longer sees one from package.json — the same two outcomes as before (fetch
+the resolved version; fetch nothing, since a bare `catalog:foo` fails `isRegistryVersion`). The branch
+stays for the workspace-file path, whose groups keep their versions raw.
+
+`refreshDependencies` keeps its name/version-pair signature rather than taking `DependencyGroups[]`.
+That is what keeps `npm.ts` free of `pnpmWorkspaceFile.ts` — taking the groups would only trade the
+import for one on `packageJson.ts`. `dependencyFile.ts` stays the single module that knows both file
+types exist.
+
+Changed:
+
+- `refreshDependencies` exported from `npm.ts`; `refreshPackageJsonData`, `refreshWorkspaceFileData`
+  and `collectGroupDependencies` deleted along with the `pnpmWorkspaceFile` import and the
+  `getValueAtPath`/`toPath`/`isRecord`/`StrictDict` imports that only they used
+- `refreshDependencyFileData` in `dependencyFile.ts` takes the computed groups and no longer
+  dispatches on file type; `loadDecoration` passes the groups it already has
+- stale `refreshPackageJsonData` mention in the `isRegistryVersion` test comment updated
+
+- [x] Thread the computed dependency groups through instead of re-parsing
+- [x] Drop the `pnpmWorkspaceFile` import from `npm.ts`
 
 ---
 

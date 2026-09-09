@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 
-import { refreshPackageJsonData, refreshWorkspaceFileData } from './npm'
+import { refreshDependencies } from './npm'
 import {
   Dependency,
   DependencyGroups,
@@ -60,12 +60,18 @@ export const getUpdatedLineText = (
   }
 }
 
-export const refreshDependencyFileData = (document: vscode.TextDocument): Promise<void>[] => {
-  if (isPackageJson(document)) {
-    return refreshPackageJsonData(document.getText(), document.uri.fsPath)
-  } else if (isPnpmWorkspaceFile(document)) {
-    return refreshWorkspaceFileData(document.getText(), document.uri.fsPath)
-  } else {
-    return []
-  }
+/**
+ * Fetches npm data for the dependencies of an already-parsed file. The groups are
+ * the ones the caller is about to decorate, so parsing happens once per pass and
+ * we can only ever fetch what we show.
+ */
+export const refreshDependencyFileData = (
+  document: vscode.TextDocument,
+  dependencyGroups: DependencyGroups[],
+): Promise<void>[] => {
+  const dependencies = dependencyGroups
+    .flatMap((group) => group.deps)
+    .map((dep) => [dep.dependencyName, dep.currentVersion] as const)
+
+  return refreshDependencies(dependencies, document.uri.fsPath)
 }
