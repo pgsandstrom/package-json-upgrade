@@ -17,7 +17,6 @@ import { getConfig } from './config'
 import { logError } from './log'
 import { getNpmConfig } from './npmConfig'
 import { AsyncState, Dict } from './types'
-import { resolveCatalogVersion } from './workspace'
 
 export interface NpmLoader<T> {
   asyncstate: AsyncState
@@ -408,6 +407,12 @@ export const isRegistryVersion = (version: string): boolean => {
  * Starts (or reuses) a registry fetch for every dependency given, and returns the
  * fetches still in flight. The dependencies are the ones we are about to decorate,
  * so what we fetch and what we show can never drift apart.
+ *
+ * Versions arrive here already resolved: a package.json `catalog:` ref is turned
+ * into its real version (or dropped) by toDependency while parsing, and a catalog
+ * entry in pnpm-workspace.yaml never references a catalog itself. isRegistryVersion
+ * is the single guard on what we fetch, and it skips an unresolved `catalog:` along
+ * with every other non-registry spec.
  */
 export const refreshDependencies = (
   dependencies: readonly (readonly [string, string])[],
@@ -417,13 +422,6 @@ export const refreshDependencies = (
   const fetchedDependencies = new Set<string>()
 
   return dependencies
-    .map(([dependencyName, version]) => {
-      if (version.startsWith('catalog:')) {
-        const resolved = resolveCatalogVersion(version, dependencyName, filePath)
-        return [dependencyName, resolved?.version ?? version] as const
-      }
-      return [dependencyName, version] as const
-    })
     .filter(([_dependencyName, version]) => isRegistryVersion(version))
     .filter(([dependencyName, _version]) => {
       // The cache is keyed by name only, so one fetch covers every occurrence.

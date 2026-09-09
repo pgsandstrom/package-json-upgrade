@@ -692,10 +692,10 @@ describe('isRegistryVersion', () => {
   })
 
   test('catalog: references are skipped', () => {
-    // By the time refreshDependencies calls this, resolvable catalog refs have
-    // already been replaced with their real version. An unresolved "catalog:" must
-    // not be fetched. "catalog:react17" coerces to "17.0.0", so a naive coerce
-    // check would let it through.
+    // Resolvable catalog refs are replaced with their real version while parsing,
+    // so by the time refreshDependencies calls this, a remaining "catalog:" is one
+    // we could not resolve and must not fetch. "catalog:react17" coerces to
+    // "17.0.0", so a naive coerce check would let it through.
     assert.strictEqual(isRegistryVersion('catalog:'), false)
     assert.strictEqual(isRegistryVersion('catalog:react17'), false)
   })
