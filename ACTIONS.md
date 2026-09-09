@@ -5,8 +5,8 @@ Follow-ups from a read-through of the pnpm-workspace.yaml support as it stands o
 manual verification in its item 5 — that check is item 1 here, and reading the code says it would
 have failed.
 
-Items 1 and 3 are done. Nothing left here blocks a release: items 2, 4 and 5 are comments that no
-longer describe the code, plus one knowingly accepted gap.
+Items 1, 3 and 5 are done. Nothing left here blocks a release: items 2 and 4 are comments that no
+longer describe the code.
 
 Line references are as of `efa5b3b`.
 
@@ -167,7 +167,7 @@ is a backstop rather than a live path.
 
 ---
 
-## 5. Merge keys are not resolved
+## 5. Merge keys are not resolved — DONE
 
 **Where:** `src/util/yaml.ts:23`
 
@@ -184,7 +184,14 @@ is a different and more invasive change than the null/bool line makes it look.
 Anchors in a pnpm catalog are rare enough that accepting the gap is reasonable. Just record it next
 to the null/bool reasoning so the next person does not have to re-derive why `merge` is missing.
 
-- [ ] Note the gap in the schema comment, or add `merge` via the implicit form
+**Resolved by recording the gap in the schema comment.** The comment on
+`WORKSPACE_YAML_SCHEMA` now says that `merge` is left out on purpose, what that costs (a `<<` key
+that decorates nothing, silently), and why the array form of `extend` is not the fix — the same
+`explicit`-only behaviour that keeps a bare `true` a string is what makes `<<` unresolvable without
+`extend({ implicit: [...] })`. Adding it that way turns implicit resolution back on, which is the
+thing the schema exists to avoid, so the gap stands.
+
+- [x] Note the gap in the schema comment, or add `merge` via the implicit form
 
 ---
 

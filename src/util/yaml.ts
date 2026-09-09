@@ -16,6 +16,16 @@ import * as yaml from 'js-yaml'
  * readable while leaving numbers alone - the implicit resolvers stay off, so a
  * bare `true` is still the string "true", which is exactly what we want for a
  * value that is meant to be a version.
+ *
+ * `merge` is deliberately not in the list, so a `<<: *base` in a catalog stays a
+ * literal `<<` key instead of merging the anchor's entries in. Nothing throws and
+ * `<<` is not a name we would look up, so the merged in dependencies simply get
+ * no decoration. Closing that gap is not a matter of adding one more type to the
+ * array: `Schema.extend([type])` only adds to `explicit`, which is exactly why a
+ * bare `true` stays a string above. Resolving `<<` needs
+ * `extend({ implicit: [...] })`, and turning implicit resolution back on is the
+ * thing this schema exists to avoid. Anchors in a pnpm catalog are rare enough
+ * that the gap is the better trade.
  */
 // js-yaml exports its built in types, but @types/js-yaml does not declare them.
 const builtinTypes = (yaml as unknown as { types: Record<string, yaml.Type> }).types
