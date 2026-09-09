@@ -246,11 +246,58 @@ overrides:
     assert.deepStrictEqual(groups, [{ startLine: 0, deps: [] }])
   })
 
-  test('should skip values that are not strings', () => {
+  test('should skip values that are not a single scalar', () => {
     const yamlAsString = `catalog:
   react: ^19.2.5
   lodash:
     - 4.17.21
+  express:
+`
+    assert.deepStrictEqual(getDependencies(yamlAsString), [
+      { dependencyName: 'react', currentVersion: '^19.2.5', line: 1 },
+    ])
+  })
+
+  test('should handle versions that yaml would otherwise read as numbers', () => {
+    // Without quotes or a caret these look like numbers, so they only survive
+    // because we read the file with a schema that keeps every scalar a string
+    const yamlAsString = `catalog:
+  typescript: 5.9
+  react: 19
+  eslint: 9.0
+`
+    assert.deepStrictEqual(getDependencies(yamlAsString), [
+      { dependencyName: 'typescript', currentVersion: '5.9', line: 1 },
+      { dependencyName: 'react', currentVersion: '19', line: 2 },
+      { dependencyName: 'eslint', currentVersion: '9.0', line: 3 },
+    ])
+  })
+
+  test('should keep the trailing zero of a version that looks like a number', () => {
+    // The whole point of the schema: as a number this would be 5.1
+    const yamlAsString = `catalog:
+  typescript: 5.10
+`
+    assert.deepStrictEqual(getDependencies(yamlAsString), [
+      { dependencyName: 'typescript', currentVersion: '5.10', line: 1 },
+    ])
+  })
+
+  test('should handle a numberlike version with a trailing comment', () => {
+    const yamlAsString = `catalog:
+  typescript: 5.9 # not 5.10 yet
+`
+    assert.deepStrictEqual(getDependencies(yamlAsString), [
+      { dependencyName: 'typescript', currentVersion: '5.9', line: 1 },
+    ])
+  })
+
+  test('should not throw on explicit yaml tags', () => {
+    // The failsafe schema on its own knows no tags at all, and one unknown tag
+    // fails the whole file rather than the one line
+    const yamlAsString = `catalog:
+  react: ^19.2.5
+someFlag: !!bool true
 `
     assert.deepStrictEqual(getDependencies(yamlAsString), [
       { dependencyName: 'react', currentVersion: '^19.2.5', line: 1 },
@@ -287,9 +334,10 @@ overrides:
     assert.deepStrictEqual(getDependencies(yamlAsString), [
       { dependencyName: 'react', currentVersion: '^19.2.5', line: 4 },
       { dependencyName: 'lodash', currentVersion: '4.17.21', line: 5 },
-      { dependencyName: 'axios', currentVersion: '^1.11.0', line: 9 },
-      { dependencyName: 'react', currentVersion: '^17.0.2', line: 11 },
-      { dependencyName: 'react-dom', currentVersion: '^17.0.2', line: 12 },
+      { dependencyName: 'typescript', currentVersion: '5.10', line: 6 },
+      { dependencyName: 'axios', currentVersion: '^1.11.0', line: 10 },
+      { dependencyName: 'react', currentVersion: '^17.0.2', line: 12 },
+      { dependencyName: 'react-dom', currentVersion: '^17.0.2', line: 13 },
     ])
   })
 

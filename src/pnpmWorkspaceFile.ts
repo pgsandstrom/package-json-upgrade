@@ -4,6 +4,7 @@ import * as vscode from 'vscode'
 import { getConfig } from './config'
 import { Dependency, DependencyGroups } from './packageJson'
 import { endsWithFileName, getValueAtPath, isRecord, toPath } from './util/util'
+import { WORKSPACE_YAML_SCHEMA } from './util/yaml'
 
 export const isPnpmWorkspaceFile = (document: vscode.TextDocument) => {
   return endsWithFileName(document, 'pnpm-workspace.yaml')
@@ -12,7 +13,7 @@ export const isPnpmWorkspaceFile = (document: vscode.TextDocument) => {
 export const getWorkspaceFileDependencyInformation = (yamlAsString: string): DependencyGroups[] => {
   let parsed: unknown
   try {
-    parsed = yaml.load(yamlAsString)
+    parsed = yaml.load(yamlAsString, { schema: WORKSPACE_YAML_SCHEMA })
   } catch (_) {
     // Broken yaml. The user is probably in the middle of an edit, so just show nothing.
     return []

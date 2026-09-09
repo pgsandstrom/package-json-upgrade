@@ -68,7 +68,7 @@ only asserts by re-deriving the same data.
 
 ---
 
-## 3. Versions that YAML reads as numbers are silently dropped
+## 3. Versions that YAML reads as numbers are silently dropped — DONE
 
 **Where:** `src/pnpmWorkspaceFile.ts:56` and `:61` (the `typeof value === 'string'` gates)
 
@@ -80,11 +80,49 @@ this is narrow, but a two-segment range is plausible in a catalog.
 than showing nothing. Options are (a) coerce only when the raw line text round-trips to the same
 string, or (b) leave it and accept the gap knowingly. Decide which; do not coerce naively.
 
-- [ ] Decide: coerce carefully, or document the gap and move on
+**Decision: stop js-yaml from producing numbers in the first place.**
+
+Both options in the caveat take the number as given and try to recover from it. Neither is necessary:
+the schema decides whether `5.9` is a number at all, and we choose the schema.
+
+`yaml.FAILSAFE_SCHEMA` resolves every scalar as a string, so `5.10` arrives as `'5.10'` and the
+existing `typeof value === 'string'` gates become correct as written. The one rough edge is that the
+failsafe schema knows no tags beyond str/seq/map, so an explicit `!!bool true` _anywhere_ in the file
+throws and costs us every decoration in it rather than the one line. Adding the null and bool types
+back covers that. Their implicit resolvers stay off, which is what we want: a bare `true` remains the
+string `'true'`.
+
+Worth recording why the alternative was rejected, because it is the tempting one. `String(5.10)` is
+`'5.1'`, and that string is not only what we would show — it is also what `updateAll` and the quick
+fix hand to `replaceVersionInWorkspaceLine` as the text to find. `indexOf('5.1')` matches inside
+`5.10`, so the upgrade would rewrite the `5.1` and leave the `0`, turning `typescript: 5.10` into
+`typescript: 5.11.00`. A silent drop is bad; a corrupted version is worse. Reading the version back
+out of the raw line avoids that too, but it costs a numeric-shape regex, comment stripping, and a
+standing assumption that the raw line and the parsed value agree — all to undo a conversion we can
+decline to make.
+
+Values that are not versions are not a new problem: junk reaches `isRegistryVersion`, which requires
+a valid range, and `'true'`, `'1e3'`, `'0x10'`, `'.5'` and `'-2'` all fail it, so nothing is fetched.
+That is the same path a quoted `react: 'nonsense'` has always taken.
+
+Changed:
+
+- `src/util/yaml.ts` holds `WORKSPACE_YAML_SCHEMA`, the one place that decides how we read these
+  files. `@types/js-yaml` does not declare `yaml.types`, so getting the null and bool types needs a
+  cast — the comment says so
+- `pnpmWorkspaceFile.ts` and `workspace.ts` pass the schema to `yaml.load`. Nothing else changed in
+  either: the string gates were right all along, they were just being handed numbers
+- unit tests for numberlike versions, the `5.10` trailing zero, one with a trailing comment, and the
+  explicit tag that the bare failsafe schema would have choked on
+- `typescript: 5.10` added to the `catalog-workspace` fixture, so the decoration path and the
+  `catalog:` resolution path are both covered by it
+
+- [x] Decide: coerce carefully, or document the gap and move on
+- [x] Fix the same gates in `workspace.ts`, where a `catalog:` reference resolved to nothing
 
 ---
 
-## 4. `onLanguage:yaml` activates the extension for every YAML file
+## 4. `onLanguage:yaml` activates the extension for every YAML file — DONE
 
 **Where:** `package.json:29-34`
 
@@ -96,7 +134,28 @@ would not activate for a `pnpm-workspace.yaml` opened outside of a workspace fol
 both and accept the union, or just accept `onLanguage:yaml` as the pragmatic choice — but make it a
 deliberate decision.
 
-- [ ] Decide on the activation event and note the reasoning
+**Decision: keep `onLanguage:yaml` as the only yaml trigger. No change to `activationEvents`.**
+
+Three things settle it:
+
+- The premise is weaker than it looks. `onLanguage:json` was already there, and it fires for every
+  `.json` file a user opens — `settings.json`, `tsconfig.json`, any fixture or config file. Yaml is
+  not a new kind of breadth, it is the same breadth applied to a second language.
+- Activation is nearly free. `activate` inits the logger, prunes expired entries out of the GitHub
+  cache in `globalState`, reads the config and registers listeners (`src/extension.ts:25-105`).
+  No network, no registry work, no yaml parsing. Everything expensive sits behind
+  `isDependencyFile(document)` in `handleFileDecoration` (`src/texteditor.ts:41`), so a
+  docker-compose file boots the extension and is then immediately ignored.
+- `workspaceContains` would make it worse, not better. It activates at startup for every pnpm
+  monorepo whether or not the user ever opens a relevant file, where `onLanguage` at least waits for
+  a yaml file to be opened. It is narrower on the axis the item was worried about and wider on the
+  one that actually costs startup time — and it still misses the standalone-file case. Declaring
+  both would take the union of the two, which is strictly the most eager option of the three.
+
+The right time to revisit is if activation ever gains real cost, at which point the fix is to make
+`activate` lazy rather than to narrow the trigger.
+
+- [x] Decide on the activation event and note the reasoning
 
 ---
 

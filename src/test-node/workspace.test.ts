@@ -49,6 +49,16 @@ describe('workspace', () => {
     assert.deepStrictEqual(result, { version: '^17.0.2', isCatalog: true })
   })
 
+  test('should resolve a catalog entry that yaml would otherwise read as a number', () => {
+    const result = resolveCatalogVersion(
+      'catalog:',
+      'typescript',
+      path.join(catalogWorkspaceDir, 'packages', 'consumer', 'package.json'),
+    )
+    // 5.10, not the 5.1 that reading it as a number would give
+    assert.deepStrictEqual(result, { version: '5.10', isCatalog: true })
+  })
+
   test('should return undefined for missing catalog entry', () => {
     const result = resolveCatalogVersion(
       'catalog:',

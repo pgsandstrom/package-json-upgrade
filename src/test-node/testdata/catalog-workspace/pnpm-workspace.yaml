@@ -4,6 +4,7 @@ packages:
 catalog:
   react: ^19.2.5
   lodash: 4.17.21
+  typescript: 5.10
 
 catalogs:
   default:
