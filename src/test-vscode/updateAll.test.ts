@@ -50,6 +50,7 @@ const createConfig = (dependencyGroups: string[]): Config => {
     dependencyGroups,
     minimumReleaseAge: 0,
     minimumReleaseAgeExclude: [],
+    changelogUrls: {},
   }
 }
 

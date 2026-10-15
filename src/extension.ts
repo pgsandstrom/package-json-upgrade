@@ -190,6 +190,7 @@ const fixConfig = () => {
       .filter((s) => s.length > 0),
     minimumReleaseAge: Math.max(0, workspaceConfig.get<number>('minimumReleaseAge') ?? 0),
     minimumReleaseAgeExclude: workspaceConfig.get<string[]>('minimumReleaseAgeExclude') ?? [],
+    changelogUrls: workspaceConfig.get<Record<string, string | undefined>>('changelogUrls') ?? {},
   }
   setConfig(config)
 }

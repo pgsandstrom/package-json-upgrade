@@ -2,6 +2,7 @@ import * as path from 'path'
 import * as vscode from 'vscode'
 
 import { getChangelogUrl } from './changelog'
+import { getConfig } from './config'
 import {
   getDependencyFromDocumentLine,
   getUpdatedLineText,
@@ -104,7 +105,8 @@ export class UpdateAction implements vscode.CodeActionProvider {
       actions.push(commandAction)
     }
 
-    const changelogUrl = getChangelogUrl(npmCache.item.npmData)
+    const changelogUrl =
+      getConfig().changelogUrls[dep.dependencyName] ?? getChangelogUrl(npmCache.item.npmData)
     if (changelogUrl !== undefined) {
       const commandAction = this.createChangelogCommand(changelogUrl)
       actions.push(commandAction)

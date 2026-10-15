@@ -13,6 +13,7 @@ export interface Config {
   dependencyGroups: string[]
   minimumReleaseAge: number
   minimumReleaseAgeExclude: string[]
+  changelogUrls: Record<string, string | undefined>
 }
 
 let currentConfig: Config | undefined

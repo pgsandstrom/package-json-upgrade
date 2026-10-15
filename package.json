@@ -107,6 +107,11 @@
           "type": "array",
           "default": [],
           "description": "Package names to exclude from the minimumReleaseAge check. Supports pnpm-style `*` wildcards, for example [\"@my-org/*\", \"eslint\"] to always show the newest version regardless of release age."
+        },
+        "package-json-upgrade.changelogUrls": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "Custom changelog URLs keyed by npm package name. A matching URL overrides the changelog or GitHub releases URL detected automatically. Example: `\"changelogUrls\": { \"some-package\": \"https://example.com/releases\" }`."
         }
       }
     },

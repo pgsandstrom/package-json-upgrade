@@ -27,6 +27,7 @@ const setDependencyGroups = (dependencyGroups: string[]) => {
     dependencyGroups,
     minimumReleaseAge: 0,
     minimumReleaseAgeExclude: [],
+    changelogUrls: {},
   }
   setConfig(config)
 }

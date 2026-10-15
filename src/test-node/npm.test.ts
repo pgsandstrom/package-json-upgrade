@@ -84,6 +84,7 @@ describe('Npm Test Suite', () => {
       dependencyGroups: ['dependencies', 'devDependencies'],
       minimumReleaseAge: 0,
       minimumReleaseAgeExclude: [],
+      changelogUrls: {},
     }
     setConfig(config)
   })

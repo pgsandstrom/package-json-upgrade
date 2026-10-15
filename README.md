@@ -34,6 +34,17 @@ It is also possible to add ranges for versions that you wish to ignore. Lets say
 },
 ```
 
+You can override the automatically detected changelog URL for individual packages. Add the npm package name and the URL you want to open to `package-json-upgrade.changelogUrls` in your VS Code `settings.json`:
+
+```json
+"package-json-upgrade.changelogUrls": {
+  "some-package": "https://example.com/releases",
+  "@my-org/another-package": "https://github.com/my-org/another-package/releases"
+},
+```
+
+When a package has a custom URL, the extension uses it instead of the changelog or GitHub releases URL it would detect automatically.
+
 A config is available to control if the updates should always be shown when a package.json is opened, or if they should only be shown after triggering a command called "Toggle showing available updates in package.json and pnpm-workspace.yaml". This can be useful if you find that this extension is in the way when you are doing other work in your package.json file.
 
 As a default "dependencies", "devDependencies" and the catalog groups are checked, but this is fully configurable.

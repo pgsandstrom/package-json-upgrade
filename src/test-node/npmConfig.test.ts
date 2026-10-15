@@ -1,4 +1,4 @@
-import { before, describe, test } from 'node:test'
+import { after, before, describe, test } from 'node:test'
 
 import * as assert from 'assert'
 import * as fs from 'fs'
@@ -9,7 +9,17 @@ import { Config, setConfig } from '../config'
 import { getNpmConfig } from '../npmConfig'
 
 describe('npmConfig', () => {
+  // `npm run` (and some CI setups) inject npm_config_* env vars that take precedence over .npmrc files
+  const savedEnv: Record<string, string | undefined> = {}
+
   before(() => {
+    for (const key of Object.keys(process.env)) {
+      if (/^npm_config_/i.test(key)) {
+        savedEnv[key] = process.env[key]
+        Reflect.deleteProperty(process.env, key)
+      }
+    }
+
     const config: Config = {
       showUpdatesAtStart: true,
       showOverviewRulerColor: true,
@@ -25,8 +35,15 @@ describe('npmConfig', () => {
       dependencyGroups: ['dependencies', 'devDependencies'],
       minimumReleaseAge: 0,
       minimumReleaseAgeExclude: [],
+      changelogUrls: {},
     }
     setConfig(config)
+  })
+
+  after(() => {
+    for (const [key, value] of Object.entries(savedEnv)) {
+      process.env[key] = value
+    }
   })
 
   test('should read registry from project .npmrc', () => {

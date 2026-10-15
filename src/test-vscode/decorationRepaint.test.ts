@@ -37,6 +37,7 @@ const createConfig = (): Config => {
     dependencyGroups: ['dependencies', 'devDependencies', 'catalog', 'catalogs'],
     minimumReleaseAge: 0,
     minimumReleaseAgeExclude: [],
+    changelogUrls: {},
   }
 }
 
